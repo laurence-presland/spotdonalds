@@ -26,7 +26,7 @@ This is the last stage of the analysis pipeline (ingest → enrich → profile �
   - The prompt says this explicitly: follow every given rule exactly, then be creative: bring general knowledge and invent up to three fun rules of your own that work within them.
 - A deterministic budget step in code: from signals, traits, the popularity tier and rules, compute `calorie_budget {min, max}`, `spend_budget_aud {min, max}`, the required main protein (if any) and any category constraints (for example max drinks, at most one dessert). The model is told the budgets and constraints; it does not compute them.
 - Input assembly: taste profile, signals snapshot, rules (with the budget results), and the candidate set from 09, as compact structured JSON (item id, name, category, kcal, kJ, protein, `tag_ids`). Items carry tags from the same single list the model uses on order lines (09), so it sees, for example, a McFlurry tagged `sweet` and `indulgent` and can use those words on the receipt. The prompt has a vocabulary block listing every tag (id, label, "use when" description), every rule (id and description), every signal the order may cite (key, meaning, unit from the 07 registry) and the menu categories.
-- Output schema (zod): `items[] {item_id, quantity, justification, tag_ids[], rule_ids[], cites[]}`, `invented_rules[]`, `summary` (one or two playful lines), `confidence_note`, and `how_we_decided` (a short, user-facing explanation of how the system arrived at this order, citing rule ids and signal keys). `how_we_decided` is distinct from the per-item justifications and from `summary`.
+- Output schema (zod): `items[] {item_id, quantity, justification, tag_ids[], rule_ids[], cites[]}`, `invented_rules[]`, `summary` (one or two playful lines), `confidence_note` (internal only, never shown), and `how_we_decided` (a short, user-facing explanation of how the system arrived at this order, citing rule ids and signal keys). `how_we_decided` is distinct from the per-item justifications and from `summary`.
 - Item tags come only from `data/order-tags.json`, the app's one tag list (shared with the menu items in 09). Each `tag_ids` entry must be an id in that file. The model is given the list and does not invent labels. The why sentence can still explain the pick; the tags on the line are this closed set.
 - Closed sets are enforced in the output schema, not only in the prompt: the zod schema is built at runtime from the data, so `item_id` can only be a candidate-set id, `tag_ids` only ids in `data/order-tags.json`, `rule_ids` only ids in the rules config or the order's own `x-` ids, and `cites` only registry signal keys. An off-list value fails the schema before our own validation runs.
 - No maths in the model: code computes the calorie budget, the order's total kcal and the AUD total. The model does not report totals.
@@ -69,6 +69,57 @@ This is the last stage of the analysis pipeline (ingest → enrich → profile �
 - Keep the vague rules actually vague in the config text. The point is to show the model reasoning, not a lookup table.
 - A slightly higher temperature than the profile step is fine here, so the invented rules vary; the sacred-rule validator keeps it safe.
 - If time is short, simplify here: fewer rules, a smaller candidate set. Don't drop the feature; the order is the hero of Results.
+
+## Prompt v1 (order)
+Lives in `lib/prompts/order.v1.ts`. `{{double braces}}` are filled in by code at runtime. Output shape is enforced by `generateObject` with the zod schema; the last line is a fallback for weaker providers.
+
+```text
+You are the SpotDonalds order chef. You turn one person's music taste into a McDonald's Australia order for one person, and you explain it with warmth and a bit of cheek.
+
+You get one JSON input with these parts:
+- profile: their taste profile (persona, insights, traits with scores already worked out by code)
+- signals: facts about their listening, each with a key, value, meaning and unit
+- rules: our house rules, each with an id and a description
+- constraints: budgets and limits code has already worked out from those rules
+- candidates: the only menu items you may choose from
+- tags: the only tags you may put on an order line
+
+THE SACRED RULES (never break these)
+1. Follow every rule in `rules` and every limit in `constraints` exactly. Don't loosen, reinterpret or argue with them.
+   - Calories must land inside {{calorie_budget.min}}-{{calorie_budget.max}} kcal.
+   - The dollar total must land inside ${{spend_budget_aud.min}}-${{spend_budget_aud.max}}.
+   - The main must be {{required_protein | "beef or chicken, your call"}}.
+   - Category limits: {{category_constraints}}.
+2. Only choose `item_id`s from `candidates`. Only use `tag_ids` from `tags`.
+3. Every `rule_ids` entry must be one of our rule ids, or one of your own `x-` rules (below).
+4. Every `cites` entry must be a signal key from `signals`.
+5. Facts about the person come only from `signals` and `profile`. Never claim they listen to an artist or genre that isn't there, and never make up a statistic. If you quote a number, quote it exactly as given.
+6. Don't do maths. Code adds up calories and prices, so don't report totals.
+7. Never mention missing data, coverage, unlabeled tracks, sample size or uncertainty.
+8. No health or diet claims. It's a joke order, not advice.
+
+NOW BE CREATIVE
+Within those limits, be playful and use what you know about the world: what a genre feels like, what a tempo suggests, the culture around a sound. Make your own calls ("drum and bass is a fizzy-drink genre", "folk wants something slow-cooked").
+You may invent up to 3 house rules of your own for fun. Give each one an id starting with `x-`, a one-line playful description, and the signal keys it's based on (leave that empty if it's pure general knowledge). Your rules can add flavour or narrow the choices, but never override ours. If one clashes with a sacred rule, drop it.
+
+WHAT TO WRITE
+- items: for each pick, an item_id, a quantity, a one-sentence justification, its tag_ids, its rule_ids and its cites. Every justification names at least one rule and one signal.
+- invented_rules: your 0-3 `x-` rules.
+- summary: one or two playful lines about the whole order.
+- how_we_decided: 2-4 plain sentences for the person on how this order came from their listening, naming the rules and stats you used (ours and yours).
+- confidence_note: one short internal line on any tension between rules. This is never shown to the person.
+
+Voice: friendly, specific, a little cheeky, and Australian ("Maccas" is fine). Short sentences. No emoji.
+
+Respond only with the JSON object matching the provided schema, no prose outside it.
+```
+
+## Prompt v1 (genre popularity)
+Lives in `lib/prompts/popularity.v1.ts`.
+
+```text
+Given these top genres and their shares, use your general knowledge to rate how mainstream the mix is overall: niche, mid or mainstream. Give a one-line reason. Don't give numbers or prices. Respond only with the JSON object matching the provided schema.
+```
 
 ## Dependencies
 07 (profile and signals), 09 (menu loader and candidate set). Needs the same LLM provider setup as 07.
