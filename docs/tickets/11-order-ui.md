@@ -13,6 +13,7 @@ First generation is automatic, as the last stage of the analysis pipeline (13). 
 ## In scope
 - `OrderReceipt`: receipt-styled layout (header, order number or date, item lines with quantity, name, AUD price, kcal, a dollar total, a calorie total, footer). Built as the hero component for Results (13), so it should read clearly as the main result, not a footer card. The dollar total is the sum of the line prices.
 - Per-item "why" text from the stored justification, plus tags whose ids come from `data/order-tags.json`. Render the label from that file, not from model text. These tags are not freeform rule or signal chips.
+- House rules: a small list of the order's `invented_rules` under `HowWeDecided`, labelled as rules the AI made up (for example "House rules, invented by the AI"), visually lighter than our own rules.
 - `HowWeDecided`: a block rendering the stored `how_we_decided` explanation, with no rule or signal chips on this block. Distinct from the per-item "why" lines and from the item tags. 13 places it in the hero card, under the persona.
 - Calorie total against the budget, with the budget's rule explanation ("higher average BPM, so a bigger budget").
 - Footer showing menu `retrieved_at` and a source note (McDonald's Australia public product pages), and the one-line "not affiliated" notice.
