@@ -28,14 +28,14 @@ The raw track list (05) answers "what we kept". Tracks 04 dropped never appear a
 - Cross-user comparison.
 
 ## Acceptance criteria
-- [ ] Every aggregate is computed by a pure function with unit tests covering empty input, missing values, ties and a typical fixture.
-- [ ] Tracks with missing BPM are excluded from BPM stats (not treated as 0). The results panels do not display that sample size or say that tracks were left out.
-- [ ] Genre/tag mix uses only stored enrichment data and each tag can be traced to its source.
-- [ ] Top artists are shown for all three windows and match the persisted `top_items`.
-- [ ] Coverage is computed and tested, and is not rendered on Results.
-- [ ] The panels render from persisted data on reload without re-running ingestion.
-- [ ] Charts are readable at mobile widths and have text alternatives (a table or `aria-label` summary).
-- [ ] Loading, empty and error states exist for the panels.
+- [x] Every aggregate is computed by a pure function with unit tests covering empty input, missing values, ties and a typical fixture.
+- [x] Tracks with missing BPM are excluded from BPM stats (not treated as 0). The results panels do not display that sample size or say that tracks were left out.
+- [x] Genre/tag mix uses only stored enrichment data and each tag can be traced to its source.
+- [x] Top artists are shown for all three windows and match the persisted `top_items`.
+- [x] Coverage is computed and tested, and is not rendered on Results.
+- [x] The panels render from persisted data on reload without re-running ingestion.
+- [x] Charts are readable at mobile widths and have text alternatives (a table or `aria-label` summary).
+- [x] Loading, empty and error states exist for the panels.
 
 ## Technical notes
 - Use a lightweight chart approach (inline SVG or a small library). Don't pull in a heavy dependency for two charts.
