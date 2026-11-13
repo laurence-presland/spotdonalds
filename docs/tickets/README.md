@@ -1,4 +1,4 @@
-# SpotDonalds: ticket plan
+# SpotDonalds (aka MySubscriptions): ticket plan
 
 Take-home: "MySubscriptions: A Connected Services Dashboard with AI Insights". Due Fri 20 Nov 2026. The brief expects roughly 4-8 hours of work, so the plan below has an explicit cut line.
 

@@ -1,4 +1,4 @@
-# SpotDonalds
+# SpotDonalds (aka MySubscriptions)
 
 Sign in with Spotify, get a taste profile built from your listening, and a McDonald's order to match.
 
