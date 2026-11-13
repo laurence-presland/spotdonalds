@@ -44,6 +44,19 @@ export const streamEventSchema = z.discriminatedUnion("type", [
     code: z.string(),
     message: z.string(),
   }),
+  z.object({
+    type: z.literal("enrich_start"),
+    total: z.number().int(),
+  }),
+  z.object({
+    type: z.literal("enrich_result"),
+    id: z.string(),
+    name: z.string(),
+    artists: z.array(z.string()),
+    album: z.string().nullable(),
+    image: z.string().nullable(),
+    failures: z.array(z.string()),
+  }),
 ]);
 
 export type StreamEvent = z.infer<typeof streamEventSchema>;

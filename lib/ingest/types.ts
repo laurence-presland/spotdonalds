@@ -5,6 +5,7 @@ export type IngestCheckpoint = {
   recently_played?: boolean;
   top_tracks?: Partial<Record<Term, boolean>>;
   top_artists?: Partial<Record<Term, boolean>>;
+  enrich?: boolean;
 };
 
 export type IngestCounts = {
