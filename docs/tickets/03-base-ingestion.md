@@ -27,14 +27,14 @@ After login, ingestion is kicked off immediately as the first stage of the analy
 ## Acceptance criteria
 - [ ] Hitting `/api/ingest` as a signed-in user streams events progressively (first event arrives before the last Spotify call completes) on the deployed Vercel app, not just locally.
 - [ ] Recent plays, and top tracks and artists for all three windows, are persisted and match what Spotify returned (spot check against a real account).
-- [ ] Running ingestion twice does not duplicate rows.
-- [ ] Killing the connection mid-stream and calling again completes the run without refetching persisted items (covered by a test with a stubbed Spotify client).
-- [ ] The run record exposes a readable `stage` and status after start, mid-run and completion, so a reload can tell this stage is in progress or finished.
-- [ ] Spotify 429 and 5xx responses are retried with backoff and the stream reports an error event if retries are exhausted.
-- [ ] A 403 from Spotify produces a typed error mapped to the access screen from 02.
-- [ ] The route requires auth and only ever reads/writes the caller's data.
-- [ ] Normalisation has unit tests using recorded Spotify response fixtures.
-- [ ] Each run logs duration and per-endpoint counts.
+- [x] Running ingestion twice does not duplicate rows.
+- [x] Killing the connection mid-stream and calling again completes the run without refetching persisted items (covered by a test with a stubbed Spotify client).
+- [x] The run record exposes a readable `stage` and status after start, mid-run and completion, so a reload can tell this stage is in progress or finished.
+- [x] Spotify 429 and 5xx responses are retried with backoff and the stream reports an error event if retries are exhausted.
+- [x] A 403 from Spotify produces a typed error mapped to the access screen from 02.
+- [x] The route requires auth and only ever reads/writes the caller's data.
+- [x] Normalisation has unit tests using recorded Spotify response fixtures.
+- [x] Each run logs duration and per-endpoint counts.
 
 ## Technical notes
 - Vercel response bodies are capped at 4.5 MB unless streamed; use a streamed `Response` from a Node route handler, with `export const maxDuration` set explicitly. Ingestion itself should be quick (a handful of calls); the long part is enrichment (04). Starting this work as soon as the session exists is what lets the welcome screen in 13 cover start-up latency.
