@@ -74,6 +74,10 @@ Then add `spotdonalds` to the project's exposed Data API schemas (Supabase dashb
 
 `GET /api/health` returns `{ "ok": true }` only when it can read `spotdonalds.healthcheck`.
 
+## Menu data
+
+`data/menu/menu.json` is a point-in-time snapshot of McDonald's Australia's public menu and nutrition pages, retrieved 13 November 2026. Provenance, gaps (no national prices, about 31 items without nutrition, milk alternatives, withdrawn limited-time items) and why there is no refresh script are in [data/menu/SOURCES.md](data/menu/SOURCES.md). The loader validates the file against `menu.schema.json` at startup. Order tags come from `data/order-tags.json` via `data/menu/tag-rules.json`.
+
 ## Architecture
 
 Placeholder. The analysis pipeline (ingest, enrich, taste profile, order) and the four screens are specified in `docs/tickets/`.

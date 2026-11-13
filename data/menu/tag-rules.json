@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "rules": [
+    { "category": "burgers", "tags": ["classic", "savoury", "familiar", "comfort"] },
+    { "category": "chicken_and_fish", "tags": ["classic", "savoury", "familiar"] },
+    { "category": "breakfast", "tags": ["classic", "savoury"] },
+    { "category": "sides", "tags": ["side", "savoury", "comfort"] },
+    { "category": "desserts", "tags": ["sweet", "indulgent"] },
+    { "category": "mccafe_food", "tags": ["sweet"] },
+    { "category": "mccafe_drinks", "tags": ["one-drink"] },
+    { "category": "cold_and_frozen_drinks", "tags": ["one-drink"] },
+    { "category": "shakes_and_frappes", "tags": ["one-drink", "sweet", "indulgent"] },
+    { "category": "condiments", "tags": ["side"] },
+    { "category": "happy_meal", "tags": ["familiar", "classic"] },
+    { "category": "bundle_meals", "tags": ["familiar", "classic"] }
+  ],
+  "name_rules": [
+    { "includes": "mcflurry", "tags": ["sweet", "indulgent"] },
+    { "includes": "hash brown", "tags": ["side", "savoury"] },
+    { "includes": "salad", "tags": ["light"] },
+    { "includes": "sundae", "tags": ["sweet", "indulgent"] }
+  ],
+  "fallback": ["classic"]
+}
