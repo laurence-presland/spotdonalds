@@ -29,19 +29,19 @@ Ingestion and enrichment together take tens of seconds to a few minutes, and the
 - Persisting UI state beyond what the database already holds.
 
 ## Acceptance criteria
-- [ ] The screen shows the heading "Analysing your listening history" and nothing smaller directly above or below it.
-- [ ] The three stages are "Reading your history", "Analysing your taste", and "Assembling your order", and the current one is visible.
-- [ ] The bar is the yellow wordmark only.
-- [ ] A row appears only after that track has been enriched, and the first such row appears within a few seconds of this screen being visible (the welcome in 13 may already have covered start-up).
-- [ ] A track that could not be enriched never appears, including after reload.
-- [ ] Album art uses the Spotify image when there is one, and a letter tile when there isn't.
-- [ ] Progress counts match the kept tracks at completion (verified against the database in a test or a manual check).
-- [ ] When reading is done, the screen moves to "Analysing your taste" and then "Assembling your order" instead of looking finished.
-- [ ] The footer reads "Data provided by Spotify, MusicBrainz, and Deezer."
-- [ ] Dropping the network mid-run shows a reconnecting state, and the run resumes without duplicate rows when the connection returns.
-- [ ] Reloading mid-run shows the already-persisted rows immediately and continues.
-- [ ] A signed-in but non-allowlisted account sees the access screen, not a broken list.
-- [ ] Component tests cover state transitions with a scripted event stream, including error and resume.
+- [x] The screen shows the heading "Analysing your listening history" and nothing smaller directly above or below it.
+- [x] The three stages are "Reading your history", "Analysing your taste", and "Assembling your order", and the current one is visible.
+- [x] The bar is the yellow wordmark only.
+- [x] A row appears only after that track has been enriched, and the first such row appears within a few seconds of this screen being visible (the welcome in 13 may already have covered start-up).
+- [x] A track that could not be enriched never appears, including after reload.
+- [x] Album art uses the Spotify image when there is one, and a letter tile when there isn't.
+- [x] Progress counts match the kept tracks at completion (verified against the database in a test or a manual check).
+- [x] When reading is done, the screen moves to "Analysing your taste" and then "Assembling your order" instead of looking finished.
+- [x] The footer reads "Data provided by Spotify, MusicBrainz, and Deezer."
+- [x] Dropping the network mid-run shows a reconnecting state, and the run resumes without duplicate rows when the connection returns.
+- [x] Reloading mid-run shows the already-persisted rows immediately and continues.
+- [x] A signed-in but non-allowlisted account sees the access screen, not a broken list.
+- [x] Component tests cover state transitions with a scripted event stream, including error and resume.
 - [ ] Lighthouse accessibility score of at least 90 on the page.
 
 ## Technical notes
