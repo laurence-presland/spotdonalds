@@ -19,11 +19,12 @@ type RunRow = {
   heartbeat_at?: Date | string | null;
   attempts?: number | null;
   workflow_id?: string | null;
+  outcome?: string | null;
 };
 
 export async function loadLatestRun(userId: string): Promise<RunRecord | null> {
   const rows = await sql()<RunRow[]>`
-    select id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id
+    select id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
     from spotdonalds.analysis_runs
     where user_id = ${userId}
     order by started_at desc
@@ -34,7 +35,7 @@ export async function loadLatestRun(userId: string): Promise<RunRecord | null> {
 
 export async function loadOpenRun(userId: string): Promise<RunRecord | null> {
   const rows = await sql()<RunRow[]>`
-    select id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id
+    select id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
     from spotdonalds.analysis_runs
     where user_id = ${userId} and open
     order by started_at desc
@@ -45,7 +46,7 @@ export async function loadOpenRun(userId: string): Promise<RunRecord | null> {
 
 export async function loadRun(runId: string, userId: string): Promise<RunRecord | null> {
   const rows = await sql()<RunRow[]>`
-    select id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id
+    select id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
     from spotdonalds.analysis_runs
     where id = ${runId} and user_id = ${userId}
   `;
@@ -57,7 +58,7 @@ export async function insertRun(userId: string, startedAt: string): Promise<RunR
   const rows = await db<RunRow[]>`
     insert into spotdonalds.analysis_runs (user_id, status, stage, started_at, counts, checkpoint)
     values (${userId}, 'running', 'ingest', ${startedAt}, ${db.json(emptyCounts())}, ${db.json({})})
-    returning id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id
+    returning id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
   `;
   const row = rows[0];
   if (!row) throw new Error("analysis run was not created");
@@ -75,6 +76,7 @@ export async function saveAnalysisRun(run: RunRecord): Promise<void> {
         finished_at = ${run.finished_at},
         counts = ${db.json(run.counts)},
         error = ${run.error},
+        outcome = ${run.outcome ?? null},
         checkpoint = ${db.json(run.checkpoint)},
         open = ${open},
         attempts = coalesce(${run.attempts ?? null}, attempts),
@@ -99,11 +101,11 @@ export async function insertOpenRun(userId: string, startedAt: string): Promise<
     insert into spotdonalds.analysis_runs (user_id, status, stage, started_at, counts, checkpoint, open)
     values (${userId}, 'running', 'ingest', ${startedAt}, ${db.json(emptyCounts())}, ${db.json({})}, true)
     on conflict (user_id) where open do nothing
-    returning id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id
+    returning id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
   `;
   if (rows[0]) return asRun(rows[0]);
   const existing = await db<RunRow[]>`
-    select id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id
+    select id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
     from spotdonalds.analysis_runs
     where user_id = ${userId} and open
     order by started_at desc
@@ -125,7 +127,7 @@ export async function reopenRun(run: RunRecord): Promise<RunRecord> {
         lease_token = null,
         workflow_id = null
     where id = ${run.id} and user_id = ${run.user_id}
-    returning id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id
+    returning id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
   `;
   const row = rows[0];
   if (!row) throw new Error("analysis run was not reopened");
@@ -209,6 +211,16 @@ export async function clearPendingWorkflow(runId: string, userId: string): Promi
   `;
 }
 
+export async function noteRecovery(runId: string, userId: string, at: string): Promise<void> {
+  await sql()`
+    update spotdonalds.analysis_runs
+    set checkpoint = jsonb_set(coalesce(checkpoint, '{}'::jsonb), '{recovery_at}', to_jsonb(${at}::text), true)
+    where id = ${runId}
+      and user_id = ${userId}
+      and status = 'running'
+  `;
+}
+
 export async function markRunFailed(runId: string, userId: string, message: string): Promise<RunRecord | null> {
   const rows = await sql()<RunRow[]>`
     update spotdonalds.analysis_runs
@@ -222,7 +234,7 @@ export async function markRunFailed(runId: string, userId: string, message: stri
     where id = ${runId}
       and user_id = ${userId}
       and status = 'running'
-    returning id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id
+    returning id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
   `;
   return rows[0] ? asRun(rows[0]) : null;
 }
@@ -278,6 +290,7 @@ function asRun(row: RunRow): RunRecord {
     heartbeat_at: row.heartbeat_at == null ? null : iso(row.heartbeat_at),
     attempts: row.attempts ?? 0,
     workflow_id: row.workflow_id ?? null,
+    outcome: row.outcome === "ready" || row.outcome === "insufficient_data" ? row.outcome : null,
   };
 }
 

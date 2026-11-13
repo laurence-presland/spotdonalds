@@ -1,4 +1,4 @@
-import { getSessionUser } from "@/lib/auth/session";
+import { requireSession } from "@/lib/auth/session";
 import { generateOrder, generatePopularity } from "@/lib/order/model";
 import { runOrder, type OrderCompletion } from "@/lib/order/run";
 import { orderStore } from "@/lib/order/store";
@@ -19,8 +19,8 @@ const complete: OrderCompletion = async (input) => {
 };
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+  const user = await requireSession();
+  if (user instanceof Response) return user;
   const force = new URL(request.url).searchParams.get("force") === "1";
   return ndjsonResponse(async (emit) => {
     let emittedError = false;

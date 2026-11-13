@@ -91,5 +91,11 @@ async function sealFailure(
 }
 
 function sameTerminal(current: RunRecord, next: RunRecord): boolean {
-  return current.status === next.status && current.stage === next.stage && current.finished_at === next.finished_at && current.open === next.open;
+  return (
+    current.status === next.status &&
+    current.stage === next.stage &&
+    current.finished_at === next.finished_at &&
+    current.open === next.open &&
+    current.outcome === next.outcome
+  );
 }

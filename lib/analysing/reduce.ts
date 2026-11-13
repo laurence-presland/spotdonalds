@@ -4,7 +4,7 @@ import type { StreamEvent, Term } from "@/lib/stream/events";
 
 export type VisibleStage = "reading" | "taste" | "order";
 
-export type ConnectionStatus = "idle" | "streaming" | "reconnecting" | "error" | "access";
+export type ConnectionStatus = "idle" | "streaming" | "reconnecting" | "error" | "access" | "dropped";
 
 type PendingTrack = {
   name: string;
@@ -40,6 +40,7 @@ export type RunSnapshot = {
   status: string;
   stage: string;
   error: string | null;
+  outcome?: string | null;
   progress: { done: number; total: number };
 };
 

@@ -75,6 +75,7 @@ describe.skipIf(!process.env.DATABASE_URL)("postgres access", () => {
     expect(await assertWorker(runId, userA, "workflow-b")).toBe(true);
     await sql()`update spotdonalds.analysis_runs set stage = 'popularity' where id = ${runId}`;
     const fresh = await startFreshAnalysis(userA, "2026-11-13T01:00:00.000Z");
+    expect(fresh.outcome ?? null).toBeNull();
     expect(fresh.id).not.toBe(runId);
     const open = await sql()<{ id: string }[]>`
       select id from spotdonalds.analysis_runs where user_id = ${userA} and open
@@ -84,5 +85,22 @@ describe.skipIf(!process.env.DATABASE_URL)("postgres access", () => {
       select status, open from spotdonalds.analysis_runs where id = ${runId}
     `;
     expect(closed[0]).toMatchObject({ status: "error", open: false });
+  });
+
+  it("records insufficient_data and rejects any other outcome", async () => {
+    await sql()`delete from spotdonalds.orders where user_id = ${userA}`;
+    await sql()`delete from spotdonalds.taste_profiles where user_id = ${userA}`;
+    await sql()`delete from spotdonalds.analysis_runs where user_id = ${userA}`;
+    const run = await claimAnalysis(userA, false);
+    const runId = run?.id ?? "";
+    await sql()`
+      update spotdonalds.analysis_runs
+      set outcome = 'insufficient_data', status = 'complete', stage = 'done', open = false
+      where id = ${runId}
+    `;
+    const loaded = await loadLatestRun(userA);
+    expect(loaded?.outcome).toBe("insufficient_data");
+    await expect(sql()`update spotdonalds.analysis_runs set outcome = 'nope' where id = ${runId}`).rejects.toThrow();
+    await sql()`delete from spotdonalds.analysis_runs where id = ${runId}`;
   });
 });

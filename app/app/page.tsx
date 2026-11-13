@@ -1,16 +1,19 @@
 import { redirect } from "next/navigation";
 import { NotAllowlisted } from "@/components/NotAllowlisted";
 import { DriveThrough } from "@/components/flow/DriveThrough";
+import { InsufficientData } from "@/components/flow/InsufficientData";
 import { ResultsScreen } from "@/components/flow/ResultsScreen";
 import { RunError } from "@/components/flow/RunError";
+import { shouldStartWorker } from "@/lib/analyse/machine";
 import { analysisErrorCopy } from "@/lib/analyse/progress";
+import { reviveOrClose } from "@/lib/analyse/reconcile";
 import { ensureAnalysisJob } from "@/lib/analyse/start";
+import { AuthUnavailable, getSessionUser } from "@/lib/auth/session";
 import { safeDbMessage } from "@/lib/db";
 import { screenForRun } from "@/lib/flow/screen";
 import { log } from "@/lib/log";
 import { loadResults } from "@/lib/results/load";
 import { profileStore } from "@/lib/profile/store";
-import { createSupabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,19 +23,24 @@ export default async function ProtectedHome({
 }: {
   searchParams: Promise<{ welcome?: string }>;
 }) {
-  const supabase = await createSupabaseServer();
-  const session = await Promise.race([
-    supabase.auth.getUser().then((result) => ({ user: result.data.user, timedOut: false as const })),
-    new Promise<{ user: null; timedOut: true }>((resolve) => setTimeout(() => resolve({ user: null, timedOut: true }), 8000)),
-  ]);
-  if (session.timedOut) return <RunError message="The page didn't load. Try again." />;
-  if (!session.user) redirect("/");
-  const user = session.user;
+  let user: { id: string } | null;
+  try {
+    user = await getSessionUser();
+  } catch (error) {
+    if (error instanceof AuthUnavailable) {
+      return <RunError title="The page didn't load." message="Spotify sign-in didn't respond. Try again." action="reload" />;
+    }
+    throw error;
+  }
+  if (!user) redirect("/");
   const params = await searchParams;
   const loaded = await loadScreen(user.id, params.welcome === "1");
-  if (loaded.kind === "failed") return <RunError message="The page didn't load. Try again." />;
+  if (loaded.kind === "failed") {
+    return <RunError title="The page didn't load." message="The listening data didn't load. Try again." action="reload" />;
+  }
   if (loaded.kind === "denied") return <NotAllowlisted />;
   if (loaded.kind === "error") return <RunError message={loaded.message} />;
+  if (loaded.kind === "insufficient") return <InsufficientData count={loaded.count} />;
   if (loaded.kind === "results") {
     return (
       <ResultsScreen
@@ -49,8 +57,13 @@ export default async function ProtectedHome({
 
 async function loadScreen(userId: string, welcome: boolean) {
   try {
-    const run = await profileStore().latestRun(userId);
+    let run = await reviveOrClose(await profileStore().latestRun(userId));
+    if (run?.status === "running" && shouldStartWorker(run, Date.now()) && !run.checkpoint.recovery_at) {
+      await ensureAnalysisJob(userId, run.id);
+      run = (await profileStore().latestRun(userId)) ?? run;
+    }
     const screen = screenForRun(run, welcome);
+    if (screen === "insufficient") return { kind: "insufficient" as const, count: run?.checkpoint.track_count ?? 0 };
     if (screen === "error") {
       if (run?.error === "not_allowlisted") return { kind: "denied" as const };
       return { kind: "error" as const, message: analysisErrorCopy(run?.error) };
@@ -58,13 +71,6 @@ async function loadScreen(userId: string, welcome: boolean) {
     if (screen === "results" && run) {
       const results = await loadResults(userId);
       if (results) return { kind: "results" as const, results };
-    }
-    if (run?.status === "running") {
-      try {
-        await ensureAnalysisJob(userId, run.id);
-      } catch (error) {
-        log("error", "analyse.start_failed", { message: safeDbMessage(error), run_id: run.id });
-      }
     }
     return { kind: screen === "welcome" ? "welcome" as const : "analysing" as const };
   } catch (error) {

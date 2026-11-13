@@ -5,9 +5,10 @@ import { NotAllowlisted } from "@/components/NotAllowlisted";
 import { AnalysingView } from "@/components/analysing/AnalysingView";
 import { reconnectDelay } from "@/lib/analysing/backoff";
 import { initialAnalysingState, reduceAnalysis, type RunSnapshot } from "@/lib/analysing/reduce";
+import { parseWatchLine, type WatchEvent, type WatchRun } from "@/lib/analyse/watch";
 import type { VisibleArtist, VisibleTrack } from "@/lib/catalogue/present";
 
-const POLL_MS = 1500;
+const DROPPED = "The connection dropped. Try again.";
 
 export function AnalysingScreen({
   autostart = false,
@@ -24,55 +25,124 @@ export function AnalysingScreen({
   });
 
   useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
+    const controller = new AbortController();
+    let cursor: string | null = null;
+    let attempt = 0;
 
-    async function catalogue() {
-      const response = await fetch("/api/catalogue");
-      if (!response.ok) return;
-      const body = (await response.json()) as { tracks: VisibleTrack[]; artists: VisibleArtist[] };
-      if (!cancelled) dispatch({ type: "hydrate", tracks: body.tracks, artists: body.artists });
+    function fail(message: string) {
+      dispatch({ type: "connection", status: "dropped", message });
     }
 
-    async function tick(attempt: number) {
-      try {
-        const response = await fetch("/api/runs");
-        if (response.status === 401 || cancelled) return;
-        if (!response.ok) throw new Error("status");
-        const body = (await response.json()) as { run: (RunSnapshot & { id: string }) | null };
-        if (cancelled) return;
-        dispatch({ type: "snapshot", run: body.run });
-        await catalogue();
-        const run = body.run;
-        if (run?.status === "error") return;
-        if (run?.stage === "done" && run.status === "complete") {
+    async function read(signal: AbortSignal): Promise<"advance" | "stay" | "again" | string> {
+      const url = cursor ? `/api/runs/watch?cursor=${encodeURIComponent(cursor)}` : "/api/runs/watch";
+      const response = await fetch(url, { signal, headers: { accept: "application/x-ndjson, application/json" } });
+      if (signal.aborted) return "stay";
+      if (response.status === 401) return "stay";
+      if (response.status === 503) throw new Error(await errorMessage(response));
+      if (!response.ok) throw new Error(DROPPED);
+      const type = response.headers.get("content-type") ?? "";
+      if (type.includes("application/json")) {
+        const body = (await response.json()) as {
+          run: (RunSnapshot & WatchRun) | null;
+          tracks: VisibleTrack[];
+          artists: VisibleArtist[];
+        };
+        dispatch({ type: "hydrate", tracks: body.tracks ?? [], artists: body.artists ?? [] });
+        return applyRun(body.run);
+      }
+      if (!response.body) throw new Error(DROPPED);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          const event = parseWatchLine(line);
+          if (!event) continue;
+          const step = applyEvent(event);
+          if (step === "continue") continue;
+          if (step === "advance" || step === "stay") return step;
+          return step;
+        }
+      }
+      return "again";
+    }
+
+    function applyEvent(event: WatchEvent): "advance" | "stay" | "continue" | string {
+      if (event.type === "tracks") {
+        dispatch({ type: "hydrate", tracks: event.tracks, artists: event.artists });
+        return "continue";
+      }
+      if (event.type === "run") return applyRun(event.run);
+      if (event.type === "terminal") {
+        applyRun(event.run);
+        return "advance";
+      }
+      if (event.type === "resume") return event.cursor;
+      dispatch({ type: "connection", status: "dropped", message: event.message || DROPPED });
+      return "stay";
+    }
+
+    function applyRun(run: RunSnapshot | WatchRun | null): "advance" | "stay" | "continue" {
+      if (!run) {
+        fail("The analysis didn't start. Try again.");
+        return "stay";
+      }
+      dispatch({
+        type: "snapshot",
+        run: {
+          status: run.status,
+          stage: run.stage,
+          error: run.error,
+          progress: "progress" in run && run.progress ? run.progress : { done: 0, total: 0 },
+        },
+      });
+      if (run.status === "error" || run.outcome === "insufficient_data" || (run.stage === "done" && run.status === "complete")) {
+        return "advance";
+      }
+      dispatch({ type: "connection", status: "streaming", message: null });
+      return "continue";
+    }
+
+    async function loop() {
+      dispatch({ type: "connection", status: "streaming", message: null });
+      if (autostart && generation === 0) {
+        const started = await fetch("/api/analyse", { method: "POST", signal: controller.signal });
+        if (started.status === 503) throw new Error(await errorMessage(started));
+      }
+      while (!controller.signal.aborted) {
+        const next = await read(controller.signal);
+        if (next === "stay") return;
+        if (next === "advance") {
           onAdvanceRef.current?.();
           return;
         }
-        dispatch({ type: "connection", status: "streaming", message: null });
-        timer = setTimeout(() => void tick(0), POLL_MS);
-      } catch {
-        if (cancelled) return;
-        if (attempt >= 6) {
-          dispatch({ type: "connection", status: "error", message: "The connection dropped." });
-          return;
+        if (next === "again") {
+          attempt += 1;
+          if (attempt >= 6) {
+            fail(DROPPED);
+            return;
+          }
+          dispatch({ type: "connection", status: "reconnecting", message: "Reconnecting" });
+          await wait(reconnectDelay(attempt), controller.signal);
+          continue;
         }
-        dispatch({ type: "connection", status: "reconnecting", message: "Reconnecting" });
-        timer = setTimeout(() => void tick(attempt + 1), reconnectDelay(attempt));
+        cursor = next;
+        attempt = 0;
       }
     }
 
-    async function start() {
-      dispatch({ type: "connection", status: "streaming", message: null });
-      if (autostart && generation === 0) await fetch("/api/analyse", { method: "POST" });
-      if (!cancelled) await tick(0);
-    }
+    void loop().catch((error: unknown) => {
+      if (controller.signal.aborted) return;
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      fail(error instanceof Error && error.message ? error.message : DROPPED);
+    });
 
-    void start();
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
+    return () => controller.abort();
   }, [autostart, generation]);
 
   async function retry() {
@@ -89,8 +159,38 @@ export function AnalysingScreen({
   return (
     <AnalysingView
       state={state}
-      onRetry={state.status === "error" ? () => void retry() : undefined}
+      onRetry={
+        state.status === "error" ? () => void retry() : state.status === "dropped" ? () => setGeneration((value) => value + 1) : undefined
+      }
       onStartFresh={state.status === "error" ? () => void startFresh() : undefined}
     />
   );
+}
+
+async function errorMessage(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as { message?: string };
+    if (body.message) return body.message;
+  } catch {
+    return "Spotify sign-in didn't respond. Try again.";
+  }
+  return "Spotify sign-in didn't respond. Try again.";
+}
+
+function wait(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(new DOMException("aborted", "AbortError"));
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new DOMException("aborted", "AbortError"));
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
 }

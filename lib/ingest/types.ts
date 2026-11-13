@@ -10,6 +10,8 @@ export type IngestCheckpoint = {
   enrich_total?: number;
   profile?: boolean;
   popularity?: boolean;
+  track_count?: number;
+  recovery_at?: string;
 };
 
 export type IngestCounts = {
@@ -20,6 +22,7 @@ export type IngestCounts = {
 
 export type RunStatus = "running" | "complete" | "error";
 export type RunStage = "ingest" | "enrich" | "profile" | "popularity" | "order" | "done";
+export type RunOutcome = "ready" | "insufficient_data";
 
 export type RunRecord = {
   id: string;
@@ -35,6 +38,7 @@ export type RunRecord = {
   heartbeat_at?: string | null;
   attempts?: number;
   workflow_id?: string | null;
+  outcome?: RunOutcome | null;
 };
 
 export type IngestStore = {

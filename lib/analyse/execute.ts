@@ -1,6 +1,14 @@
 import { assertWorker, loadRun, saveAnalysisRun } from "@/lib/analysis-run";
 import { settleAttempt, type SettleResult } from "@/lib/analyse/job";
-import { WorkerLost, type Artifacts, type WorkStage } from "@/lib/analyse/machine";
+import { countDistinctTracks } from "@/lib/analyse/tracks";
+import {
+  ingestCheckpointDone,
+  MIN_RESULT_TRACKS,
+  terminalInsufficient,
+  WorkerLost,
+  type Artifacts,
+  type WorkStage,
+} from "@/lib/analyse/machine";
 import { getSpotifyAccessToken, SpotifyTokenError } from "@/lib/auth/tokens";
 import { tokenStore } from "@/lib/auth/token-store";
 import { createDeezer } from "@/lib/enrich/deezer";
@@ -28,7 +36,7 @@ export async function performStage(
   attempt: number,
   maxAttempts: number,
 ): Promise<SettleResult["result"]> {
-  const loaded = await loadContext(userId, runId);
+  const loaded = await loadAnalysisContext(userId, runId);
   if (!loaded) return "stop";
   const outcome = await settleAttempt({
     ...loaded,
@@ -36,7 +44,7 @@ export async function performStage(
     attempt,
     maxAttempts,
     now: new Date().toISOString(),
-    reload: () => loadContext(userId, runId),
+    reload: () => loadAnalysisContext(userId, runId),
     save: (run) => saveAnalysisRun(run),
     prepare: async () => assertWorker(runId, userId, workflowRunId),
     work: (nextStage, run) => runStage(nextStage, userId, run, workflowRunId),
@@ -51,7 +59,7 @@ export async function performStage(
   return outcome.result;
 }
 
-async function loadContext(userId: string, runId: string): Promise<{ run: RunRecord; artifacts: Artifacts } | null> {
+export async function loadAnalysisContext(userId: string, runId: string): Promise<{ run: RunRecord; artifacts: Artifacts } | null> {
   const run = await loadRun(runId, userId);
   if (!run) return null;
   const [profile, order] = await Promise.all([
@@ -91,7 +99,12 @@ async function runStage(stage: WorkStage, userId: string, run: RunRecord, workfl
     if (latest?.status === "error") return latest;
     throw error;
   }
-  return (await loadRun(run.id, userId)) ?? run;
+  const latest = (await loadRun(run.id, userId)) ?? run;
+  if (stage !== "ingest" || latest.status === "error" || !ingestCheckpointDone(latest.checkpoint)) return latest;
+  const count = await countDistinctTracks(userId);
+  const counted: RunRecord = { ...latest, checkpoint: { ...latest.checkpoint, track_count: count } };
+  if (count < MIN_RESULT_TRACKS) return terminalInsufficient(counted, count, new Date().toISOString());
+  return counted;
 }
 
 async function ingest(userId: string): Promise<void> {

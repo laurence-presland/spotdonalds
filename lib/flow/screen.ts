@@ -1,9 +1,10 @@
-export type AppScreen = "welcome" | "analysing" | "results" | "error";
+export type AppScreen = "welcome" | "analysing" | "results" | "error" | "insufficient";
 
 export function screenForRun(
-  run: { stage: string; status: string } | null,
+  run: { stage: string; status: string; outcome?: string | null } | null,
   welcomeRequested: boolean,
 ): AppScreen {
+  if (run?.outcome === "insufficient_data") return "insufficient";
   if (run?.status === "error") return "error";
   if (run?.stage === "done") return "results";
   if (!run && welcomeRequested) return "welcome";

@@ -53,6 +53,8 @@ export function runStatus(run: RunRecord | null) {
       error: run.error,
       counts: run.counts,
       heartbeat_at: run.heartbeat_at ?? null,
+      outcome: run.outcome ?? null,
+      track_count: run.checkpoint.track_count ?? null,
       progress: {
         done: run.checkpoint.enrich_done ?? 0,
         total: run.checkpoint.enrich_total ?? 0,
