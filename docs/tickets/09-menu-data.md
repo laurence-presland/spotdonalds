@@ -13,6 +13,7 @@ The menu is drink-heavy (112 McCafé drinks plus 52 cold/frozen drinks and 20 sh
 ## In scope
 - Generate TypeScript types from `data/menu/menu.schema.json` (or hand-write matching types with a test that fails on drift).
 - A loader module (`lib/menu`) that reads, validates (Ajv or zod) and exposes the menu with helpers: get by id, filter by category/tags, items with complete nutrition, and a stable "candidate set" function used by 10.
+- One tag list for the whole app: `data/order-tags.json`. Code assigns each menu item `tag_ids` from that list once, by deterministic rules on category and name kept in one file (`data/menu/tag-rules.json`), with a test that every assigned id exists in the list and every candidate item gets at least one tag. The older inferred `tags` field in `menu.json` stays as internal data for filtering only and is never sent to the model or shown in the UI.
 - A candidate-set policy: exclude items without nutrition, cap drinks (for example at most N drinks, preferring a spread of categories and sizes), and exclude condiments from being main picks. The policy is data in one file, with a test.
 - A validation test run in CI: the committed `menu.json` conforms to the schema, ids are unique, and energy values are plausible (kcal roughly consistent with kJ, within tolerance).
 - A refresh script (`scripts/refresh-menu`) plan: either commit a reproducible script that rebuilds the menu from the product pages, or document clearly that the file is a point-in-time snapshot and how it was produced. Pick one and document in `data/menu/SOURCES.md`. A snapshot with honest docs is acceptable for the take-home.
@@ -28,13 +29,14 @@ The menu is drink-heavy (112 McCafé drinks plus 52 cold/frozen drinks and 20 sh
 - [ ] `data/menu/menu.json` validates against `data/menu/menu.schema.json` in CI.
 - [ ] Types for menu items exist and the loader returns typed, validated data; invalid data fails loudly at startup/test, not silently.
 - [ ] Item ids are unique, and a test asserts the item count and the share of items with nutrition against the committed file's metadata.
+- [ ] Every menu item's `tag_ids` come only from `data/order-tags.json`, assigned by the rules file, and the same input gives the same tags (tested).
 - [ ] The candidate-set function never returns items without nutrition, caps drinks, and is deterministic for the same input (tested).
 - [ ] `data/menu/SOURCES.md` documents the known gaps (no prices, ~31 items without nutrition tables, milk alternatives, withdrawn limited-time items) and the retrieval date.
 - [ ] The refresh approach (script or documented snapshot) is written down and linked from the main README.
 
 ## Technical notes
 - `energy_kcal` is the published figure, never derived from kJ in this dataset; keep that invariant if the refresh script is built.
-- Tags in the file are inferred from name, slug and category only. No item is asserted to be vegetarian or halal, following McDonald's own disclaimer. Don't present tags as dietary guarantees in the UI.
+- Tags (both the inferred `tags` field and the assigned `tag_ids`) come from name, slug and category only. No item is asserted to be vegetarian or halal, following McDonald's own disclaimer. Don't present tags as dietary guarantees in the UI.
 - The product pages and the nutrition PDFs are the official sources; the `/dnaapp/` endpoint is disallowed by robots.txt and must not be used.
 - Data is for a personal, non-commercial take-home, attributed to McDonald's Australia's published information.
 
