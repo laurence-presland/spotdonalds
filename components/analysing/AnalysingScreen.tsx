@@ -9,14 +9,9 @@ import { parseWatchLine, type WatchEvent, type WatchRun } from "@/lib/analyse/wa
 import type { VisibleArtist, VisibleTrack } from "@/lib/catalogue/present";
 
 const DROPPED = "The connection dropped. Try again.";
+const NOT_STARTED = "The analysis didn't start. Try again.";
 
-export function AnalysingScreen({
-  autostart = false,
-  onAdvance,
-}: {
-  autostart?: boolean;
-  onAdvance?: () => void;
-}) {
+export function AnalysingScreen({ onAdvance }: { onAdvance?: () => void }) {
   const [state, dispatch] = useReducer(reduceAnalysis, initialAnalysingState);
   const [generation, setGeneration] = useState(0);
   const onAdvanceRef = useRef(onAdvance);
@@ -89,7 +84,7 @@ export function AnalysingScreen({
 
     function applyRun(run: RunSnapshot | WatchRun | null): "advance" | "stay" | "continue" {
       if (!run) {
-        fail("The analysis didn't start. Try again.");
+        fail(NOT_STARTED);
         return "stay";
       }
       dispatch({
@@ -110,10 +105,6 @@ export function AnalysingScreen({
 
     async function loop() {
       dispatch({ type: "connection", status: "streaming", message: null });
-      if (autostart && generation === 0) {
-        const started = await fetch("/api/analyse", { method: "POST", signal: controller.signal });
-        if (started.status === 503) throw new Error(await errorMessage(started));
-      }
       while (!controller.signal.aborted) {
         const next = await read(controller.signal);
         if (next === "stay") return;
@@ -143,7 +134,12 @@ export function AnalysingScreen({
     });
 
     return () => controller.abort();
-  }, [autostart, generation]);
+  }, [generation]);
+
+  async function start() {
+    await fetch("/api/analyse", { method: "POST" });
+    setGeneration((value) => value + 1);
+  }
 
   async function retry() {
     await fetch("/api/analyse?retry=1", { method: "POST" });
@@ -160,7 +156,13 @@ export function AnalysingScreen({
     <AnalysingView
       state={state}
       onRetry={
-        state.status === "error" ? () => void retry() : state.status === "dropped" ? () => setGeneration((value) => value + 1) : undefined
+        state.status === "error"
+          ? () => void retry()
+          : state.status === "dropped" && state.message === NOT_STARTED
+            ? () => void start()
+            : state.status === "dropped"
+              ? () => setGeneration((value) => value + 1)
+              : undefined
       }
       onStartFresh={state.status === "error" ? () => void startFresh() : undefined}
     />

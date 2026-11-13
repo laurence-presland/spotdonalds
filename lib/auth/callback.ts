@@ -32,6 +32,7 @@ export async function handleAuthCallback(input: {
   store: TokenStore;
   probe: (accessToken: string) => Promise<ProbeResult>;
   signOut: () => Promise<void>;
+  beginFlow?: (userId: string) => Promise<void>;
   now?: () => number;
 }): Promise<{ redirectTo: string }> {
   const { origin, params } = input;
@@ -92,15 +93,31 @@ export async function handleAuthCallback(input: {
     if (probe === "error") {
       log("warn", "auth.probe_failed", { user_id: userId });
     }
-    return { redirectTo: `${origin}/app?welcome=1` };
+    return enterApp(input.beginFlow, userId, origin);
   }
 
   if (existing?.refresh_token) {
     log("info", "auth.provider_token_missing", { user_id: userId });
-    return { redirectTo: `${origin}/app?welcome=1` };
+    return enterApp(input.beginFlow, userId, origin);
   }
 
   log("info", "auth.provider_token_missing", { user_id: userId });
   await input.signOut();
   return { redirectTo: `${origin}/?notice=reauth` };
+}
+
+async function enterApp(
+  beginFlow: ((userId: string) => Promise<void>) | undefined,
+  userId: string,
+  origin: string,
+): Promise<{ redirectTo: string }> {
+  try {
+    await beginFlow?.(userId);
+  } catch (error) {
+    log("error", "analyse.start_failed", {
+      user_id: userId,
+      message: error instanceof Error ? error.message : "The analysis didn't start",
+    });
+  }
+  return { redirectTo: `${origin}/app?welcome=1` };
 }

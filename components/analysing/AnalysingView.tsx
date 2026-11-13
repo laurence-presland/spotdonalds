@@ -6,6 +6,7 @@ import type { Term } from "@/lib/stream/events";
 import { DataCredit } from "@/components/DataCredit";
 import { IngestionProgress } from "@/components/analysing/IngestionProgress";
 import { TrackList, type ListTab } from "@/components/analysing/TrackList";
+import { QuietLogout } from "@/components/flow/QuietLogout";
 
 const TABS: { id: ListTab; label: string }[] = [
   { id: "recent", label: "Recent plays" },
@@ -39,6 +40,7 @@ export function AnalysingView({
       <header className="bar">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="wordmark wordmark-bar" src="/brand/wordmark-yellow.svg" alt="SpotDonalds" />
+        <QuietLogout />
       </header>
       <main className="analysing-main">
         <h1>Analysing your listening history</h1>

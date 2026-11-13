@@ -151,13 +151,20 @@ a {
 }
 
 .bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
   background: var(--charcoal);
   padding: 0.85rem 1.25rem;
 }
 
 .wordmark-bar {
   width: 9.5rem;
+  max-width: calc(100% - 6rem);
   display: block;
+  flex: 0 0 auto;
 }
 
 .analysing-main {
@@ -678,16 +685,20 @@ a {
 }
 
 .quiet-logout {
-  margin: 2rem 0 0;
+  margin: 0 0 0 auto;
 }
 
 .quiet-logout button {
   border: 0;
   background: transparent;
-  color: var(--muted);
+  color: var(--cream);
   font-weight: 700;
   cursor: pointer;
-  padding: 0;
+  padding: 0.35rem 0.15rem;
+}
+
+.quiet-logout button:focus-visible {
+  outline-color: var(--yellow);
 }
 
 @media (prefers-reduced-motion: reduce) {
