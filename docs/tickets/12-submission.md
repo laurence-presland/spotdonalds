@@ -18,12 +18,12 @@ The brief asks for a public repo link, a hosted version (preferred) and a README
   - assumptions and limitations (below),
   - future enhancements for 1, 5 and 20 more days,
   - attribution for MusicBrainz (CC BY-NC-SA), Deezer and the McDonald's Australia source data, and the not-affiliated note.
-- Limitations to state plainly: shallow recently-played history, no audio features or reliable popularity from Spotify, metadata coverage gaps (shown as missing), MusicBrainz rate limit making first runs slow, menu has no prices and ~31 items without nutrition, dev-mode user cap.
+- Limitations to state plainly: shallow recently-played history, no audio features or reliable popularity from Spotify, metadata coverage gaps (handled internally, never mentioned in the UI), MusicBrainz rate limit making first runs slow, national menu prices are not published (the receipt still shows a price and a total) and ~31 items have no nutrition, dev-mode user cap.
 - Future enhancements:
   - **1 day:** Discogs as a third enrichment source; more taste-profile metrics including popularity and how mainstream the listening is; menu refresh script; better tag normalisation.
   - **5 days:** search-grounded gap-fill for metadata no structured source has (with citations, never model recall); Spotify privacy-export backfill for longer history; menu prices via store-specific data; background job queue so enrichment isn't tied to one request; evaluation harness for profile and order quality.
   - **20 days:** drawn or generated images of the order; extended Spotify quota or another music source for multi-user scale; additional connected services; sharing and comparing profiles; scheduled re-ingestion and taste drift over time.
-- Screenshots in `docs/screenshots/` and referenced from the README: landing, welcome, analysing, and results (order as hero, with the taste profile, aggregates, collapsed track list and "how we decided" explanation visible).
+- Screenshots in `docs/screenshots/` and referenced from the README: landing, welcome, analysing, and results (order as hero, with the taste profile, aggregates and "how we decided" explanation visible).
 - Reviewer access: add each reviewer's name and Spotify email under User Management in the Spotify Developer Dashboard (max 5 users including the owner), and confirm each can sign in. This is a manual step done by the owner.
 - Hosted link: production deployment verified end to end with a fresh, allowlisted account.
 - Final clean-up pass: remove dead code and TODOs, run lint/typecheck/tests, check secrets history, fill the contact line on the access-denied screen from 02.

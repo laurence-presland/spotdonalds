@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "description": "Closed set of tags an order line may carry. The order step picks ids from this list. It does not invent labels.",
+  "tags": [
+    {
+      "id": "comfort",
+      "label": "Comfort",
+      "description": "A familiar pick when the listening mix is narrow."
+    },
+    {
+      "id": "familiar",
+      "label": "Familiar",
+      "description": "Repeats a category the listener already stays with."
+    },
+    {
+      "id": "classic",
+      "label": "Classic",
+      "description": "A standard menu item rather than a one-off."
+    },
+    {
+      "id": "high-energy",
+      "label": "High energy",
+      "description": "Fits a hotter tempo, when the calorie budget has room."
+    },
+    {
+      "id": "sweet",
+      "label": "Sweet",
+      "description": "A sweet item, usually the dessert."
+    },
+    {
+      "id": "savoury",
+      "label": "Savoury",
+      "description": "A savoury main or side."
+    },
+    {
+      "id": "side",
+      "label": "Side",
+      "description": "The side that goes with the main."
+    },
+    {
+      "id": "one-drink",
+      "label": "One drink",
+      "description": "The single drink the rules allow."
+    },
+    {
+      "id": "variety",
+      "label": "Variety",
+      "description": "A pick from another category when the listening is diverse."
+    },
+    {
+      "id": "late-night",
+      "label": "Late night",
+      "description": "Fits listening that sits late."
+    },
+    {
+      "id": "light",
+      "label": "Light",
+      "description": "A smaller item when the budget is tight."
+    },
+    {
+      "id": "indulgent",
+      "label": "Indulgent",
+      "description": "A richer item when the budget has room."
+    }
+  ]
+}

@@ -3,18 +3,19 @@
 **Size:** M · **Depends on:** 03 (04 for enrichment states)
 
 ## Summary / goal
-The Analysing screen: a full-screen loading view, headed something like "Analysing your listening history", where the track list fills in row by row as base ingestion and enrichment stream in. Per-row states, source badges and overall progress make the wait feel deliberate. This screen is not a destination; when the full analysis pipeline completes, 13 moves the user on to Results.
+The Analysing screen: a loading view headed "Analysing your listening history". The track list fills with tracks that have already been enriched. A track that can't be enriched is dropped and never appears, so the list has no pending, enriching, partial, missing, or error rows. This screen is not a destination; when the full analysis pipeline completes, 13 moves the user on to Results.
 
 ## Context
 Ingestion and enrichment together take tens of seconds to a few minutes, and the taste profile and order steps add a short wait after the list is already full. Reviewers will sit through this on their first run. The streaming design from 03 and 04 makes it possible to show real progress rather than a spinner. The user arrives here after the welcome transition (13), and comes back here on reload if a run is still in progress.
 
 ## In scope
-- The Analysing screen itself: a clear heading (for example "Analysing your listening history") and the filling list as the main content. Treat it as a loading screen, not a dashboard.
+- The Analysing screen itself: the heading is exactly "Analysing your listening history", with no eyebrow above it and no subtitle under it. The filling list is the main content. Treat it as a loading screen, not a dashboard.
+- The bar is the yellow wordmark only. No S icon, no log out, no order number.
 - A client hook that consumes the NDJSON streams with the shared event schema (including `stage` events) and exposes typed state (rows, progress, errors, status, current pipeline stage). Until 13 lands, this hook can start ingestion then enrichment itself; 13 will wrap or replace that with the full ingest → enrich → profile → order orchestrator.
-- A track list that appends rows as events arrive, with Spotify data first (artwork, title, artists, album, source: recent play or top track and rank/window) and enrichment filling in afterwards.
-- Per-row states: **pending**, **enriching**, **enriched**, **partial**, **missing**, **error**, each with a distinct, accessible visual treatment.
-- Source badges on enriched values (MusicBrainz, Deezer) linking to the source URL, plus MusicBrainz attribution in the footer of the list.
-- Overall progress: counts (tracks fetched, enriched, missing), a progress bar, current step label ("Reading your recent plays", "Looking up tags", and once those tickets exist, "Building your taste profile", "Assembling your order"), and a rough remaining-time hint only if it can be honest. After the list is complete, keep the user on this screen and update the step label through the later stages; don't look finished early.
+- A track list that appends a row only once that track has been enriched. Each row shows album art when Spotify provided an image URL, otherwise a letter tile, plus title, artists, album, and source (recent play, or top track with rank/window). No per-row enrichment state and no source badges.
+- Tracks that fail enrichment are not rendered. 04 drops them; this screen never shows a placeholder for them.
+- Three stages, in this order: "Reading your history", "Analysing your taste", "Assembling your order". Reading covers ingest and enrich (rows appear during it). Taste is the profile step. Order is assembly. One progress bar, a simple track count, and the current stage marked. No remaining-time guess. After the list is complete, keep the user on this screen and move the stage through taste and order; don't look finished early.
+- Footer line, exactly: "Data provided by Spotify, MusicBrainz, and Deezer."
 - Tabs or filters for recent plays vs top tracks (per window) vs top artists.
 - Reconnect handling: if the stream drops, show it, retry automatically with backoff, and resume.
 - Empty, error and 403-access states handled and designed (not blank screens).
@@ -28,12 +29,15 @@ Ingestion and enrichment together take tens of seconds to a few minutes, and the
 - Persisting UI state beyond what the database already holds.
 
 ## Acceptance criteria
-- [ ] The screen shows a heading along the lines of "Analysing your listening history" while the list is filling in.
-- [ ] Rows appear progressively while the streams are still open, and the first row appears within a few seconds of this screen being visible (the welcome in 13 may already have covered start-up).
-- [ ] Each row shows the correct state as enrichment progresses, and a track with no metadata ends as `missing` with a visible but unobtrusive indicator.
-- [ ] Progress counts match the underlying data at completion (verified against the database in a test or a manual check).
-- [ ] When ingest and enrich are done, the screen has a clear in-progress state for later pipeline stages rather than looking like a finished page.
-- [ ] Source badges link to the correct source URLs, and MusicBrainz attribution is visible.
+- [ ] The screen shows the heading "Analysing your listening history" and nothing smaller directly above or below it.
+- [ ] The three stages are "Reading your history", "Analysing your taste", and "Assembling your order", and the current one is visible.
+- [ ] The bar is the yellow wordmark only.
+- [ ] A row appears only after that track has been enriched, and the first such row appears within a few seconds of this screen being visible (the welcome in 13 may already have covered start-up).
+- [ ] A track that could not be enriched never appears, including after reload.
+- [ ] Album art uses the Spotify image when there is one, and a letter tile when there isn't.
+- [ ] Progress counts match the kept tracks at completion (verified against the database in a test or a manual check).
+- [ ] When reading is done, the screen moves to "Analysing your taste" and then "Assembling your order" instead of looking finished.
+- [ ] The footer reads "Data provided by Spotify, MusicBrainz, and Deezer."
 - [ ] Dropping the network mid-run shows a reconnecting state, and the run resumes without duplicate rows when the connection returns.
 - [ ] Reloading mid-run shows the already-persisted rows immediately and continues.
 - [ ] A signed-in but non-allowlisted account sees the access screen, not a broken list.
@@ -43,12 +47,13 @@ Ingestion and enrichment together take tens of seconds to a few minutes, and the
 ## Technical notes
 - Keep the stream parsing in a small, well-tested module separate from React so it can be reused by the orchestrator in 13.
 - Virtualise the list only if rendering becomes an issue; with ~200 rows it shouldn't.
-- Avoid layout shift as rows fill in: fixed row height with skeletons.
-- Components: `AnalysingScreen`, `TrackList`, `TrackRow`, `IngestionProgress`, `SourceBadge`. Keep `TrackList` usable in a collapsed form on the Results screen (13).
+- Avoid layout shift as rows fill in: fixed row height. Rows are inserted whole, so there is no skeleton state to design.
+- Use the album image URL from Spotify when the track has one. Don't bundle copyrighted cover art in the repo; the letter tile is the fallback.
+- Components: `AnalysingScreen`, `TrackList`, `TrackRow`, `IngestionProgress`. The track list stays on Analysing. Results does not include it (13).
 
 ## Dependencies
 03 for the stream; 04 for enrichment states (can start with Spotify-only rows). 13 depends on this screen, not the other way around.
 
 ## Open questions
-- One combined progress bar or two (fetch vs enrich)? Leaning one bar driven by pipeline `stage`, with a step label.
-- Enrichment starts automatically after ingestion (decided: automatic, as part of the pipeline).
+- One progress bar, driven by the three visible stages. Decided.
+- Enrichment is part of "Reading your history", not its own stage. A track is shown only after it succeeds. Decided.

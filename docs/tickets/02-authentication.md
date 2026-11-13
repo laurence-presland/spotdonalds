@@ -15,7 +15,7 @@ The landing page is the first thing a reviewer sees. Keep it spare: branding and
 - Auth callback route that captures the provider access and refresh tokens at sign-in (Supabase only exposes them on that first session) and stores them server-side in a table protected by RLS, not in the browser.
 - A token helper that returns a valid access token for a user, refreshing against Spotify's token endpoint when expired and persisting the new tokens (refresh rotation handled).
 - Session handling with `@supabase/ssr`, a middleware/guard that protects app routes, and a logout action.
-- Landing page for unauthenticated users only: wordmark and icon from `assets/`, the slogan "Your Spotify taste, served as a drive-thru order.", and a "Log in with Spotify" button. No extra marketing sections. A single quiet line under the button about what data is read is fine; don't clutter it.
+- Landing page for unauthenticated users only: the wordmark, the slogan "Your Spotify taste assembled as a drive-through order.", and a "Log in with Spotify" button. No icon on the page, no line about which data is read, and no other marketing sections.
 - "Not allowlisted" / access-denied screen: explains the app is in Spotify's development mode with a limited user list, and how to request access (contact line, filled in by 12). This screen still applies after a completed consent that then fails the allowlist.
 - Handling of denied consent and revoked tokens (send the user back to the landing page with a clear message).
 - After a successful login, redirect into the authenticated app. 13 owns the welcome → analysing → results journey; this ticket just hands off to a protected route.
@@ -27,7 +27,7 @@ The landing page is the first thing a reviewer sees. Keep it spare: branding and
 - Allowlisting reviewers (12, done manually in the Spotify dashboard).
 
 ## Acceptance criteria
-- [ ] An unauthenticated visit to the front page shows only the branded landing (wordmark/icon, the slogan above, "Log in with Spotify") and does not reveal any user data.
+- [ ] An unauthenticated visit to the front page shows only the wordmark, the slogan "Your Spotify taste assembled as a drive-through order.", and "Log in with Spotify". No icon, no data-read line, and no user data.
 - [ ] An allowlisted Spotify user can sign in from the landing page and is redirected to a protected route (the screen they see next is 13).
 - [ ] Unauthenticated requests to protected pages and API routes are redirected to the landing page (pages) or get 401 (API).
 - [ ] Spotify tokens are never sent to or readable by the browser, and the token table is unreadable with the anon key (RLS verified by a test or documented manual check).
@@ -43,7 +43,7 @@ The landing page is the first thing a reviewer sees. Keep it spare: branding and
 - Because Supabase doesn't refresh provider tokens for us, the refresh logic is ours. Treat the token table as the source of truth.
 - Spotify email can be absent or differ from the allowlist email; don't use it as a key, use the Supabase user id.
 - Unclear whether Supabase Auth surfaces Spotify's 403-for-non-allowlisted at login or only on the first API call. Test it with a non-allowlisted account and handle both.
-- Use the committed assets in `assets/` (wordmark and the yellow-S-on-charcoal icon). Don't invent a second set of marks.
+- The landing page is the wordmark only. The S icon in `assets/` stays available for the favicon and app icon, and is not drawn on the page. Don't invent a second wordmark.
 
 ## Dependencies
 01. Needs a Spotify developer app (owner is Premium) and the redirect URIs configured.

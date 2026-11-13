@@ -1,0 +1,3521 @@
+{
+  "version": "2.22",
+  "children": [
+    {
+      "type": "frame",
+      "id": "sRKwr",
+      "x": 0,
+      "y": 0,
+      "name": "Landing",
+      "clip": true,
+      "width": 1200,
+      "height": 760,
+      "fill": "$red",
+      "layout": "vertical",
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "Fmo4I",
+          "name": "Stack",
+          "width": 560,
+          "layout": "vertical",
+          "gap": 22,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "bQnnY",
+              "name": "Wordmark",
+              "fill": "$yellow",
+              "content": "SpotDonalds",
+              "fontFamily": "$font-display",
+              "fontSize": 68,
+              "fontWeight": "900",
+              "letterSpacing": -2.4
+            },
+            {
+              "type": "text",
+              "id": "JcmMC",
+              "name": "Slogan",
+              "fill": "$white",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Your Spotify taste assembled as a drive-through order.",
+              "lineHeight": 1.35,
+              "textAlign": "center",
+              "fontFamily": "$font-display",
+              "fontSize": 22,
+              "fontWeight": "650"
+            },
+            {
+              "type": "frame",
+              "id": "j7zjV",
+              "name": "Login",
+              "fill": "$charcoal",
+              "cornerRadius": 8,
+              "padding": [
+                15,
+                22
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "DOTKO",
+                  "name": "Label",
+                  "fill": "$yellow",
+                  "content": "Log in with Spotify",
+                  "fontFamily": "$font-display",
+                  "fontSize": 16,
+                  "fontWeight": "800"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "jZbE2",
+      "x": 1296,
+      "y": 0,
+      "name": "Welcome",
+      "clip": true,
+      "width": 1200,
+      "height": 760,
+      "fill": "$charcoal",
+      "layout": "vertical",
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "TA5rp",
+          "name": "Welcome copy",
+          "width": 760,
+          "layout": "vertical",
+          "gap": 18,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "DMnlm",
+              "name": "Line",
+              "fill": "$yellow",
+              "content": "Please drive through...",
+              "textAlign": "center",
+              "fontFamily": "$font-display",
+              "fontSize": 64,
+              "fontWeight": "800",
+              "letterSpacing": -1.6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "VStKK",
+      "x": 2592,
+      "y": 0,
+      "name": "Not allowlisted",
+      "clip": true,
+      "width": 1200,
+      "height": 760,
+      "fill": "$red",
+      "layout": "vertical",
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "YWWGL",
+          "name": "Access card",
+          "width": 520,
+          "fill": "$cream",
+          "cornerRadius": 12,
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 32,
+          "children": [
+            {
+              "type": "text",
+              "id": "v0Nw2",
+              "name": "Eyebrow",
+              "fill": "$red",
+              "content": "SPOTIFY DEVELOPMENT MODE",
+              "fontFamily": "$font-mono",
+              "fontSize": 11,
+              "fontWeight": "500",
+              "letterSpacing": 1.4
+            },
+            {
+              "type": "text",
+              "id": "Uvm6v",
+              "name": "Title",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "This account isn't on the list.",
+              "lineHeight": 1.15,
+              "fontFamily": "$font-display",
+              "fontSize": 32,
+              "fontWeight": "800",
+              "letterSpacing": -0.8
+            },
+            {
+              "type": "text",
+              "id": "EjCTg",
+              "name": "Body",
+              "fill": "$muted",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "SpotDonalds is in Spotify's development mode, so only a short list of accounts can sign in. Finishing consent still brings you here when the account isn't on that list.",
+              "lineHeight": 1.45,
+              "fontFamily": "$font-display",
+              "fontSize": 16,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "llK6u",
+              "name": "Ask",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Ask the project owner to add your Spotify email, then try again.",
+              "lineHeight": 1.4,
+              "fontFamily": "$font-display",
+              "fontSize": 16,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "lIx4O",
+              "name": "Back",
+              "fill": "$charcoal",
+              "cornerRadius": 8,
+              "padding": [
+                12,
+                16
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "zXff4",
+                  "name": "Back label",
+                  "fill": "$yellow",
+                  "content": "Back to the start",
+                  "fontFamily": "$font-display",
+                  "fontSize": 14,
+                  "fontWeight": "800"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Roglh",
+      "x": 0,
+      "y": 856,
+      "name": "Analysing",
+      "clip": true,
+      "width": 1280,
+      "fill": "$paper",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "bBKu6",
+          "name": "Header",
+          "width": "fill_container",
+          "height": 64,
+          "fill": "$charcoal",
+          "padding": [
+            0,
+            28
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "C5jcv",
+              "name": "Brand",
+              "gap": 10,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "uj3cb",
+                  "name": "Name",
+                  "fill": "$yellow",
+                  "content": "SpotDonalds",
+                  "fontFamily": "$font-display",
+                  "fontSize": 16,
+                  "fontWeight": "800"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "BxBNS",
+          "name": "Body",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 28,
+          "padding": [
+            36,
+            40,
+            40,
+            40
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "cMGF4",
+              "name": "Intro",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "X5krr",
+                  "name": "Heading",
+                  "fill": "$ink",
+                  "content": "Analysing your listening history",
+                  "fontFamily": "$font-display",
+                  "fontSize": 40,
+                  "fontWeight": "800",
+                  "letterSpacing": -1
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "xpiWj",
+              "name": "Steps",
+              "width": "fill_container",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "nS4Am",
+                  "name": "Reading plays",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 2,
+                      "id": "ZWB8O",
+                      "name": "Bar",
+                      "fill": "$charcoal",
+                      "width": "fill_container",
+                      "height": 4
+                    },
+                    {
+                      "type": "text",
+                      "id": "k2JPaZ",
+                      "name": "Label",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Reading your history",
+                      "fontFamily": "$font-display",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "G3deGM",
+                  "name": "Looking up tags",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 2,
+                      "id": "OLIIM",
+                      "name": "Bar",
+                      "fill": "$red",
+                      "width": "fill_container",
+                      "height": 4
+                    },
+                    {
+                      "type": "text",
+                      "id": "OqhVK",
+                      "name": "Label",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Analysing your taste",
+                      "fontFamily": "$font-display",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "LZe1m",
+                  "name": "Assembling order",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 8,
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "cornerRadius": 2,
+                      "id": "B8ykje",
+                      "name": "Bar",
+                      "fill": "$line",
+                      "width": "fill_container",
+                      "height": 4
+                    },
+                    {
+                      "type": "text",
+                      "id": "FKPk9",
+                      "name": "Label",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Assembling your order",
+                      "fontFamily": "$font-display",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "zTjM5",
+              "name": "Progress",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "B8nYc",
+                  "name": "Counts",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "mQ5t7",
+                      "name": "Counts label",
+                      "fill": "$ink",
+                      "content": "18 tracks",
+                      "fontFamily": "$font-display",
+                      "fontSize": 14,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "FwOfe",
+                  "name": "Track",
+                  "clip": true,
+                  "width": "fill_container",
+                  "height": 8,
+                  "fill": "$line",
+                  "cornerRadius": 4,
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "id": "a8gye",
+                      "name": "Fill",
+                      "fill": "$red",
+                      "width": 760,
+                      "height": 8
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "LJtkH",
+              "name": "Tabs",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "l50QO",
+                  "name": "Recent plays",
+                  "fill": "$charcoal",
+                  "cornerRadius": 999,
+                  "padding": [
+                    8,
+                    12
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "dqpK3",
+                      "name": "Label",
+                      "fill": "$yellow",
+                      "content": "Recent plays",
+                      "fontFamily": "$font-display",
+                      "fontSize": 13,
+                      "fontWeight": "800"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "T3bf9",
+                  "name": "Top tracks",
+                  "fill": "#00000000",
+                  "cornerRadius": 999,
+                  "padding": [
+                    8,
+                    12
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Halyg",
+                      "name": "Label",
+                      "fill": "$muted",
+                      "content": "Top tracks",
+                      "fontFamily": "$font-display",
+                      "fontSize": 13,
+                      "fontWeight": "800"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "RVyiO",
+                  "name": "Top artists",
+                  "fill": "#00000000",
+                  "cornerRadius": 999,
+                  "padding": [
+                    8,
+                    12
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "D8NQAF",
+                      "name": "Label",
+                      "fill": "$muted",
+                      "content": "Top artists",
+                      "fontFamily": "$font-display",
+                      "fontSize": 13,
+                      "fontWeight": "800"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "WU4kw",
+              "name": "Track list",
+              "width": "fill_container",
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "GTYrT",
+                  "name": "HUMBLE.",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "cBeSq",
+                      "name": "Identity",
+                      "gap": 14,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "QH98J",
+                          "name": "Art",
+                          "width": 44,
+                          "height": 44,
+                          "fill": "#C45C26",
+                          "cornerRadius": 4,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "CaYpG",
+                              "name": "Letter",
+                              "fill": "#FFFFFF",
+                              "content": "H",
+                              "fontFamily": "$font-display",
+                              "fontSize": 16,
+                              "fontWeight": "800"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "DPA52",
+                          "name": "Meta",
+                          "width": 340,
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "o5HCcI",
+                              "name": "Title",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "HUMBLE.",
+                              "fontFamily": "$font-display",
+                              "fontSize": 15,
+                              "fontWeight": "800"
+                            },
+                            {
+                              "type": "text",
+                              "id": "oL0Km",
+                              "name": "Artist",
+                              "fill": "$muted",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Kendrick Lamar",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ryp0Y",
+                      "name": "Status",
+                      "gap": 18,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Xk2G1",
+                          "name": "Album",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": 150,
+                          "content": "DAMN.",
+                          "fontFamily": "$font-display",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "e7bc6",
+                          "name": "Source",
+                          "fill": "$ink",
+                          "content": "Recent play",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 12,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "EpkmR",
+                  "name": "Blinding Lights",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "FonHi",
+                      "name": "Identity",
+                      "gap": 14,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "fkbTF",
+                          "name": "Art",
+                          "width": 44,
+                          "height": 44,
+                          "fill": "#2A241C",
+                          "cornerRadius": 4,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "JnFA6",
+                              "name": "Letter",
+                              "fill": "#FFFFFF",
+                              "content": "B",
+                              "fontFamily": "$font-display",
+                              "fontSize": 16,
+                              "fontWeight": "800"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "eIs6b",
+                          "name": "Meta",
+                          "width": 340,
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "BV80a",
+                              "name": "Title",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Blinding Lights",
+                              "fontFamily": "$font-display",
+                              "fontSize": 15,
+                              "fontWeight": "800"
+                            },
+                            {
+                              "type": "text",
+                              "id": "Cr3kk",
+                              "name": "Artist",
+                              "fill": "$muted",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "The Weeknd",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "H8ezp3",
+                      "name": "Status",
+                      "gap": 18,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "os9Of",
+                          "name": "Album",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": 150,
+                          "content": "After Hours",
+                          "fontFamily": "$font-display",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "u9N3e",
+                          "name": "Source",
+                          "fill": "$ink",
+                          "content": "Top · 4 weeks",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 12,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "aG8Py",
+                  "name": "Rumble",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "xiSZp",
+                      "name": "Identity",
+                      "gap": 14,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "qHkB6",
+                          "name": "Art",
+                          "width": 44,
+                          "height": 44,
+                          "fill": "#2F5D50",
+                          "cornerRadius": 4,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "waeNt",
+                              "name": "Letter",
+                              "fill": "#FFFFFF",
+                              "content": "R",
+                              "fontFamily": "$font-display",
+                              "fontSize": 16,
+                              "fontWeight": "800"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "UcTEE",
+                          "name": "Meta",
+                          "width": 340,
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "jR064",
+                              "name": "Title",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Rumble",
+                              "fontFamily": "$font-display",
+                              "fontSize": 15,
+                              "fontWeight": "800"
+                            },
+                            {
+                              "type": "text",
+                              "id": "obyJn",
+                              "name": "Artist",
+                              "fill": "$muted",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Fred again..",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "J6aUD",
+                      "name": "Status",
+                      "gap": 18,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "TEkJT",
+                          "name": "Album",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": 150,
+                          "content": "USB",
+                          "fontFamily": "$font-display",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "PRWBb",
+                          "name": "Source",
+                          "fill": "$ink",
+                          "content": "Top · 6 months",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 12,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "VQ4EF",
+                  "name": "SICKO MODE",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "gYGTz",
+                      "name": "Identity",
+                      "gap": 14,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "kuxGN",
+                          "name": "Art",
+                          "width": 44,
+                          "height": 44,
+                          "fill": "#D63D78",
+                          "cornerRadius": 4,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "WenWz",
+                              "name": "Letter",
+                              "fill": "#FFFFFF",
+                              "content": "S",
+                              "fontFamily": "$font-display",
+                              "fontSize": 16,
+                              "fontWeight": "800"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "zPtvy",
+                          "name": "Meta",
+                          "width": 340,
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "LLA77",
+                              "name": "Title",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "SICKO MODE",
+                              "fontFamily": "$font-display",
+                              "fontSize": 15,
+                              "fontWeight": "800"
+                            },
+                            {
+                              "type": "text",
+                              "id": "Fhyjg",
+                              "name": "Artist",
+                              "fill": "$muted",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Travis Scott",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "lru1B",
+                      "name": "Status",
+                      "gap": 18,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Mlx3D",
+                          "name": "Album",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": 150,
+                          "content": "ASTROWORLD",
+                          "fontFamily": "$font-display",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "hnSj2",
+                          "name": "Source",
+                          "fill": "$ink",
+                          "content": "Top · 4 weeks",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 12,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "DVicn",
+                  "name": "Cigarettes out the Window",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "bottom": 1
+                  },
+                  "padding": [
+                    12,
+                    0
+                  ],
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "XKEyd",
+                      "name": "Identity",
+                      "gap": 14,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "YredA",
+                          "name": "Art",
+                          "width": 44,
+                          "height": 44,
+                          "fill": "#3C4C86",
+                          "cornerRadius": 4,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "aQuSE",
+                              "name": "Letter",
+                              "fill": "#FFFFFF",
+                              "content": "C",
+                              "fontFamily": "$font-display",
+                              "fontSize": 16,
+                              "fontWeight": "800"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "XMB4H",
+                          "name": "Meta",
+                          "width": 340,
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "VS6Jc",
+                              "name": "Title",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Cigarettes out the Window",
+                              "fontFamily": "$font-display",
+                              "fontSize": 15,
+                              "fontWeight": "800"
+                            },
+                            {
+                              "type": "text",
+                              "id": "IKuku",
+                              "name": "Artist",
+                              "fill": "$muted",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "TV Girl",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "sZhWh",
+                      "name": "Status",
+                      "gap": 18,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "vccRV",
+                          "name": "Album",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": 150,
+                          "content": "Who Really Cares",
+                          "fontFamily": "$font-display",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "EBf0I",
+                          "name": "Source",
+                          "fill": "$ink",
+                          "content": "Recent play",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 12,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "jf590",
+              "name": "Attribution",
+              "fill": "$muted",
+              "content": "Data provided by Spotify, MusicBrainz, and Deezer.",
+              "fontFamily": "$font-display",
+              "fontSize": 12,
+              "fontWeight": "600"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "lkKOi",
+      "x": 1376,
+      "y": 856,
+      "name": "Results",
+      "clip": true,
+      "width": 1440,
+      "fill": "$paper",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "uWWh3",
+          "name": "Header",
+          "width": "fill_container",
+          "height": 64,
+          "fill": "$charcoal",
+          "padding": [
+            0,
+            28
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "O7rs5S",
+              "name": "Brand",
+              "gap": 10,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "gc4KE",
+                  "name": "Name",
+                  "fill": "$yellow",
+                  "content": "SpotDonalds",
+                  "fontFamily": "$font-display",
+                  "fontSize": 16,
+                  "fontWeight": "800"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "BEZ2H",
+          "name": "Body",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 40,
+          "padding": [
+            36,
+            40,
+            48,
+            40
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "ViEdi",
+              "name": "Back",
+              "gap": 4,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "N8p2Us",
+                  "name": "Chevron",
+                  "width": 18,
+                  "height": 18,
+                  "icon": "chevron-left",
+                  "library": "lucide",
+                  "fill": "$charcoal"
+                },
+                {
+                  "type": "text",
+                  "id": "HX8iI",
+                  "name": "Label",
+                  "fill": "$charcoal",
+                  "content": "Back",
+                  "fontFamily": "$font-display",
+                  "fontSize": 14,
+                  "fontWeight": "800"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "XxB8v",
+              "name": "Hero",
+              "width": "fill_container",
+              "gap": 40,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "YHtoK",
+                  "name": "Receipt",
+                  "clip": true,
+                  "width": 600,
+                  "fill": "$cream",
+                  "stroke": "$charcoal",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "h9asv",
+                      "name": "Receipt head",
+                      "width": "fill_container",
+                      "fill": "$red",
+                      "layout": "vertical",
+                      "gap": 6,
+                      "padding": [
+                        18,
+                        22
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "jqSs1",
+                          "name": "Band row",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "tEZmv",
+                              "name": "Band brand",
+                              "gap": 8,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "KcitS",
+                                  "name": "Word",
+                                  "fill": "$yellow",
+                                  "content": "SPOTDONALDS",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 16,
+                                  "fontWeight": "900",
+                                  "letterSpacing": 1.2
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "pS32s",
+                              "name": "Lane",
+                              "fill": "$white",
+                              "content": "DRIVE-THRU",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 11,
+                              "fontWeight": "500",
+                              "letterSpacing": 1.1
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "PcZ3b",
+                          "name": "Meta",
+                          "fill": "#FFFFFFE0",
+                          "content": "Order 1842  ·  13 Nov 2026  ·  one person",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 12,
+                          "fontWeight": "500"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "MVV9C",
+                      "name": "Slip",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 16,
+                      "padding": [
+                        18,
+                        22,
+                        8,
+                        22
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "h3UIai",
+                          "name": "Big Mac",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 6,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "b2ysw",
+                              "name": "Line",
+                              "width": "fill_container",
+                              "justifyContent": "space_between",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "WD1mZ",
+                                  "name": "Name",
+                                  "gap": 10,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "nGnQt",
+                                      "name": "Qty",
+                                      "fill": "$muted",
+                                      "content": "1",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 13,
+                                      "fontWeight": "500"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "NwAy9",
+                                      "name": "Item",
+                                      "fill": "$ink",
+                                      "content": "Big Mac",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": 18,
+                                      "fontWeight": "800"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "mv5FF",
+                                  "name": "Amount",
+                                  "layout": "vertical",
+                                  "gap": 1,
+                                  "alignItems": "end",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "swtf9",
+                                      "name": "Price",
+                                      "fill": "$ink",
+                                      "content": "$7.90",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": 16,
+                                      "fontWeight": "800"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "b2EW3m",
+                                      "name": "Kcal",
+                                      "fill": "$muted",
+                                      "content": "621 kcal",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "k9vMUI",
+                              "name": "Why",
+                              "fill": "$muted",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "A familiar main. Three artists cover most of your top tracks, so the order repeats a known category.",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "OUZte",
+                              "name": "Chips",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "kpW2H",
+                                  "name": "Repeat a category",
+                                  "fill": "#F6E7B0",
+                                  "cornerRadius": 4,
+                                  "padding": [
+                                    3,
+                                    7
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "u1fRP",
+                                      "name": "Chip label",
+                                      "fill": "$charcoal",
+                                      "content": "Familiar",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "WWPaa",
+                                  "name": "Artist concentration 62%",
+                                  "fill": "#F6E7B0",
+                                  "cornerRadius": 4,
+                                  "padding": [
+                                    3,
+                                    7
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "eRFQl",
+                                      "name": "Chip label",
+                                      "fill": "$charcoal",
+                                      "content": "Classic",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Xi2Hf",
+                          "name": "Fries (Medium)",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 6,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "XlYQp",
+                              "name": "Line",
+                              "width": "fill_container",
+                              "justifyContent": "space_between",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "vgbBC",
+                                  "name": "Name",
+                                  "gap": 10,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "i04hc",
+                                      "name": "Qty",
+                                      "fill": "$muted",
+                                      "content": "1",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 13,
+                                      "fontWeight": "500"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "vcSM8",
+                                      "name": "Item",
+                                      "fill": "$ink",
+                                      "content": "Fries (Medium)",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": 18,
+                                      "fontWeight": "800"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ifvZ3",
+                                  "name": "Amount",
+                                  "layout": "vertical",
+                                  "gap": 1,
+                                  "alignItems": "end",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "ejpys",
+                                      "name": "Price",
+                                      "fill": "$ink",
+                                      "content": "$5.45",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": 16,
+                                      "fontWeight": "800"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "OMUIl",
+                                      "name": "Kcal",
+                                      "fill": "$muted",
+                                      "content": "316 kcal",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "ryskm",
+                              "name": "Why",
+                              "fill": "$muted",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "The side that belongs with a comfort main. The tag mix is narrow, mostly hip hop.",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "C7G0oC",
+                              "name": "Chips",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "viMyo",
+                                  "name": "Comfort pick",
+                                  "fill": "#F6E7B0",
+                                  "cornerRadius": 4,
+                                  "padding": [
+                                    3,
+                                    7
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "m9ZR7G",
+                                      "name": "Chip label",
+                                      "fill": "$charcoal",
+                                      "content": "Comfort",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "U6wfw",
+                                  "name": "Hip hop 48%",
+                                  "fill": "#F6E7B0",
+                                  "cornerRadius": 4,
+                                  "padding": [
+                                    3,
+                                    7
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "VLDbr",
+                                      "name": "Chip label",
+                                      "fill": "$charcoal",
+                                      "content": "Side",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "hYy8v",
+                          "name": "Coca-Cola (Medium)",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 6,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "H19AJb",
+                              "name": "Line",
+                              "width": "fill_container",
+                              "justifyContent": "space_between",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "ag09n",
+                                  "name": "Name",
+                                  "gap": 10,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "Bf3sH",
+                                      "name": "Qty",
+                                      "fill": "$muted",
+                                      "content": "1",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 13,
+                                      "fontWeight": "500"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "HJchw",
+                                      "name": "Item",
+                                      "fill": "$ink",
+                                      "content": "Coca-Cola (Medium)",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": 18,
+                                      "fontWeight": "800"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "m20pC",
+                                  "name": "Amount",
+                                  "layout": "vertical",
+                                  "gap": 1,
+                                  "alignItems": "end",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "LbmhV",
+                                      "name": "Price",
+                                      "fill": "$ink",
+                                      "content": "$4.55",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": 16,
+                                      "fontWeight": "800"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "qbZAY",
+                                      "name": "Kcal",
+                                      "fill": "$muted",
+                                      "content": "136 kcal",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "entBG",
+                              "name": "Why",
+                              "fill": "$muted",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "One cold drink. The rules allow a single drink with the meal.",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "cfLqe",
+                              "name": "Chips",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "W1ZTMo",
+                                  "name": "One drink",
+                                  "fill": "#F6E7B0",
+                                  "cornerRadius": 4,
+                                  "padding": [
+                                    3,
+                                    7
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "IIIsn",
+                                      "name": "Chip label",
+                                      "fill": "$charcoal",
+                                      "content": "One drink",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "uVLKF",
+                          "name": "Oreo Cookies McFlurry",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 6,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "zvREV",
+                              "name": "Line",
+                              "width": "fill_container",
+                              "justifyContent": "space_between",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "AiB9J",
+                                  "name": "Name",
+                                  "gap": 10,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "dNbQf",
+                                      "name": "Qty",
+                                      "fill": "$muted",
+                                      "content": "1",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 13,
+                                      "fontWeight": "500"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "b5nMJR",
+                                      "name": "Item",
+                                      "fill": "$ink",
+                                      "content": "Oreo Cookies McFlurry",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": 18,
+                                      "fontWeight": "800"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "efUtC",
+                                  "name": "Amount",
+                                  "layout": "vertical",
+                                  "gap": 1,
+                                  "alignItems": "end",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "oRhef",
+                                      "name": "Price",
+                                      "fill": "$ink",
+                                      "content": "$4.50",
+                                      "fontFamily": "$font-display",
+                                      "fontSize": 16,
+                                      "fontWeight": "800"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "uLzlt",
+                                      "name": "Kcal",
+                                      "fill": "$muted",
+                                      "content": "312 kcal",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 12,
+                                      "fontWeight": "600"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "fqyU6",
+                              "name": "Why",
+                              "fill": "$muted",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Tempo runs hot, and the budget still had room after the main.",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "wKLOG",
+                              "name": "Chips",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "CRvmY",
+                                  "name": "Higher BPM",
+                                  "fill": "#F6E7B0",
+                                  "cornerRadius": 4,
+                                  "padding": [
+                                    3,
+                                    7
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "i6kc82",
+                                      "name": "Chip label",
+                                      "fill": "$charcoal",
+                                      "content": "High energy",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "cem2l",
+                                  "name": "bpm.mean 128",
+                                  "fill": "#F6E7B0",
+                                  "cornerRadius": 4,
+                                  "padding": [
+                                    3,
+                                    7
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "CBPnM",
+                                      "name": "Chip label",
+                                      "fill": "$charcoal",
+                                      "content": "Sweet",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "y1qMc",
+                      "name": "Totals",
+                      "width": "fill_container",
+                      "stroke": "$line",
+                      "strokeWidth": {
+                        "top": 1
+                      },
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": [
+                        16,
+                        22,
+                        18,
+                        22
+                      ],
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "xvaDj",
+                          "name": "Sum",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "WGRG6",
+                              "name": "Total label",
+                              "fill": "$ink",
+                              "content": "Total",
+                              "fontFamily": "$font-display",
+                              "fontSize": 16,
+                              "fontWeight": "800"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "ubXGa",
+                              "name": "Total amounts",
+                              "layout": "vertical",
+                              "gap": 2,
+                              "alignItems": "end",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "KKFZQ",
+                                  "name": "Total price",
+                                  "fill": "$ink",
+                                  "content": "$22.40",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 22,
+                                  "fontWeight": "800"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "m48Fa",
+                                  "name": "Total kcal",
+                                  "fill": "$muted",
+                                  "content": "1,385 kcal",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 12,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "zooV9",
+                          "name": "Budget",
+                          "fill": "$muted",
+                          "content": "Budget 1,200–1,450 kcal",
+                          "fontFamily": "$font-mono",
+                          "fontSize": 12,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "sgjSE",
+                          "name": "Budget bar",
+                          "clip": true,
+                          "width": "fill_container",
+                          "height": 8,
+                          "fill": "$line",
+                          "cornerRadius": 4,
+                          "children": [
+                            {
+                              "type": "rectangle",
+                              "id": "usJtI",
+                              "name": "Budget fill",
+                              "fill": "$red",
+                              "width": 410,
+                              "height": 8
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "fdVY3",
+                          "name": "Budget why",
+                          "fill": "$ink",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Higher average BPM, so a bigger budget.",
+                          "fontFamily": "$font-display",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Nebxv",
+                      "name": "Receipt foot",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "padding": [
+                        0,
+                        22,
+                        18,
+                        22
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "JCFlJ",
+                          "name": "Source",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Menu retrieved 12 Nov 2026 from McDonald's Australia public product pages.",
+                          "lineHeight": 1.4,
+                          "fontFamily": "$font-display",
+                          "fontSize": 11,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "o0R2a",
+                          "name": "Disclaimer",
+                          "fill": "$muted",
+                          "content": "Not affiliated with McDonald's or Spotify.",
+                          "fontFamily": "$font-display",
+                          "fontSize": 11,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "bxl9G",
+                  "name": "How we decided",
+                  "width": "fill_container",
+                  "fill": "$cream",
+                  "cornerRadius": 12,
+                  "stroke": "$charcoal",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 18,
+                  "padding": 28,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "EodqA",
+                      "name": "Lead",
+                      "fill": "$muted",
+                      "content": "We think you're a",
+                      "fontFamily": "$font-display",
+                      "fontSize": 14,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ZcQ97",
+                      "name": "Persona",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Night-Shift Repeater",
+                      "lineHeight": 1.05,
+                      "fontFamily": "$font-display",
+                      "fontSize": 40,
+                      "fontWeight": "800",
+                      "letterSpacing": -1.1
+                    },
+                    {
+                      "type": "text",
+                      "id": "ZC2DS",
+                      "name": "Tagline",
+                      "fill": "$muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Fast, familiar, and a little loud.",
+                      "fontFamily": "$font-display",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "aSWjn",
+                      "name": "Eyebrow",
+                      "fill": "$red",
+                      "content": "HOW WE DECIDED YOUR ORDER",
+                      "fontFamily": "$font-mono",
+                      "fontSize": 12,
+                      "fontWeight": "500",
+                      "letterSpacing": 1.1
+                    },
+                    {
+                      "type": "text",
+                      "id": "FIgrn",
+                      "name": "Explanation",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Average tempo is 128 BPM, so the calorie budget opened from the baseline to 1,200–1,450 kcal. The tag mix is narrow — hip hop is 48% — which pointed the meal at comfort rather than a tour of the menu. Three artists account for 62% of your top tracks, so the main is a classic you already live with.",
+                      "lineHeight": 1.45,
+                      "fontFamily": "$font-display",
+                      "fontSize": 16,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "t4xCtP",
+                      "name": "Regenerate",
+                      "width": "fill_container",
+                      "fill": "$charcoal",
+                      "cornerRadius": 8,
+                      "padding": [
+                        14,
+                        18
+                      ],
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "q1HVRF",
+                          "name": "Label",
+                          "fill": "$yellow",
+                          "content": "Regenerate order",
+                          "fontFamily": "$font-display",
+                          "fontSize": 16,
+                          "fontWeight": "800"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Z1mXnF",
+              "name": "Taste profile",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 18,
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "a8hBF",
+                  "name": "Rule",
+                  "fill": "$line",
+                  "width": "fill_container",
+                  "height": 1
+                },
+                {
+                  "type": "frame",
+                  "id": "ITcCy",
+                  "name": "Profile columns",
+                  "width": "fill_container",
+                  "gap": 48,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ERdwx",
+                      "name": "Insights",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "n6LsX",
+                          "name": "Insight",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "F679iq",
+                              "name": "Line",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "You stay with a few artists instead of grazing the library.",
+                              "lineHeight": 1.35,
+                              "fontFamily": "$font-display",
+                              "fontSize": 16,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "EVfJp",
+                              "name": "Chips",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "punTX",
+                                  "name": "Artist concentration 62%",
+                                  "fill": "#F6E7B0",
+                                  "cornerRadius": 4,
+                                  "padding": [
+                                    3,
+                                    7
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "S83nB",
+                                      "name": "Chip label",
+                                      "fill": "$charcoal",
+                                      "content": "Artist concentration 62%",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "qCm1H",
+                                  "name": "Top tracks · 50",
+                                  "fill": "#F6E7B0",
+                                  "cornerRadius": 4,
+                                  "padding": [
+                                    3,
+                                    7
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "SloT1",
+                                      "name": "Chip label",
+                                      "fill": "$charcoal",
+                                      "content": "Top tracks · 50",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "OcBgd",
+                          "name": "Insight",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "lWqWP",
+                              "name": "Line",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "The tag mix is tight. Hip hop is nearly half of it.",
+                              "lineHeight": 1.35,
+                              "fontFamily": "$font-display",
+                              "fontSize": 16,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "wUBxj",
+                              "name": "Chips",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "aulrt",
+                                  "name": "Hip hop 48%",
+                                  "fill": "#F6E7B0",
+                                  "cornerRadius": 4,
+                                  "padding": [
+                                    3,
+                                    7
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "tRWPz",
+                                      "name": "Chip label",
+                                      "fill": "$charcoal",
+                                      "content": "Hip hop 48%",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "fKJor",
+                                  "name": "Diversity 0.41",
+                                  "fill": "#F6E7B0",
+                                  "cornerRadius": 4,
+                                  "padding": [
+                                    3,
+                                    7
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "OMw05",
+                                      "name": "Chip label",
+                                      "fill": "$charcoal",
+                                      "content": "Diversity 0.41",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "eMjQs",
+                          "name": "Insight",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "NXVDd",
+                              "name": "Line",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Your tempo runs hot.",
+                              "lineHeight": 1.35,
+                              "fontFamily": "$font-display",
+                              "fontSize": 16,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "Slc42",
+                              "name": "Chips",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "Kvv0N",
+                                  "name": "bpm.mean 128",
+                                  "fill": "#F6E7B0",
+                                  "cornerRadius": 4,
+                                  "padding": [
+                                    3,
+                                    7
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "OgRX5",
+                                      "name": "Chip label",
+                                      "fill": "$charcoal",
+                                      "content": "bpm.mean 128",
+                                      "fontFamily": "$font-mono",
+                                      "fontSize": 11,
+                                      "fontWeight": "500"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "C8YYIX",
+                      "name": "Traits",
+                      "width": 400,
+                      "layout": "vertical",
+                      "gap": 14,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "UeItb",
+                          "name": "Energy",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "GpzjR",
+                              "name": "Label row",
+                              "width": "fill_container",
+                              "justifyContent": "space_between",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "s7nKo",
+                                  "name": "Trait",
+                                  "fill": "$ink",
+                                  "content": "Energy",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "800"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "DNJNP",
+                                  "name": "Score",
+                                  "fill": "$ink",
+                                  "content": "84",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "NAsb5",
+                              "name": "Bar track",
+                              "clip": true,
+                              "width": "fill_container",
+                              "height": 6,
+                              "fill": "$line",
+                              "cornerRadius": 3,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "id": "W3SIHG",
+                                  "name": "Bar fill",
+                                  "fill": "$red",
+                                  "width": 336,
+                                  "height": 6
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "Ftbvx",
+                              "name": "Cite",
+                              "fill": "$muted",
+                              "content": "bpm.mean",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "luMGS",
+                          "name": "Loyalty",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "f1s4M",
+                              "name": "Label row",
+                              "width": "fill_container",
+                              "justifyContent": "space_between",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "B3dotx",
+                                  "name": "Trait",
+                                  "fill": "$ink",
+                                  "content": "Loyalty",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "800"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "KDT7N",
+                                  "name": "Score",
+                                  "fill": "$ink",
+                                  "content": "78",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "VBztu",
+                              "name": "Bar track",
+                              "clip": true,
+                              "width": "fill_container",
+                              "height": 6,
+                              "fill": "$line",
+                              "cornerRadius": 3,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "id": "zTLU5",
+                                  "name": "Bar fill",
+                                  "fill": "$red",
+                                  "width": 312,
+                                  "height": 6
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "QqYuM",
+                              "name": "Cite",
+                              "fill": "$muted",
+                              "content": "artist concentration",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "dTyyh",
+                          "name": "Variety",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "mMkkN",
+                              "name": "Label row",
+                              "width": "fill_container",
+                              "justifyContent": "space_between",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "rifac",
+                                  "name": "Trait",
+                                  "fill": "$ink",
+                                  "content": "Variety",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "800"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "odzB3",
+                                  "name": "Score",
+                                  "fill": "$ink",
+                                  "content": "34",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "wekjt",
+                              "name": "Bar track",
+                              "clip": true,
+                              "width": "fill_container",
+                              "height": 6,
+                              "fill": "$line",
+                              "cornerRadius": 3,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "id": "xCp4t",
+                                  "name": "Bar fill",
+                                  "fill": "$charcoal",
+                                  "width": 136,
+                                  "height": 6
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "PzL8w",
+                              "name": "Cite",
+                              "fill": "$muted",
+                              "content": "genre diversity",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "G1fZ4j",
+                          "name": "Nostalgia",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "Sk6RI",
+                              "name": "Label row",
+                              "width": "fill_container",
+                              "justifyContent": "space_between",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "Cjo6R",
+                                  "name": "Trait",
+                                  "fill": "$ink",
+                                  "content": "Nostalgia",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "800"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "X26MjN",
+                                  "name": "Score",
+                                  "fill": "$ink",
+                                  "content": "22",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "UC5EB",
+                              "name": "Bar track",
+                              "clip": true,
+                              "width": "fill_container",
+                              "height": 6,
+                              "fill": "$line",
+                              "cornerRadius": 3,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "id": "UMsUX",
+                                  "name": "Bar fill",
+                                  "fill": "$charcoal",
+                                  "width": 88,
+                                  "height": 6
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "TvRsQ",
+                              "name": "Cite",
+                              "fill": "$muted",
+                              "content": "release recency",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 11,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "tx5ie",
+              "name": "Aggregates",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 18,
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "J7FVw",
+                  "name": "Rule",
+                  "fill": "$line",
+                  "width": "fill_container",
+                  "height": 1
+                },
+                {
+                  "type": "text",
+                  "id": "TIPUZ",
+                  "name": "Eyebrow",
+                  "fill": "$red",
+                  "content": "WHAT IT ADDS UP TO",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 12,
+                  "fontWeight": "500",
+                  "letterSpacing": 1.1
+                },
+                {
+                  "type": "frame",
+                  "id": "WYpAS",
+                  "name": "Stats row",
+                  "width": "fill_container",
+                  "gap": 36,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "zRFUW",
+                      "name": "Genre mix",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "k8qxc",
+                          "name": "Title",
+                          "fill": "$ink",
+                          "content": "Tags",
+                          "fontFamily": "$font-display",
+                          "fontSize": 16,
+                          "fontWeight": "800"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "QyVzl",
+                          "name": "Hip hop",
+                          "width": "fill_container",
+                          "gap": 10,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "Q909pR",
+                              "name": "Label",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": 88,
+                              "content": "Hip hop",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "p62aNH",
+                              "name": "Track",
+                              "clip": true,
+                              "width": 280,
+                              "height": 8,
+                              "fill": "$line",
+                              "cornerRadius": 4,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "id": "Clvto",
+                                  "name": "Fill",
+                                  "fill": "$red",
+                                  "width": 134,
+                                  "height": 8
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "t6T8P",
+                              "name": "Share",
+                              "fill": "$muted",
+                              "content": "48%",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 12,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "t0dZJ5",
+                          "name": "Electronic",
+                          "width": "fill_container",
+                          "gap": 10,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "nd4F7",
+                              "name": "Label",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": 88,
+                              "content": "Electronic",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "vgwBd",
+                              "name": "Track",
+                              "clip": true,
+                              "width": 280,
+                              "height": 8,
+                              "fill": "$line",
+                              "cornerRadius": 4,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "id": "SykUs",
+                                  "name": "Fill",
+                                  "fill": "$charcoal",
+                                  "width": 62,
+                                  "height": 8
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "gL6A9",
+                              "name": "Share",
+                              "fill": "$muted",
+                              "content": "22%",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 12,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "wbSMi",
+                          "name": "Pop",
+                          "width": "fill_container",
+                          "gap": 10,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "QEnYQ",
+                              "name": "Label",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": 88,
+                              "content": "Pop",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "CBNP8",
+                              "name": "Track",
+                              "clip": true,
+                              "width": 280,
+                              "height": 8,
+                              "fill": "$line",
+                              "cornerRadius": 4,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "id": "MNRxB",
+                                  "name": "Fill",
+                                  "fill": "$charcoal",
+                                  "width": 39,
+                                  "height": 8
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "c89yV",
+                              "name": "Share",
+                              "fill": "$muted",
+                              "content": "14%",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 12,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "J7iH5",
+                          "name": "R&B",
+                          "width": "fill_container",
+                          "gap": 10,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "GThn2",
+                              "name": "Label",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": 88,
+                              "content": "R&B",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "lIKEe",
+                              "name": "Track",
+                              "clip": true,
+                              "width": 280,
+                              "height": 8,
+                              "fill": "$line",
+                              "cornerRadius": 4,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "id": "Il3CU",
+                                  "name": "Fill",
+                                  "fill": "$charcoal",
+                                  "width": 25,
+                                  "height": 8
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "xeJ9d",
+                              "name": "Share",
+                              "fill": "$muted",
+                              "content": "9%",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 12,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "tc72q",
+                          "name": "Other",
+                          "width": "fill_container",
+                          "gap": 10,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "LTxuK",
+                              "name": "Label",
+                              "fill": "$ink",
+                              "textGrowth": "fixed-width",
+                              "width": 88,
+                              "content": "Other",
+                              "fontFamily": "$font-display",
+                              "fontSize": 13,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "U9UI9a",
+                              "name": "Track",
+                              "clip": true,
+                              "width": 280,
+                              "height": 8,
+                              "fill": "$line",
+                              "cornerRadius": 4,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "id": "B7INd",
+                                  "name": "Fill",
+                                  "fill": "$charcoal",
+                                  "width": 20,
+                                  "height": 8
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "GyLu0",
+                              "name": "Share",
+                              "fill": "$muted",
+                              "content": "7%",
+                              "fontFamily": "$font-mono",
+                              "fontSize": 12,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "r2GqmQ",
+                      "name": "BPM",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "uOHmJ",
+                          "name": "Title",
+                          "fill": "$ink",
+                          "content": "Tempo",
+                          "fontFamily": "$font-display",
+                          "fontSize": 16,
+                          "fontWeight": "800"
+                        },
+                        {
+                          "type": "text",
+                          "id": "qoHHg",
+                          "name": "Note",
+                          "fill": "$muted",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Mean 128 · median 126",
+                          "fontFamily": "$font-display",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "X23yVL",
+                          "name": "Histogram",
+                          "gap": 10,
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "GUSs0",
+                              "name": "90",
+                              "width": 28,
+                              "layout": "vertical",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": [
+                                    3,
+                                    3,
+                                    0,
+                                    0
+                                  ],
+                                  "id": "gP2q7",
+                                  "name": "Bin",
+                                  "fill": "$charcoal",
+                                  "width": 28,
+                                  "height": 28
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "BXc5u",
+                                  "name": "Bin label",
+                                  "fill": "$muted",
+                                  "content": "90",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "Sr05X",
+                              "name": "100",
+                              "width": 28,
+                              "layout": "vertical",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": [
+                                    3,
+                                    3,
+                                    0,
+                                    0
+                                  ],
+                                  "id": "hdzc3",
+                                  "name": "Bin",
+                                  "fill": "$charcoal",
+                                  "width": 28,
+                                  "height": 44
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "O47zj",
+                                  "name": "Bin label",
+                                  "fill": "$muted",
+                                  "content": "100",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "MviP1",
+                              "name": "110",
+                              "width": 28,
+                              "layout": "vertical",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": [
+                                    3,
+                                    3,
+                                    0,
+                                    0
+                                  ],
+                                  "id": "CmOVX",
+                                  "name": "Bin",
+                                  "fill": "$charcoal",
+                                  "width": 28,
+                                  "height": 70
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "OV4oE",
+                                  "name": "Bin label",
+                                  "fill": "$muted",
+                                  "content": "110",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "feWcG",
+                              "name": "120",
+                              "width": 28,
+                              "layout": "vertical",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": [
+                                    3,
+                                    3,
+                                    0,
+                                    0
+                                  ],
+                                  "id": "lGG25",
+                                  "name": "Bin",
+                                  "fill": "$red",
+                                  "width": 28,
+                                  "height": 108
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "R3cBO",
+                                  "name": "Bin label",
+                                  "fill": "$muted",
+                                  "content": "120",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "Vz0IL",
+                              "name": "130",
+                              "width": 28,
+                              "layout": "vertical",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": [
+                                    3,
+                                    3,
+                                    0,
+                                    0
+                                  ],
+                                  "id": "n7ILbv",
+                                  "name": "Bin",
+                                  "fill": "$red",
+                                  "width": 28,
+                                  "height": 96
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "GCeRj",
+                                  "name": "Bin label",
+                                  "fill": "$muted",
+                                  "content": "130",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "PKNPd",
+                              "name": "140",
+                              "width": 28,
+                              "layout": "vertical",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": [
+                                    3,
+                                    3,
+                                    0,
+                                    0
+                                  ],
+                                  "id": "AuLM8",
+                                  "name": "Bin",
+                                  "fill": "$charcoal",
+                                  "width": 28,
+                                  "height": 58
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "i2UtxR",
+                                  "name": "Bin label",
+                                  "fill": "$muted",
+                                  "content": "140",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "eanKD",
+                              "name": "150",
+                              "width": 28,
+                              "layout": "vertical",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": [
+                                    3,
+                                    3,
+                                    0,
+                                    0
+                                  ],
+                                  "id": "j2iBWw",
+                                  "name": "Bin",
+                                  "fill": "$charcoal",
+                                  "width": 28,
+                                  "height": 24
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "FrEBJ",
+                                  "name": "Bin label",
+                                  "fill": "$muted",
+                                  "content": "150",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 10,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "YGDq8",
+                  "name": "Stats row two",
+                  "width": "fill_container",
+                  "gap": 36,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "K2Nn9J",
+                      "name": "Top artists",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "yDRls",
+                          "name": "Title",
+                          "fill": "$ink",
+                          "content": "Top artists",
+                          "fontFamily": "$font-display",
+                          "fontSize": 16,
+                          "fontWeight": "800"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "gg16I",
+                          "name": "Windows",
+                          "width": "fill_container",
+                          "gap": 24,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "UT4zf",
+                              "name": "4 weeks",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "uofJ1",
+                                  "name": "Window",
+                                  "fill": "$muted",
+                                  "content": "4 WEEKS",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 11,
+                                  "fontWeight": "500",
+                                  "letterSpacing": 0.8
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "tjL5K",
+                                  "name": "Kendrick Lamar",
+                                  "fill": "$ink",
+                                  "content": "1  Kendrick Lamar",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "KVNGu",
+                                  "name": "Fred again..",
+                                  "fill": "$ink",
+                                  "content": "2  Fred again..",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "xhrJh",
+                                  "name": "Charli XCX",
+                                  "fill": "$ink",
+                                  "content": "3  Charli XCX",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "E0uSd",
+                              "name": "6 months",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "yCl2e",
+                                  "name": "Window",
+                                  "fill": "$muted",
+                                  "content": "6 MONTHS",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 11,
+                                  "fontWeight": "500",
+                                  "letterSpacing": 0.8
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "R4mkGk",
+                                  "name": "Kendrick Lamar",
+                                  "fill": "$ink",
+                                  "content": "1  Kendrick Lamar",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "y7RCs",
+                                  "name": "The Weeknd",
+                                  "fill": "$ink",
+                                  "content": "2  The Weeknd",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "E6rfSz",
+                                  "name": "Fred again..",
+                                  "fill": "$ink",
+                                  "content": "3  Fred again..",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "R3qqZL",
+                              "name": "All time",
+                              "width": "fill_container",
+                              "layout": "vertical",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "HUaae",
+                                  "name": "Window",
+                                  "fill": "$muted",
+                                  "content": "ALL TIME",
+                                  "fontFamily": "$font-mono",
+                                  "fontSize": 11,
+                                  "fontWeight": "500",
+                                  "letterSpacing": 0.8
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "eeJjb",
+                                  "name": "The Weeknd",
+                                  "fill": "$ink",
+                                  "content": "1  The Weeknd",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "XgOjS",
+                                  "name": "Kendrick Lamar",
+                                  "fill": "$ink",
+                                  "content": "2  Kendrick Lamar",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "LpwG3",
+                                  "name": "Beyoncé",
+                                  "fill": "$ink",
+                                  "content": "3  Beyoncé",
+                                  "fontFamily": "$font-display",
+                                  "fontSize": 14,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "red": {
+      "type": "color",
+      "value": "#DA291C"
+    },
+    "yellow": {
+      "type": "color",
+      "value": "#FFC72C"
+    },
+    "charcoal": {
+      "type": "color",
+      "value": "#292929"
+    },
+    "ink": {
+      "type": "color",
+      "value": "#1C1A17"
+    },
+    "paper": {
+      "type": "color",
+      "value": "#F3EEE4"
+    },
+    "cream": {
+      "type": "color",
+      "value": "#FFFDF8"
+    },
+    "muted": {
+      "type": "color",
+      "value": "#6E675E"
+    },
+    "line": {
+      "type": "color",
+      "value": "#E4D9C8"
+    },
+    "white": {
+      "type": "color",
+      "value": "#FFFFFF"
+    },
+    "font-display": {
+      "type": "string",
+      "value": "Nunito"
+    },
+    "font-mono": {
+      "type": "string",
+      "value": "IBM Plex Mono"
+    }
+  },
+  "fileToken": "7d20dd41-ac87-4ed8-a8ce-0f51479e75bf"
+}
