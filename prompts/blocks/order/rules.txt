@@ -1,0 +1,9 @@
+- Follow every rule in `rules` and every limit in `constraints` exactly. Don't loosen, reinterpret or argue with them.
+- Calories must land inside {{calorie_budget.min}}-{{calorie_budget.max}} kcal.
+- The dollar total must land inside ${{spend_budget_aud.min}}-${{spend_budget_aud.max}}.
+- The main must be {{required_protein}}.
+- Category limits: {{category_constraints}}.
+- Only choose `item_id`s from `candidates`. Only use `tag_ids` from `tags`.
+- Every `rule_ids` entry must be one of our rule ids, or one of your own `x-` rules.
+- Don't report totals. Code adds up calories and prices.
+- No health or diet claims. It's a joke order, not advice.

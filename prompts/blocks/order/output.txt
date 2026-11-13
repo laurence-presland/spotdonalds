@@ -1,0 +1,6 @@
+WHAT TO WRITE
+- items: for each pick, an item_id, a quantity, a one-sentence justification, its tag_ids, its rule_ids and its cites. Every justification names at least one rule and one signal.
+- invented_rules: your 0-3 `x-` rules.
+- summary: one or two playful lines about the whole order.
+- how_we_decided: 2-4 plain sentences for the person on how this order came from their listening, naming the rules and stats you used (ours and yours).
+- confidence_note: one short internal line on any tension between rules. This is never shown to the person.
