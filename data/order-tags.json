@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Closed set of tags an order line may carry. The order step picks ids from this list. It does not invent labels.",
+  "description": "The app's one closed list of tags. Menu items are assigned tags from it in code (ticket 09), and the order step picks ids from it for each line (ticket 10). Nothing invents labels.",
   "tags": [
     {
       "id": "comfort",
