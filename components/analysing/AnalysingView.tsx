@@ -53,7 +53,7 @@ export function AnalysingView({
             Reconnecting
           </p>
         ) : null}
-        {state.status === "error" ? (
+        {state.status === "error" || state.status === "dropped" ? (
           <div className="status-banner" role="alert">
             <p>{state.message ?? "The analysis stopped."}</p>
             <div className="button-row">

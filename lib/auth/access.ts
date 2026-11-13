@@ -1,6 +1,7 @@
 const PUBLIC_PAGES = new Set(["/", "/not-allowlisted"]);
 
 export type AccessDecision = "allow" | "redirect-home" | "redirect-app" | "unauthorized";
+export type AuthOutageDecision = "allow" | "unavailable-api" | "redirect-notice";
 
 export function accessDecision(pathname: string, hasUser: boolean): AccessDecision {
   if (pathname === "/api/health" || pathname.startsWith("/auth/") || pathname.startsWith("/.well-known/workflow/")) return "allow";
@@ -9,6 +10,20 @@ export function accessDecision(pathname: string, hasUser: boolean): AccessDecisi
   if (!hasUser && pathname.startsWith("/api/")) return "unauthorized";
   if (!hasUser) return "redirect-home";
   return "allow";
+}
+
+export function authOutageDecision(pathname: string): AuthOutageDecision {
+  if (
+    pathname === "/" ||
+    pathname === "/not-allowlisted" ||
+    pathname === "/api/health" ||
+    pathname.startsWith("/auth/") ||
+    pathname.startsWith("/.well-known/")
+  ) {
+    return "allow";
+  }
+  if (pathname.startsWith("/api/")) return "unavailable-api";
+  return "redirect-notice";
 }
 
 export function isAllowlistFailure(code: string, description = ""): boolean {

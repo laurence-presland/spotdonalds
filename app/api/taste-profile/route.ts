@@ -1,4 +1,4 @@
-import { getSessionUser } from "@/lib/auth/session";
+import { requireSession } from "@/lib/auth/session";
 import { generateProfile } from "@/lib/profile/model";
 import { runTasteProfile } from "@/lib/profile/run";
 import { profileStore } from "@/lib/profile/store";
@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+  const user = await requireSession();
+  if (user instanceof Response) return user;
   const force = new URL(request.url).searchParams.get("force") === "1";
   return ndjsonResponse(async (emit) => {
     let emittedError = false;

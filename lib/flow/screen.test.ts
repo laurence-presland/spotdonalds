@@ -12,6 +12,7 @@ describe("screen flow", () => {
     expect(screenForRun({ stage: "order", status: "error" }, false)).toBe("error");
     expect(screenForRun({ stage: "profile", status: "error" }, false)).toBe("error");
     expect(screenForRun({ stage: "ingest", status: "error" }, false)).toBe("error");
+    expect(screenForRun({ stage: "done", status: "complete", outcome: "insufficient_data" }, false)).toBe("insufficient");
   });
 
   it("walks a scripted stream from ingest to done", () => {

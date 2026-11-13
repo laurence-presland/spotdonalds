@@ -93,19 +93,20 @@ Migrations, in order:
 7. `20261113126000_app_role.sql` — `spotdonalds_app` grants and per-table policies
 8. `20261113127000_run_lease.sql` — one open analysis run per person, and a short lease so a second start attaches to it
 9. `20261113128000_run_job.sql` — `attempts`, `workflow_id`, and a `popularity` stage
+10. `20261113129000_run_outcome.sql` — `outcome` of `ready` or `insufficient_data`
 
 ## Architecture
 
 ```text
 Landing → Welcome → Analysing → Results
                          |
-                         GET /api/runs
+                    GET /api/runs/watch
                  ingest → enrich → profile → popularity → order → done
 ```
 
-One authenticated route, `/app`, chooses the screen from `analysis_runs`. The welcome is only for a brand-new sign-in (`/app?welcome=1` with no run yet). The state machine is [docs/adr/001-analysis-job.md](docs/adr/001-analysis-job.md).
+One authenticated route, `/app`, chooses the screen from `analysis_runs`. The welcome is only for a brand-new sign-in (`/app?welcome=1` with no run yet). The state machine is [docs/adr/001-analysis-job.md](docs/adr/001-analysis-job.md). The runner is a Vercel Queue, described in [docs/adr/002-analysis-queue.md](docs/adr/002-analysis-queue.md).
 
-`POST /api/analyse` creates a run, retries a failed one (`?retry=1`), or closes it and starts another (`?fresh=1`). A Vercel Workflow then runs each stage as its own step. The page polls `GET /api/runs` and does not POST again while the run is open. A partial unique index allows one open run per person. A run with no heartbeat for 3 minutes is marked failed, and the next page load of a running row with no live worker starts the workflow from the last finished stage. Supabase Realtime is not used.
+`POST /api/analyse` creates a run, retries a failed one (`?retry=1`), or closes it and starts another (`?fresh=1`). Each stage is a queue message. The consumer writes the checkpoint, then enqueues the next unfinished stage. While a run is open the page reads `GET /api/runs/watch`: one JSON snapshot when the run has finished, or an NDJSON stream that replays stored tracks and follows new ones until the run finishes or the function hands back a resume cursor. A finished run with fewer than 50 distinct tracks is `outcome = insufficient_data` and does not continue into the profile. A partial unique index allows one open run per person. A stale heartbeat is re-driven once from the read path, then closed if that recovery also goes quiet. Supabase Realtime is not used.
 
 Spotify tokens are stored in `spotify_tokens` at the callback, the only moment Supabase Auth exposes them, and read later over the direct Postgres connection. Catalogue tables are server-only. Each query for plays, top items, runs, a profile or an order is limited to that user's id.
 

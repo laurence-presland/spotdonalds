@@ -1,6 +1,6 @@
 import { getSpotifyAccessToken, SpotifyTokenError } from "@/lib/auth/tokens";
 import { tokenStore } from "@/lib/auth/token-store";
-import { getSessionUser } from "@/lib/auth/session";
+import { requireSession } from "@/lib/auth/session";
 import { ingestStore } from "@/lib/ingest/store";
 import { runIngest } from "@/lib/ingest/run";
 import { createSpotifyClient } from "@/lib/spotify/client";
@@ -11,8 +11,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export async function POST() {
-  const user = await getSessionUser();
-  if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+  const user = await requireSession();
+  if (user instanceof Response) return user;
 
   return ndjsonResponse(async (emit) => {
     try {

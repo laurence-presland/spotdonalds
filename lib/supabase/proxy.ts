@@ -1,7 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { accessDecision } from "@/lib/auth/access";
+import { accessDecision, authOutageDecision } from "@/lib/auth/access";
+import { AUTH_TIMEOUT_MS } from "@/lib/auth/deadline";
 import { log } from "@/lib/log";
+
+const UNAVAILABLE = "Spotify sign-in didn't respond. Try again.";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -25,15 +28,27 @@ export async function updateSession(request: NextRequest) {
           },
         },
       });
-      const { data, error } = await supabase.auth.getUser();
-      if (error) {
-        log("info", "auth.session_missing", { message: error.message });
+      const pending = supabase.auth.getUser();
+      void pending.catch(() => undefined);
+      const outcome = await Promise.race([
+        pending.then((result) => ({ timedOut: false as const, result })),
+        new Promise<{ timedOut: true }>((resolve) => setTimeout(() => resolve({ timedOut: true }), AUTH_TIMEOUT_MS)),
+      ]);
+      if (outcome.timedOut) {
+        log("error", "auth.session_failed", { message: "timeout" });
+        return outage(request, response);
       }
-      user = data.user ? { id: data.user.id } : null;
+      if (outcome.result.error && typeof outcome.result.error.status === "number" && outcome.result.error.status >= 500) {
+        log("error", "auth.session_failed", { message: outcome.result.error.message });
+        return outage(request, response);
+      }
+      if (outcome.result.error) log("info", "auth.session_missing", { message: outcome.result.error.message });
+      user = outcome.result.data.user ? { id: outcome.result.data.user.id } : null;
     } catch (error) {
       log("error", "auth.session_failed", {
         message: error instanceof Error ? error.message : "unknown",
       });
+      return outage(request, response);
     }
   }
 
@@ -48,6 +63,19 @@ export async function updateSession(request: NextRequest) {
 
   const target = decision === "redirect-app" ? "/app" : "/";
   const redirect = NextResponse.redirect(new URL(target, request.url));
+  copyCookies(response, redirect);
+  return redirect;
+}
+
+function outage(request: NextRequest, response: NextResponse) {
+  const decision = authOutageDecision(request.nextUrl.pathname);
+  if (decision === "allow") return response;
+  if (decision === "unavailable-api") {
+    const denied = NextResponse.json({ error: "unavailable", message: UNAVAILABLE }, { status: 503 });
+    copyCookies(response, denied);
+    return denied;
+  }
+  const redirect = NextResponse.redirect(new URL("/?notice=unavailable", request.url));
   copyCookies(response, redirect);
   return redirect;
 }

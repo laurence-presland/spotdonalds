@@ -337,4 +337,60 @@ describe("analysis job", () => {
     expect(failed.current.stage).toBe("order");
     expect(failed.current.open).toBe(false);
   });
+
+  it("stops after ingest when fewer than 50 distinct tracks were found", async () => {
+    const store = memory(run({
+      stage: "enrich",
+      checkpoint: checkpoint({ track_count: 12 }),
+    }));
+    let worked = false;
+    const outcome = await settleAttempt({
+      run: store.current,
+      artifacts: { profile: false, popularity: false, order: false },
+      requested: "enrich",
+      attempt: 1,
+      maxAttempts: 3,
+      now: NOW,
+      reload: store.reload,
+      save: store.save,
+      work: async () => {
+        worked = true;
+        return store.current;
+      },
+    });
+    expect(worked).toBe(false);
+    expect(outcome).toMatchObject({ result: "stop", reason: "finished" });
+    expect(store.current).toMatchObject({
+      status: "complete",
+      stage: "done",
+      outcome: "insufficient_data",
+      error: null,
+      open: false,
+    });
+    expect(store.current.checkpoint.track_count).toBe(12);
+  });
+
+  it("continues when ingest found 50 distinct tracks", async () => {
+    const store = memory(run({
+      stage: "enrich",
+      checkpoint: checkpoint({ track_count: 50 }),
+    }));
+    const stages: WorkStage[] = [];
+    await settleAttempt({
+      run: store.current,
+      artifacts: { profile: false, popularity: false, order: false },
+      requested: "enrich",
+      attempt: 1,
+      maxAttempts: 3,
+      now: NOW,
+      reload: store.reload,
+      save: store.save,
+      work: async (stage, active) => {
+        stages.push(stage);
+        return { ...active, checkpoint: { ...active.checkpoint, enrich: true } };
+      },
+    });
+    expect(stages).toEqual(["enrich"]);
+    expect(store.current.outcome).not.toBe("insufficient_data");
+  });
 });

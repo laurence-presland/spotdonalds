@@ -2,6 +2,7 @@ const NOTICES: Record<string, string> = {
   "consent-denied": "Spotify sign-in was cancelled.",
   reauth: "Spotify didn't share a token. Log in again to allow access.",
   "login-failed": "Spotify sign-in didn't start. Try again.",
+  unavailable: "Spotify sign-in didn't respond. Try again.",
 };
 
 export function Landing({ notice }: { notice?: string | null }) {
