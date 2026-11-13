@@ -319,7 +319,109 @@ a {
   font-size: 0.85rem;
 }
 
+.panel {
+  margin: 0 0 1.5rem;
+}
+
+.panel h2,
+.panel h3 {
+  margin: 0 0 0.6rem;
+}
+
+.panel-message {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.mix-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.mix-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.15rem 0.75rem;
+  align-items: center;
+}
+
+.mix-name {
+  font-weight: 800;
+}
+
+.mix-share {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.mix-bar {
+  grid-column: 1 / -1;
+  height: 0.45rem;
+  background: var(--track);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.mix-bar span {
+  display: block;
+  height: 100%;
+  background: var(--red);
+}
+
+.bpm-mean {
+  margin: 0 0 0.5rem;
+  font-weight: 800;
+}
+
+.bpm-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.bpm-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.bpm-table th,
+.bpm-table td {
+  text-align: left;
+  padding: 0.25rem 0.4rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.artist-windows {
+  display: grid;
+  gap: 1rem;
+}
+
+.artist-windows ol {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
 @media (min-width: 720px) {
+  .artist-windows {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .track-row {
     grid-template-columns: 3.5rem minmax(0, 1.5fr) minmax(0, 1fr) auto;
   }
