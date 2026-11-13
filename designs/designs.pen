@@ -37,6 +37,17 @@
             },
             {
               "type": "text",
+              "id": "p6OsFR",
+              "name": "Aka",
+              "fill": "#FFFFFF",
+              "content": "(aka MySubscriptions)",
+              "textAlign": "center",
+              "fontFamily": "$font-display",
+              "fontSize": 20,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
               "id": "JcmMC",
               "name": "Slogan",
               "fill": "$white",
@@ -261,6 +272,16 @@
                   "fontFamily": "$font-display",
                   "fontSize": 16,
                   "fontWeight": "800"
+                },
+                {
+                  "type": "text",
+                  "id": "M9aTA",
+                  "name": "Aka",
+                  "fill": "#FFE7A3",
+                  "content": "(aka MySubscriptions)",
+                  "fontFamily": "$font-display",
+                  "fontSize": 13,
+                  "fontWeight": "700"
                 }
               ]
             }
@@ -1175,6 +1196,16 @@
                   "fontFamily": "$font-display",
                   "fontSize": 16,
                   "fontWeight": "800"
+                },
+                {
+                  "type": "text",
+                  "id": "LQnk5",
+                  "name": "Aka",
+                  "fill": "#FFE7A3",
+                  "content": "(aka MySubscriptions)",
+                  "fontFamily": "$font-display",
+                  "fontSize": 13,
+                  "fontWeight": "700"
                 }
               ]
             }
@@ -2161,7 +2192,7 @@
                   "id": "ITcCy",
                   "name": "Profile columns",
                   "width": "fill_container",
-                  "gap": 48,
+                  "gap": 36,
                   "children": [
                     {
                       "type": "frame",
@@ -2385,7 +2416,7 @@
                       "type": "frame",
                       "id": "C8YYIX",
                       "name": "Traits",
-                      "width": 400,
+                      "width": "fill_container",
                       "layout": "vertical",
                       "gap": 14,
                       "children": [
@@ -2441,7 +2472,7 @@
                                   "id": "W3SIHG",
                                   "name": "Bar fill",
                                   "fill": "$red",
-                                  "width": 336,
+                                  "width": 556,
                                   "height": 6
                                 }
                               ]
@@ -2510,7 +2541,7 @@
                                   "id": "zTLU5",
                                   "name": "Bar fill",
                                   "fill": "$red",
-                                  "width": 312,
+                                  "width": 516,
                                   "height": 6
                                 }
                               ]
@@ -2579,7 +2610,7 @@
                                   "id": "xCp4t",
                                   "name": "Bar fill",
                                   "fill": "$charcoal",
-                                  "width": 136,
+                                  "width": 225,
                                   "height": 6
                                 }
                               ]
@@ -2648,7 +2679,7 @@
                                   "id": "UMsUX",
                                   "name": "Bar fill",
                                   "fill": "$charcoal",
-                                  "width": 88,
+                                  "width": 146,
                                   "height": 6
                                 }
                               ]
