@@ -39,6 +39,28 @@ A fun, non-commercial take-home project. Not affiliated with McDonald's or Spoti
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest |
 
+## Authentication
+
+Sign-in is Spotify only, through Supabase Auth. The landing page sends the browser to `/auth/login`, which starts OAuth with an explicit `redirectTo` of `{origin}/auth/callback`. Do not rely on the Supabase Site URL (`http://localhost:3000`).
+
+Scopes: `user-read-email`, `user-read-recently-played`, `user-top-read`.
+
+The Spotify dashboard redirect URI is Supabase's callback, and it has to match exactly:
+
+`https://svukzdmlzjebdizvulku.supabase.co/auth/v1/callback`
+
+Supabase's additional redirect allow list (where we send the user after the code exchange) needs:
+
+- `https://spotdonalds.vercel.app/**`
+- `https://spotdonalds-*-laurencepresland-5642s-projects.vercel.app/**`
+- `http://localhost:3000/**`
+
+The Spotify app is in development mode: at most five allowlisted users, and the owner needs Premium. A user who is not on that list sees `/not-allowlisted` instead of an error page. Denying consent returns to the landing page with a short message.
+
+Spotify's access and refresh tokens are written to `spotdonalds.spotify_tokens` during the callback (the only moment Supabase exposes them) and are read with the server secret key. The table has RLS enabled and no policies for `anon` or `authenticated`, so the publishable key cannot read it. Nothing in the browser bundle receives those tokens.
+
+Refresh uses `POST https://accounts.spotify.com/api/token`. Set `SPOTIFY_CLIENT_SECRET` on the server (the same secret Supabase Auth already has). `SPOTIFY_CLIENT_ID` defaults to the public client id if unset.
+
 ## Database migrations
 
 SQL lives in `supabase/migrations/` and is idempotent. From a machine logged into the Supabase CLI:

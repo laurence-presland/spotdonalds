@@ -27,16 +27,16 @@ The landing page is the first thing a reviewer sees. Keep it spare: branding and
 - Allowlisting reviewers (12, done manually in the Spotify dashboard).
 
 ## Acceptance criteria
-- [ ] An unauthenticated visit to the front page shows only the wordmark, the slogan "Your Spotify taste assembled as a drive-through order.", and "Log in with Spotify". No icon, no data-read line, and no user data.
+- [x] An unauthenticated visit to the front page shows only the wordmark, the slogan "Your Spotify taste assembled as a drive-through order.", and "Log in with Spotify". No icon, no data-read line, and no user data.
 - [ ] An allowlisted Spotify user can sign in from the landing page and is redirected to a protected route (the screen they see next is 13).
-- [ ] Unauthenticated requests to protected pages and API routes are redirected to the landing page (pages) or get 401 (API).
-- [ ] Spotify tokens are never sent to or readable by the browser, and the token table is unreadable with the anon key (RLS verified by a test or documented manual check).
-- [ ] An expired access token is refreshed transparently and the new expiry is stored; a unit test covers the refresh path with the Spotify endpoint stubbed.
-- [ ] A non-allowlisted account that completes Spotify consent ends on the friendly access screen, not an error page.
-- [ ] Denying consent returns the user to the landing page with a message.
-- [ ] Logout clears the session and redirects to the landing page.
-- [ ] Auth events are logged (without tokens or emails).
-- [ ] `.env.example` and the Spotify redirect URIs for local and Vercel are documented.
+- [x] Unauthenticated requests to protected pages and API routes are redirected to the landing page (pages) or get 401 (API).
+- [x] Spotify tokens are never sent to or readable by the browser, and the token table is unreadable with the anon key (RLS verified by a test or documented manual check).
+- [x] An expired access token is refreshed transparently and the new expiry is stored; a unit test covers the refresh path with the Spotify endpoint stubbed.
+- [x] A non-allowlisted account that completes Spotify consent ends on the friendly access screen, not an error page.
+- [x] Denying consent returns the user to the landing page with a message.
+- [x] Logout clears the session and redirects to the landing page.
+- [x] Auth events are logged (without tokens or emails).
+- [x] `.env.example` and the Spotify redirect URIs for local and Vercel are documented.
 
 ## Technical notes
 - Redirect URI registered in the Spotify dashboard must match Supabase's callback URL exactly; document local and production values.

@@ -1,10 +1,10 @@
-export default function HomePage() {
-  return (
-    <main className="hello">
-      <div>
-        <h1>SpotDonalds</h1>
-        <p>Hello. The kitchen is warming up.</p>
-      </div>
-    </main>
-  );
+import { Landing } from "@/components/Landing";
+
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ notice?: string }>;
+}) {
+  const params = await searchParams;
+  return <Landing notice={params.notice} />;
 }
