@@ -59,6 +59,7 @@ This is the third stage of the analysis pipeline (ingest → enrich → profile 
 - [ ] Every signal key used anywhere (computation, prompt, schema, UI chips) comes from the registry, and each entry has a meaning, unit and rounding (tested).
 - [ ] Trait scores are computed by code from registry signals, unit tested per trait, and the model's output contains no scores or other numbers it calculated.
 - [ ] The output schema rejects a `cites` key not in the registry and a trait name not in the fixed four (tested).
+- [ ] The profile prompt is assembled from its manifest of text blocks; the shared blocks are the same files the order prompt uses, and the assembled template's hash is stored with each profile (tested).
 - [ ] The model receives only structured signals, never raw Spotify payloads, and the prompt version is stored with each profile.
 - [ ] Output always parses against the schema or the endpoint returns a typed error after bounded retries.
 - [ ] Every `cites` key in a stored profile exists in the signals snapshot (enforced in code and tested).
@@ -70,10 +71,74 @@ This is the third stage of the analysis pipeline (ingest → enrich → profile 
 - [ ] API keys are env-only and listed in `.env.example`.
 
 ## Technical notes
-- Keep prompt text in its own versioned module so changes are diffable and the README can describe it.
+- Keep prompt text out of code, in the block files described under Prompt construction, so changes are diffable and the README can describe it.
 - Set a low temperature; a profile for the same signals should be recognisably the same.
 - Round numbers before sending to the model and format them the same way the validator expects.
 - Consider returning insights as a discriminated structure (`claim`, `evidence`) rather than free prose, so the UI can show the stat next to the sentence.
+
+## Prompt construction (shared by 07 and 10)
+Prompts are built from text blocks stored separately, so common parts are written once and shared between steps.
+- Each block is a plain text file in `prompts/blocks/` (`shared/`, `profile/`, `order/`, `popularity/`). A block holds one idea and can contain `{{placeholders}}`.
+- Each step has a manifest (`prompts/profile.v1.json`, `prompts/order.v1.json`, `prompts/popularity.v1.json`) listing its blocks in order.
+- One builder (`lib/prompts/build.ts`) reads the manifest, joins the blocks with a blank line between them, fills the placeholders from typed inputs, and fails loudly if a placeholder is left unfilled or an input isn't used. It also returns a content hash of the assembled template.
+- The manifest version and the template hash are stored with every profile and order, so a change to a shared block shows up as a new hash on both steps.
+- Blocks use bullets, not numbered lists, so they still read correctly when they're combined.
+- Unit tests: each manifest builds; shared blocks appear in both the profile and order prompts; an unknown block or a missing placeholder fails; and a snapshot test of each assembled prompt makes changes show up clearly in review.
+
+### Shared blocks
+`shared/data-truth`
+```text
+THE SACRED RULES (never break these)
+- Facts about the person come only from the supplied data. Never claim they listen to an artist or genre that isn't there, and never make up a statistic.
+- If you quote a number, quote it exactly as given. Don't calculate, round, compare or combine numbers yourself. Code does all the maths.
+- Every `cites` entry must be a signal key from `signals`.
+```
+`shared/no-gaps`
+```text
+- Never mention missing data, coverage, unlabeled tracks, sample size or uncertainty in anything the person will read.
+- Signals marked mention: false may shape your reading, but never quote or refer to them.
+```
+`shared/be-creative`
+```text
+NOW BE CREATIVE
+Within those limits, bring what you know about the world: what a genre usually feels like, what a tempo suggests, the culture and scenes around a sound. Make confident, specific, fun calls rather than safe summaries.
+```
+`shared/voice`
+```text
+Voice: friendly, specific, a little cheeky, and Australian ("Maccas" is fine). Short sentences. No emoji.
+```
+`shared/json-only`
+```text
+Respond only with the JSON object matching the provided schema, no prose outside it.
+```
+
+## Prompt v1 (taste profile)
+Manifest `prompts/profile.v1.json`: `profile/role`, `profile/input`, `shared/data-truth`, `profile/rules`, `shared/no-gaps`, `shared/be-creative`, `profile/output`, `shared/voice`, `shared/json-only`.
+
+`profile/role`
+```text
+You are the SpotDonalds taste reader. You read one person's listening signals and describe their music taste back to them: sharp, warm, a little cheeky, and true to the numbers.
+```
+`profile/input`
+```text
+You get one JSON input with these parts:
+- signals: facts about their listening, each with a key, value, meaning and unit
+- traits: four fixed traits (energy, variety, loyalty, nostalgia), each with a meaning and a 0-100 score already worked out by code
+```
+`profile/rules`
+```text
+- Every insight and every trait explanation cites at least one signal.
+- Don't produce scores. Trait scores are already set; you only explain them.
+```
+`profile/output`
+```text
+WHAT TO WRITE
+- persona_name: 2-4 words naming this listener as a type, punchy and memorable (for example "Repeat-Button Romantic"). Not a real person or artist.
+- tagline: one line that sums them up.
+- insights: 2-3 items. Each has a text (one or two sentences pairing a real stat with an interpretation) and its cites.
+- traits: exactly the four given traits, each with a one-sentence explanation of why the score fits, and its cites.
+- caveats: short internal notes on any signal that looks weak. These are never shown to the person.
+```
 
 ## Dependencies
 06 (aggregates). Needs an LLM provider key or gateway access.
