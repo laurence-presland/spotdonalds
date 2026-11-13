@@ -29,7 +29,7 @@ describe("NotAllowlisted", () => {
     const html = renderToStaticMarkup(<NotAllowlisted />);
     expect(html).toContain("This account isn&#x27;t on the list.");
     expect(html).toContain("Spotify development mode");
-    expect(html).toContain("Ask the project owner to add your Spotify email");
+    expect(html).toContain("Ask the admin");
     expect(html).toContain("Back to the start");
   });
 });
