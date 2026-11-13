@@ -110,6 +110,9 @@ describe("runTasteProfile", () => {
       async saveProfile(profile) {
         stored = profile;
       },
+      async deleteProfile() {
+        stored = null;
+      },
       async loadListening() {
         return {
           tracks: [
@@ -189,6 +192,9 @@ describe("runTasteProfile", () => {
       },
       async saveProfile() {
         throw new Error("should not store");
+      },
+      async deleteProfile() {
+        return undefined;
       },
       async loadListening() {
         return { tracks: [], plays: [], topArtists: [] };

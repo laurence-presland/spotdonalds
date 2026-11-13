@@ -41,6 +41,10 @@ export function supabaseProfileStore(): ProfileStore {
       const { error } = await db().from("taste_profiles").upsert(profile);
       if (error) throw new Error(error.message);
     },
+    async deleteProfile(runId) {
+      const { error } = await db().from("taste_profiles").delete().eq("run_id", runId);
+      if (error) throw new Error(error.message);
+    },
     loadListening,
   };
 }

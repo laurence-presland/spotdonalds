@@ -8,9 +8,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-export async function POST() {
+export async function POST(request: Request) {
   const user = await getSessionUser();
   if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+  const force = new URL(request.url).searchParams.get("force") === "1";
   return ndjsonResponse(async (emit) => {
     let emittedError = false;
     try {
@@ -18,6 +19,7 @@ export async function POST() {
         userId: user.id,
         store: supabaseProfileStore(),
         complete: generateProfile,
+        force,
         emit: (event) => {
           if (event.type === "error") emittedError = true;
           emit(event);
