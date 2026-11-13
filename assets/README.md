@@ -2,16 +2,16 @@
 
 > **Parody / non-commercial.** SpotDonalds is a fun take-home project (Spotify taste profile → a McDonald's-style order). It is a parody, is not affiliated with, endorsed by, or sponsored by McDonald's or Spotify, and is not for commercial use.
 
-All SVGs are self-contained: the wordmark text is converted to outlines (no font dependency), and the icon "S" is hand-built from stroked paths.
+All SVGs are self-contained: the wordmark text and the icon "S" are converted to outlines (no font dependency).
 
 ## Colours
 
 | Name | Hex | Use |
 | --- | --- | --- |
-| Yellow | `#FFC72C` | Wordmark and "S" on red |
+| Yellow | `#FFC72C` | Wordmark and "S" on red or dark |
 | Red | `#DA291C` | Backgrounds, wordmark on white |
+| Charcoal | `#292929` | Favicon / app icon background |
 | White | `#FFFFFF` | Wordmark on dark / tagline |
-| Green (accent) | `#1DB954` | Small nod to Spotify (duo wordmark, OG accent bar) |
 
 ## Typography
 
@@ -21,7 +21,7 @@ All SVGs are self-contained: the wordmark text is converted to outlines (no font
 
 ## The "S"
 
-Two thick, round-capped arches (a top arch with a straight left leg, a bottom arch with a straight right leg) joined by a flowing spine, in the spirit of the Golden Arches. Same stroke weight and rounded feel throughout. Terminals curl in slightly early so the counters stay open and the S reads at 16 px.
+The icon "S" is the same Nunito Black "S" glyph used in the wordmark, converted to outlines and centred on its bounding box, so the icon and wordmark always match.
 
 ## Files
 
@@ -33,7 +33,6 @@ Two thick, round-capped arches (a top arch with a straight left leg, a bottom ar
 | `logo/wordmark-red.svg` | Red wordmark, transparent (for white/light backgrounds) |
 | `logo/wordmark-white.svg` | White wordmark, transparent (for dark backgrounds) |
 | `logo/wordmark-yellow.svg` | Yellow wordmark, transparent (for dark backgrounds) |
-| `logo/wordmark-duo-green.svg` | "Spot" in Spotify green, "Donalds" in red, transparent (for white backgrounds) |
 | `logo/lockup-yellow-on-red.svg` | Yellow "S" icon + wordmark on red |
 | `logo/lockup-red.svg` | Red "S" icon + wordmark, transparent |
 
@@ -44,6 +43,7 @@ Two thick, round-capped arches (a top arch with a straight left leg, a bottom ar
 | `icon/icon-app.svg` | Yellow S on a red rounded square (512 × 512) |
 | `icon/icon-roundel.svg` | Yellow S on a red circle |
 | `icon/icon-app-yellow.svg` | Red S on a yellow rounded square (inverse) |
+| `icon/icon-app-dark.svg` | Yellow S on a charcoal rounded square |
 | `icon/icon-s-yellow.svg` | Bare yellow S, transparent |
 | `icon/icon-s-red.svg` | Bare red S, transparent |
 | `icon/icon-s-white.svg` | Bare white S, transparent |
@@ -52,10 +52,10 @@ Two thick, round-capped arches (a top arch with a straight left leg, a bottom ar
 
 | File | Description |
 | --- | --- |
-| `favicon/favicon.svg` | Scalable favicon (yellow S on red rounded square, tuned for small sizes) |
-| `favicon/favicon.ico` | 16, 32 and 48 px frames |
-| `favicon/apple-touch-icon.png` | 180 × 180, full-bleed red (iOS rounds the corners) |
-| `favicon/icon-192.png` | 192 × 192, full-bleed red with extra padding (safe for maskable use) |
+| `favicon/favicon.svg` | Scalable favicon: yellow S on a charcoal rounded square |
+| `favicon/favicon.ico` | 16, 32 and 48 px frames (same design) |
+| `favicon/apple-touch-icon.png` | 180 × 180, full-bleed charcoal (iOS rounds the corners) |
+| `favicon/icon-192.png` | 192 × 192, full-bleed charcoal with extra padding (safe for maskable use) |
 | `favicon/icon-512.png` | 512 × 512, as above |
 
 ### `og/`
