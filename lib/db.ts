@@ -8,14 +8,23 @@ export function sql(): postgres.Sql {
     const url = requireEnv("DATABASE_URL");
     globalForDb.spotdonaldsSql = postgres(url, {
       prepare: false,
-      max: 1,
-      idle_timeout: 20,
+      // Fluid Compute shares this singleton across requests. One connection
+      // lets a long analysis pin the render of /app behind it.
+      max: 3,
+      idle_timeout: 5,
+      max_lifetime: 60,
       connect_timeout: 10,
       fetch_types: false,
       ssl: sslMode(url),
       // The transaction pooler does not support channel binding.
       channel_binding: "disable",
       onnotice: false,
+      connection: {
+        application_name: "spotdonalds",
+        statement_timeout: 8000,
+        lock_timeout: 3000,
+        idle_in_transaction_session_timeout: 8000,
+      },
     });
   }
   return globalForDb.spotdonaldsSql;

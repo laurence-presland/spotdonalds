@@ -1,5 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { loadLatestRun } from "@/lib/analysis-run";
+import { claimAnalysis } from "@/lib/analyse/claim";
 import { tokenStore } from "@/lib/auth/token-store";
 import { sql } from "@/lib/db";
 import { checkHealth } from "@/lib/health";
@@ -36,5 +37,22 @@ describe.skipIf(!process.env.DATABASE_URL)("postgres access", () => {
     const run = await ingestStore().resumeOrCreate(userA, "2026-11-13T00:00:00.000Z");
     expect(run.user_id).toBe(userA);
     await expect(loadLatestRun(userB)).resolves.toBeNull();
+  });
+
+  it("keeps a single open run when two starts race", async () => {
+    await sql()`delete from spotdonalds.orders where user_id = ${userA}`;
+    await sql()`delete from spotdonalds.taste_profiles where user_id = ${userA}`;
+    await sql()`delete from spotdonalds.analysis_runs where user_id = ${userA}`;
+    const [first, second] = await Promise.all([
+      claimAnalysis(userA, false),
+      claimAnalysis(userA, false),
+    ]);
+    expect(first?.id).toBe(second?.id);
+    const open = await sql()<{ id: string }[]>`
+      select id from spotdonalds.analysis_runs where user_id = ${userA} and open
+    `;
+    expect(open).toHaveLength(1);
+    const again = await claimAnalysis(userA, false);
+    expect(again?.id).toBe(first?.id);
   });
 });

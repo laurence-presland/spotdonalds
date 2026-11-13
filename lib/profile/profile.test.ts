@@ -75,6 +75,8 @@ describe("profile schema and validation", () => {
     const missing = validateProfile(draft(), { ...signals, "bpm.mean": null });
     expect(missing.ok).toBe(false);
     expect(validateProfile(draft(), signals).ok).toBe(true);
+    expect(validateProfile(draft("Top 5, and 3 artists keep this at 128 BPM."), signals).ok).toBe(true);
+    expect(validateProfile(draft("Top 5 at 999 BPM."), signals).ok).toBe(false);
   });
 });
 
@@ -138,6 +140,7 @@ describe("runTasteProfile", () => {
       expect(input.prompt).not.toContain("spotify_id");
       expect(input.prompt).not.toContain("isrc");
       expect(input.prompt).toContain("bpm.mean");
+      if (calls > 1) expect(input.prompt).toContain("Quoted number 999 does not match a cited signal");
       if (calls === 1) return { object: draft("Average tempo is 999 BPM."), usage: { inputTokens: 10, outputTokens: 4 } };
       return { object: draft(), usage: { inputTokens: 12, outputTokens: 8 } };
     };

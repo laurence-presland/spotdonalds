@@ -23,9 +23,11 @@ const WINDOWS: { id: Term | "all"; label: string }[] = [
 export function AnalysingView({
   state,
   initialTab = "recent",
+  onRetry,
 }: {
   state: AnalysingState;
   initialTab?: ListTab;
+  onRetry?: () => void;
 }) {
   const [tab, setTab] = useState<ListTab>(initialTab);
   const [window, setWindow] = useState<Term | "all">("all");
@@ -51,7 +53,15 @@ export function AnalysingView({
         ) : null}
         {state.status === "error" ? (
           <p className="status-banner" role="alert">
-            {state.message ?? "The stream dropped. Trying again."}
+            {state.message ?? "The analysis stopped."}
+            {onRetry ? (
+              <>
+                {" "}
+                <button type="button" className="button" onClick={onRetry}>
+                  Try again
+                </button>
+              </>
+            ) : null}
           </p>
         ) : null}
         <div className="tabs" role="tablist" aria-label="Listening lists">

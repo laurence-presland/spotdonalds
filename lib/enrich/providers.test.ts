@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { parseDeezerTrack, createDeezer } from "@/lib/enrich/deezer";
 import { createRateLimiter } from "@/lib/enrich/limiter";
-import { createMusicBrainz, parseMusicBrainz } from "@/lib/enrich/musicbrainz";
+import { createMusicBrainz, normaliseIsrc, parseMusicBrainz } from "@/lib/enrich/musicbrainz";
 import type { EnrichTrack } from "@/lib/enrich/types";
 
 const track: EnrichTrack = {
@@ -47,6 +47,25 @@ describe("MusicBrainz", () => {
     expect(time).toBeGreaterThanOrEqual(1000);
     const headers = new Headers((fetchImpl.mock.calls[0]?.[1] as RequestInit | undefined)?.headers);
     expect(headers.get("User-Agent")).toBe("SpotDonalds/test (test@example.com)");
+  });
+
+  it("treats an unknown ISRC as a miss and searches by artist and title", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.includes("/isrc/")) return new Response("missing", { status: 404 });
+      return Response.json({ recordings: [{ id: "rec", score: 95, tags: [{ name: "Jazz", count: 1 }] }] });
+    });
+    const hit = await createMusicBrainz({
+      fetch: fetchImpl,
+      sleep: async () => undefined,
+      wait: async () => undefined,
+      userAgent: "SpotDonalds/test (test@example.com)",
+    }).lookup({ ...track, isrc: "au-xyz-24-00001" });
+    expect(normaliseIsrc("au-xyz-24-00001")).toBe("AUXYZ2400001");
+    expect(hit.matched).toBe(true);
+    expect(hit.tags[0]?.name).toBe("jazz");
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toContain("/isrc/AUXYZ2400001");
+    expect(String(fetchImpl.mock.calls[1]?.[0])).toContain("/recording?");
   });
 });
 

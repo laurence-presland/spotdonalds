@@ -90,6 +90,7 @@ export async function runTasteProfile(input: {
       errors = [error instanceof Error ? error.message : "The model call failed"];
       record("warn", "taste_profile.model", {
         user_id: input.userId,
+        run_id: run.id,
         attempt,
         retry_count: attempt - 1,
         latency_ms: Date.now() - started,
@@ -102,12 +103,14 @@ export async function runTasteProfile(input: {
     const checked = validateProfile(object, signals);
     record("info", "taste_profile.model", {
       user_id: input.userId,
+      run_id: run.id,
       attempt,
       retry_count: attempt - 1,
       latency_ms: Date.now() - started,
       input_tokens: usage.inputTokens ?? null,
       output_tokens: usage.outputTokens ?? null,
       ok: checked.ok,
+      validation_failures: checked.ok ? [] : checked.issues,
     });
     if (!checked.ok) {
       errors = checked.issues;
@@ -135,7 +138,10 @@ export async function runTasteProfile(input: {
     return stored;
   }
 
+  const alreadyStored = await input.store.getProfile(input.userId, run.id);
+  if (alreadyStored) return alreadyStored;
   run.status = "error";
+  run.stage = "profile";
   run.error = errors.join("; ");
   await input.store.saveRun(run);
   input.emit({ type: "error", code: "profile_invalid", message: "The taste profile didn't pass checking." });

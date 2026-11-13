@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect, useReducer, useRef } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { NotAllowlisted } from "@/components/NotAllowlisted";
 import { AnalysingView } from "@/components/analysing/AnalysingView";
 import { reconnectDelay } from "@/lib/analysing/backoff";
-import { initialAnalysingState, reduceAnalysis } from "@/lib/analysing/reduce";
+import { initialAnalysingState, reduceAnalysis, type RunSnapshot } from "@/lib/analysing/reduce";
+import { isHeartbeatStale, LEASE_STALE_MS } from "@/lib/analyse/progress";
 import type { VisibleArtist, VisibleTrack } from "@/lib/catalogue/present";
-import { parseNdjsonChunk } from "@/lib/stream/parse";
-import type { StreamEvent } from "@/lib/stream/events";
 
-const STOP_CODES = new Set(["not_allowlisted", "reauth_required", "missing"]);
-const ADVANCE_CODES = new Set(["order_invalid", "profile_invalid"]);
+const POLL_MS = 1500;
 
 export function AnalysingScreen({
   autostart = true,
@@ -20,6 +18,7 @@ export function AnalysingScreen({
   onAdvance?: () => void;
 }) {
   const [state, dispatch] = useReducer(reduceAnalysis, initialAnalysingState);
+  const [generation, setGeneration] = useState(0);
   const onAdvanceRef = useRef(onAdvance);
   useEffect(() => {
     onAdvanceRef.current = onAdvance;
@@ -27,67 +26,70 @@ export function AnalysingScreen({
 
   useEffect(() => {
     let cancelled = false;
-    async function hydrate() {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    async function catalogue() {
       const response = await fetch("/api/catalogue");
       if (!response.ok) return;
       const body = (await response.json()) as { tracks: VisibleTrack[]; artists: VisibleArtist[] };
       if (!cancelled) dispatch({ type: "hydrate", tracks: body.tracks, artists: body.artists });
     }
-    async function read(url: string): Promise<"ok" | "retry" | "stop"> {
-      const response = await fetch(url, { method: "POST" });
-      if (response.status === 401) return "stop";
-      if (!response.ok || !response.body) return "retry";
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let rest = "";
-      while (!cancelled) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        const parsed = parseNdjsonChunk(rest, decoder.decode(value, { stream: true }));
-        rest = parsed.rest;
-        for (const event of parsed.events) {
-          dispatch({ type: "event", event });
-          const stop = terminal(event);
-          if (stop === "advance") onAdvanceRef.current?.();
-          if (stop) return stop === "advance" ? "stop" : stop;
-        }
-      }
-      return "ok";
+
+    async function kick(retry: boolean) {
+      await fetch(retry ? "/api/analyse?retry=1" : "/api/analyse", { method: "POST" });
     }
-    async function run(attempt: number) {
+
+    async function tick(attempt: number) {
       try {
-        if (!cancelled) dispatch({ type: "connection", status: "streaming", message: null });
-        await hydrate();
-        if (!autostart) return;
-        const analysis = await read("/api/analyse");
-        if (analysis === "stop" || cancelled) return;
-        if (analysis === "retry") throw new Error("analysis dropped");
+        const response = await fetch("/api/runs");
+        if (response.status === 401 || cancelled) return;
+        if (!response.ok) throw new Error("status");
+        const body = (await response.json()) as {
+          run: (RunSnapshot & { id: string; heartbeat_at: string | null }) | null;
+        };
+        if (cancelled) return;
+        dispatch({ type: "snapshot", run: body.run });
+        await catalogue();
+        const run = body.run;
+        if (run?.status === "error") return;
+        if (run?.stage === "done" && run.status === "complete") {
+          onAdvanceRef.current?.();
+          return;
+        }
+        if (run?.status === "running" && isHeartbeatStale(run.heartbeat_at, Date.now(), LEASE_STALE_MS)) {
+          await kick(false);
+        }
+        dispatch({ type: "connection", status: "streaming", message: null });
+        timer = setTimeout(() => void tick(0), POLL_MS);
       } catch {
-        if (cancelled || attempt >= 6) {
-          if (!cancelled) {
-            dispatch({ type: "connection", status: "error", message: "The connection dropped." });
-          }
+        if (cancelled) return;
+        if (attempt >= 6) {
+          dispatch({ type: "connection", status: "error", message: "The connection dropped." });
           return;
         }
         dispatch({ type: "connection", status: "reconnecting", message: "Reconnecting" });
-        await new Promise((resolve) => setTimeout(resolve, reconnectDelay(attempt)));
-        if (!cancelled) await run(attempt + 1);
+        timer = setTimeout(() => void tick(attempt + 1), reconnectDelay(attempt));
       }
     }
-    void run(0);
+
+    async function start() {
+      dispatch({ type: "connection", status: "streaming", message: null });
+      if (autostart) await kick(generation > 0);
+      if (!cancelled) await tick(0);
+    }
+
+    void start();
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
     };
-  }, [autostart]);
+  }, [autostart, generation]);
 
   if (state.status === "access") return <NotAllowlisted />;
-  return <AnalysingView state={state} />;
-}
-
-function terminal(event: StreamEvent): "stop" | "retry" | "advance" | null {
-  if (event.type === "stage" && event.stage === "done") return "advance";
-  if (event.type !== "error") return null;
-  if (STOP_CODES.has(event.code)) return "stop";
-  if (ADVANCE_CODES.has(event.code)) return "advance";
-  return "retry";
+  return (
+    <AnalysingView
+      state={state}
+      onRetry={state.status === "error" ? () => setGeneration((value) => value + 1) : undefined}
+    />
+  );
 }

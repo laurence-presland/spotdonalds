@@ -3,10 +3,9 @@ import type { OrderBudget } from "@/lib/order/budget";
 import type { OrderCandidate } from "@/lib/order/candidates";
 import { itemGroup } from "@/lib/order/protein";
 import { orderSchema, popularitySchema, type OrderDraft } from "@/lib/order/schema";
-import { SIGNAL_REGISTRY, type SignalKey } from "@/lib/signals/registry";
+import { quotedNumberIssues } from "@/lib/profile/numbers";
 import type { TasteSignals } from "@/lib/signals/compute";
 
-const NUMBER = /\d+(?:\.\d+)?%?/g;
 const GAP = /coverage|missing data|unlabeled|sample size|uncertain/i;
 
 export type CheckedOrder = {
@@ -83,22 +82,5 @@ export function validateOrder(value: unknown, input: {
 }
 
 function checkNumbers(text: string, cites: string[], signals: TasteSignals, issues: string[]) {
-  const allowed = cites.flatMap((key) => {
-    if (key === "genre.popularity_tier") return [];
-    const value = signals[key as SignalKey];
-    if (typeof value === "number") return [round(value, SIGNAL_REGISTRY[key as SignalKey].decimals)];
-    if (Array.isArray(value)) return value.map((item) => round(item.share, 2));
-    return [];
-  });
-  for (const token of text.match(NUMBER) ?? []) {
-    const ok = token.endsWith("%")
-      ? allowed.some((value) => value >= 0 && value <= 1 && Math.round(value * 100) === Math.round(Number(token.slice(0, -1))))
-      : allowed.some((value) => Math.abs(value - Number(token)) < 0.001);
-    if (!ok) issues.push(`Quoted number ${token} does not match a cited signal`);
-  }
-}
-
-function round(value: number, decimals: number): number {
-  const factor = 10 ** decimals;
-  return Math.round(value * factor) / factor;
+  issues.push(...quotedNumberIssues(text, cites, signals));
 }

@@ -67,6 +67,10 @@ export async function runOrder(input: {
     input.emit({ type: "error", code: "no_run", message: "Ingest listening before building an order." });
     throw new Error("no_run");
   }
+  if (run.status === "error") {
+    input.emit({ type: "error", code: "profile_invalid", message: run.error || "The taste profile didn't pass checking." });
+    throw new Error(run.error || "profile_failed");
+  }
   const existing = await input.store.getOrder(input.userId, run.id);
   input.emit({ type: "stage", stage: "order" });
   if (existing && !input.force) {
@@ -148,6 +152,7 @@ export async function runOrder(input: {
       const checked = validateOrder(result.object, { candidates, budget, signals: profile.signals });
       record("info", "order.model", {
         user_id: input.userId,
+        run_id: run.id,
         attempt,
         retry_count: attempt - 1,
         latency_ms: Date.now() - started,

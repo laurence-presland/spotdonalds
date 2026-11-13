@@ -1,5 +1,6 @@
 import { fetchJson } from "@/lib/enrich/http";
 import { musicbrainzUserAgent } from "@/lib/enrich/limiter";
+import { log } from "@/lib/log";
 import { miss, type EnrichTrack, type SourceHit, type TagHit } from "@/lib/enrich/types";
 
 const BASE = "https://musicbrainz.org/ws/2";
@@ -37,15 +38,23 @@ export function createMusicBrainz(deps: Deps) {
   return {
     name: "musicbrainz" as const,
     async lookup(track: EnrichTrack): Promise<SourceHit> {
-      if (track.isrc) {
+      const isrc = normaliseIsrc(track.isrc);
+      if (isrc) {
         await deps.wait();
-        const payload = await fetchJson(
-          `${BASE}/isrc/${encodeURIComponent(track.isrc)}?inc=tags+artist-credits&fmt=json`,
-          headers,
-          deps,
-        );
-        const hit = parseMusicBrainz(payload, "isrc");
-        if (hit.matched) return hit;
+        try {
+          const payload = await fetchJson(
+            `${BASE}/isrc/${encodeURIComponent(isrc)}?inc=tags+artist-credits&fmt=json`,
+            headers,
+            deps,
+          );
+          const hit = parseMusicBrainz(payload, "isrc");
+          if (hit.matched) return hit;
+        } catch (error) {
+          // MusicBrainz returns 404 when it has no recording for that ISRC.
+          // A rejected User-Agent is 403, not 404. Fall through to a title search.
+          if (!isNotFound(error)) throw error;
+          log("info", "enrich.musicbrainz", { isrc, outcome: "not_found" });
+        }
       }
       await deps.wait();
       const artist = track.artists[0] ?? "";
@@ -58,6 +67,16 @@ export function createMusicBrainz(deps: Deps) {
       return parseMusicBrainz(payload, "search");
     },
   };
+}
+
+export function normaliseIsrc(value: string | null): string | null {
+  if (!value) return null;
+  const compact = value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  return /^[A-Z0-9]{12}$/.test(compact) ? compact : null;
+}
+
+function isNotFound(error: unknown): boolean {
+  return error instanceof Error && error.message === "404";
 }
 
 function recordingsOf(payload: unknown): Record<string, unknown>[] {

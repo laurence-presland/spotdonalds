@@ -1,11 +1,11 @@
-export type AppScreen = "welcome" | "analysing" | "results";
+export type AppScreen = "welcome" | "analysing" | "results" | "error";
 
 export function screenForRun(
   run: { stage: string; status: string } | null,
   welcomeRequested: boolean,
 ): AppScreen {
+  if (run?.status === "error") return "error";
   if (run?.stage === "done") return "results";
-  if (run && run.status === "error" && (run.stage === "profile" || run.stage === "order")) return "results";
   if (!run && welcomeRequested) return "welcome";
   return "analysing";
 }

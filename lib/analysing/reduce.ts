@@ -1,3 +1,4 @@
+import { analysisErrorCopy } from "@/lib/analyse/progress";
 import type { VisibleArtist, VisibleTrack, TrackSource } from "@/lib/catalogue/present";
 import type { StreamEvent, Term } from "@/lib/stream/events";
 
@@ -35,10 +36,18 @@ export const initialAnalysingState: AnalysingState = {
   progressTotal: 0,
 };
 
+export type RunSnapshot = {
+  status: string;
+  stage: string;
+  error: string | null;
+  progress: { done: number; total: number };
+};
+
 export type AnalysingAction =
   | { type: "event"; event: StreamEvent }
   | { type: "connection"; status: ConnectionStatus; message?: string | null }
-  | { type: "hydrate"; tracks: VisibleTrack[]; artists: VisibleArtist[] };
+  | { type: "hydrate"; tracks: VisibleTrack[]; artists: VisibleArtist[] }
+  | { type: "snapshot"; run: RunSnapshot | null };
 
 export function reduceAnalysis(state: AnalysingState, action: AnalysingAction): AnalysingState {
   if (action.type === "hydrate") {
@@ -51,7 +60,20 @@ export function reduceAnalysis(state: AnalysingState, action: AnalysingAction): 
   if (action.type === "connection") {
     return { ...state, status: action.status, message: action.message ?? state.message };
   }
+  if (action.type === "snapshot") return applySnapshot(state, action.run);
   return reduceEvent(state, action.event);
+}
+
+function applySnapshot(state: AnalysingState, run: RunSnapshot | null): AnalysingState {
+  if (!run) return state;
+  return {
+    ...state,
+    stage: stageFor(run.stage, state.stage),
+    progressDone: run.progress.done,
+    progressTotal: run.progress.total,
+    status: run.status === "error" ? (run.error === "not_allowlisted" ? "access" : "error") : "streaming",
+    message: run.status === "error" ? analysisErrorCopy(run.error) : null,
+  };
 }
 
 function reduceEvent(state: AnalysingState, event: StreamEvent): AnalysingState {

@@ -1,5 +1,6 @@
 import { loadLatestRun, saveAnalysisRun } from "@/lib/analysis-run";
 import { sql } from "@/lib/db";
+import { tracksForProfile } from "@/lib/enrich/priority";
 import type { CacheRow, EnrichTrack } from "@/lib/enrich/types";
 import type { EnrichStore } from "@/lib/enrich/run";
 
@@ -15,14 +16,34 @@ export function enrichStore(): EnrichStore {
     saveRun: saveAnalysisRun,
     async listTracks(userId) {
       const db = sql();
-      const plays = await db<{ track_id: string }[]>`
-        select track_id from spotdonalds.plays where user_id = ${userId}
+      const ranked = await db<{ spotify_id: string; rank: number | null; played_at: Date | string | null }[]>`
+        with tops as (
+          select spotify_id, min(rank) as rank
+          from spotdonalds.top_items
+          where user_id = ${userId} and kind = 'track'
+          group by spotify_id
+        ),
+        plays as (
+          select track_id as spotify_id, max(played_at) as played_at
+          from spotdonalds.plays
+          where user_id = ${userId}
+          group by track_id
+        ),
+        ids as (
+          select spotify_id from tops
+          union
+          select spotify_id from plays
+        )
+        select ids.spotify_id, tops.rank, plays.played_at
+        from ids
+        left join tops on tops.spotify_id = ids.spotify_id
+        left join plays on plays.spotify_id = ids.spotify_id
       `;
-      const tops = await db<{ spotify_id: string }[]>`
-        select spotify_id from spotdonalds.top_items
-        where user_id = ${userId} and kind = 'track'
-      `;
-      const ids = [...new Set([...plays.map((row) => row.track_id), ...tops.map((row) => row.spotify_id)])];
+      const ids = tracksForProfile(ranked.map((row) => ({
+        id: row.spotify_id,
+        rank: row.rank,
+        playedAt: row.played_at == null ? null : row.played_at instanceof Date ? row.played_at.toISOString() : new Date(row.played_at).toISOString(),
+      })));
       if (ids.length === 0) return [];
       const tracks = await db<(Omit<EnrichTrack, "artists"> & { spotify_id: string })[]>`
         select spotify_id, isrc, name, album_name, album_image_url
