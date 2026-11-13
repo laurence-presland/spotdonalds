@@ -3,7 +3,7 @@
 **Size:** L · **Depends on:** 06
 
 ## Summary / goal
-This is the main AI feature. Deterministic code computes a set of taste signals from the user's real data, and an LLM interprets those signals into a taste profile: a persona name, two or three insight lines that each cite the statistic they rely on, and trait scores. The LLM does no arithmetic and sees no metadata it wasn't given.
+This is the main AI feature. Deterministic code computes a set of taste signals from the user's real data, and an LLM interprets those signals into a taste profile: a persona name, two or three insight lines that each cite the statistic they rely on, and trait scores. The LLM does no arithmetic and sees no metadata it wasn't given. (The one documented exception is the genre popularity step in 10.)
 
 ## Context
 The brief calls the AI insight "the heart of the exercise" and asks us to show our thinking. The design choice here is the split: numbers come from code, so they are correct and testable, and the model's job is narrative interpretation constrained by those numbers. Output is schema-validated JSON, so we can verify that every claim points at a real signal.
