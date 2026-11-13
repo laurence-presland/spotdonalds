@@ -1,7 +1,7 @@
 import { getSessionUser } from "@/lib/auth/session";
 import { generateOrder, generatePopularity } from "@/lib/order/model";
 import { runOrder, type OrderCompletion } from "@/lib/order/run";
-import { supabaseOrderStore } from "@/lib/order/store";
+import { orderStore } from "@/lib/order/store";
 import { ndjsonResponse } from "@/lib/stream/ndjson";
 
 export const runtime = "nodejs";
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     try {
       await runOrder({
         userId: user.id,
-        store: supabaseOrderStore(),
+        store: orderStore(),
         complete,
         force,
         emit: (event) => {

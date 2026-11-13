@@ -1,23 +1,18 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { safeDbMessage, sql } from "@/lib/db";
 import { log } from "@/lib/log";
 
 export async function checkHealth(): Promise<{ ok: true } | { ok: false; status: number }> {
   try {
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from("healthcheck")
-      .select("ok")
-      .eq("id", 1)
-      .maybeSingle();
-    if (error || data?.ok !== true) {
-      log("error", "health.failed", { message: error?.message ?? "row missing" });
+    const rows = await sql()<{ ok: boolean }[]>`
+      select ok from spotdonalds.healthcheck where id = ${1}
+    `;
+    if (rows[0]?.ok !== true) {
+      log("error", "health.failed", { message: "row missing" });
       return { ok: false, status: 503 };
     }
     return { ok: true };
   } catch (error) {
-    log("error", "health.failed", {
-      message: error instanceof Error ? error.message : "unknown",
-    });
+    log("error", "health.failed", { message: safeDbMessage(error) });
     return { ok: false, status: 503 };
   }
 }

@@ -1,70 +1,45 @@
-import { createAdminClient } from "@/lib/supabase/admin";
-import { emptyCounts, type IngestStore, type RunRecord } from "@/lib/ingest/types";
+import { insertRun, loadLatestRun, saveAnalysisRun } from "@/lib/analysis-run";
+import { sql } from "@/lib/db";
+import type { IngestStore, RunRecord } from "@/lib/ingest/types";
 import type { ArtistRow, TrackRow } from "@/lib/spotify/normalise";
 
-function asRun(row: RunRecord): RunRecord {
-  return {
-    ...row,
-    counts: { ...emptyCounts(), ...row.counts },
-    checkpoint: row.checkpoint ?? {},
-    finished_at: row.finished_at,
-    error: row.error,
-  };
-}
-
-export function supabaseIngestStore(): IngestStore {
-  const db = () => createAdminClient();
+export function ingestStore(): IngestStore {
   return {
     async resumeOrCreate(userId, now) {
-      const supabase = db();
-      const { data, error } = await supabase
-        .from("analysis_runs")
-        .select("*")
-        .eq("user_id", userId)
-        .order("started_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw new Error(error.message);
-      const latest = data as RunRecord | null;
-      if (latest && latest.stage === "ingest" && latest.status !== "complete") {
-        return asRun(latest);
-      }
-      const created = await supabase
-        .from("analysis_runs")
-        .insert({
-          user_id: userId,
-          status: "running",
-          stage: "ingest",
-          started_at: now,
-          counts: emptyCounts(),
-          checkpoint: {},
-        })
-        .select("*")
-        .single();
-      if (created.error) throw new Error(created.error.message);
-      return asRun(created.data as RunRecord);
+      const latest = await loadLatestRun(userId);
+      if (latest && latest.stage === "ingest" && latest.status !== "complete") return latest;
+      return insertRun(userId, now);
     },
     async save(run) {
-      const { error } = await db()
-        .from("analysis_runs")
-        .update({
-          status: run.status,
-          stage: run.stage,
-          finished_at: run.finished_at,
-          counts: run.counts,
-          error: run.error,
-          checkpoint: run.checkpoint,
-        })
-        .eq("id", run.id)
-        .eq("user_id", run.user_id);
-      if (error) throw new Error(error.message);
+      await saveAnalysisRun(run);
     },
     async upsertArtists(artists) {
-      await upsert(db(), "artists", dedupeArtists(artists), "spotify_id");
+      const rows = dedupeArtists(artists);
+      if (rows.length === 0) return;
+      const db = sql();
+      const payload = rows.map((artist) => ({
+        spotify_id: artist.spotify_id,
+        name: artist.name,
+        external_url: artist.external_url,
+        genres: db.json(artist.genres),
+        popularity: artist.popularity,
+        raw: db.json(artist.raw ?? {}),
+      }));
+      await db`
+        insert into spotdonalds.artists ${db(payload, "spotify_id", "name", "external_url", "genres", "popularity", "raw")}
+        on conflict (spotify_id) do update set
+          name = excluded.name,
+          external_url = excluded.external_url,
+          genres = excluded.genres,
+          popularity = excluded.popularity,
+          raw = excluded.raw
+      `;
     },
     async upsertTracks(tracks) {
-      if (tracks.length === 0) return;
-      const rows = dedupeTracks(tracks).map((track) => ({
+      const rows = dedupeTracks(tracks);
+      if (rows.length === 0) return;
+      const db = sql();
+      const payload = rows.map((track) => ({
         spotify_id: track.spotify_id,
         isrc: track.isrc,
         name: track.name,
@@ -74,80 +49,84 @@ export function supabaseIngestStore(): IngestStore {
         duration_ms: track.duration_ms,
         explicit: track.explicit,
         external_url: track.external_url,
-        raw: track.raw,
+        raw: db.json(track.raw ?? {}),
       }));
-      const { error } = await db().from("tracks").upsert(rows, { onConflict: "spotify_id" });
-      if (error) throw new Error(error.message);
-      const links = dedupeTracks(tracks).flatMap((track) =>
-        track.artists.map((artist) => ({
-          track_id: track.spotify_id,
-          artist_id: artist.spotify_id,
-          position: artist.position,
-        })),
+      const links = dedupeLinks(
+        rows.flatMap((track) =>
+          track.artists.map((artist) => ({
+            track_id: track.spotify_id,
+            artist_id: artist.spotify_id,
+            position: artist.position,
+          })),
+        ),
       );
-      if (links.length === 0) return;
-      const linked = await db().from("track_artists").upsert(links, { onConflict: "track_id,artist_id" });
-      if (linked.error) throw new Error(linked.error.message);
+      await db.begin(async (tx) => {
+        await tx`
+          insert into spotdonalds.tracks ${tx(payload, "spotify_id", "isrc", "name", "album_name", "album_image_url", "release_date", "duration_ms", "explicit", "external_url", "raw")}
+          on conflict (spotify_id) do update set
+            isrc = excluded.isrc,
+            name = excluded.name,
+            album_name = excluded.album_name,
+            album_image_url = excluded.album_image_url,
+            release_date = excluded.release_date,
+            duration_ms = excluded.duration_ms,
+            explicit = excluded.explicit,
+            external_url = excluded.external_url,
+            raw = excluded.raw
+        `;
+        if (links.length === 0) return;
+        await tx`
+          insert into spotdonalds.track_artists ${tx(links, "track_id", "artist_id", "position")}
+          on conflict (track_id, artist_id) do update set position = excluded.position
+        `;
+      });
     },
     async upsertPlays(userId, plays) {
       if (plays.length === 0) return;
-      const rows = plays.map((play) => ({
+      const db = sql();
+      const payload = plays.map((play) => ({
         user_id: userId,
         track_id: play.track.spotify_id,
         played_at: play.played_at,
-        raw: play.raw,
+        raw: db.json(play.raw ?? {}),
       }));
-      const { error } = await db()
-        .from("plays")
-        .upsert(rows, { onConflict: "user_id,track_id,played_at" });
-      if (error) throw new Error(error.message);
+      await db`
+        insert into spotdonalds.plays ${db(payload, "user_id", "track_id", "played_at", "raw")}
+        on conflict (user_id, track_id, played_at) do update set raw = excluded.raw
+      `;
     },
     async replaceTop(userId, kind, timeRange, rows) {
-      const supabase = db();
-      const removed = await supabase
-        .from("top_items")
-        .delete()
-        .eq("user_id", userId)
-        .eq("kind", kind)
-        .eq("time_range", timeRange);
-      if (removed.error) throw new Error(removed.error.message);
-      if (rows.length === 0) return;
-      const inserted = await supabase.from("top_items").insert(
-        rows.map((row) => ({
-          user_id: userId,
-          kind: row.kind,
-          time_range: row.time_range,
-          rank: row.rank,
-          spotify_id: row.track?.spotify_id ?? row.artist?.spotify_id,
-          raw: row.raw,
-        })),
-      );
-      if (inserted.error) throw new Error(inserted.error.message);
+      const db = sql();
+      const payload = rows.flatMap((row) => {
+        const spotifyId = row.track?.spotify_id ?? row.artist?.spotify_id;
+        if (!spotifyId) return [];
+        return [
+          {
+            user_id: userId,
+            kind: row.kind,
+            time_range: row.time_range,
+            rank: row.rank,
+            spotify_id: spotifyId,
+            raw: db.json(row.raw ?? {}),
+          },
+        ];
+      });
+      await db.begin(async (tx) => {
+        await tx`
+          delete from spotdonalds.top_items
+          where user_id = ${userId} and kind = ${kind} and time_range = ${timeRange}
+        `;
+        if (payload.length === 0) return;
+        await tx`
+          insert into spotdonalds.top_items ${tx(payload, "user_id", "kind", "time_range", "rank", "spotify_id", "raw")}
+        `;
+      });
     },
   };
 }
 
 export async function latestRun(userId: string): Promise<RunRecord | null> {
-  const { data, error } = await createAdminClient()
-    .from("analysis_runs")
-    .select("id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint")
-    .eq("user_id", userId)
-    .order("started_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  return data ? asRun(data as RunRecord) : null;
-}
-
-async function upsert(
-  supabase: ReturnType<typeof createAdminClient>,
-  table: "artists",
-  rows: ArtistRow[],
-  onConflict: string,
-) {
-  if (rows.length === 0) return;
-  const { error } = await supabase.from(table).upsert(rows, { onConflict });
-  if (error) throw new Error(error.message);
+  return loadLatestRun(userId);
 }
 
 function dedupeArtists(artists: ArtistRow[]): ArtistRow[] {
@@ -160,4 +139,10 @@ function dedupeTracks(tracks: TrackRow[]): TrackRow[] {
   const byId = new Map<string, TrackRow>();
   for (const track of tracks) byId.set(track.spotify_id, track);
   return [...byId.values()];
+}
+
+function dedupeLinks(links: { track_id: string; artist_id: string; position: number }[]) {
+  const byKey = new Map<string, { track_id: string; artist_id: string; position: number }>();
+  for (const link of links) byKey.set(`${link.track_id}:${link.artist_id}`, link);
+  return [...byKey.values()];
 }

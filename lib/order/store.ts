@@ -1,61 +1,103 @@
-import { emptyCounts, type RunRecord } from "@/lib/ingest/types";
-import type { OrderStore, StoredOrder } from "@/lib/order/run";
+import { loadLatestRun, saveAnalysisRun } from "@/lib/analysis-run";
+import { sql } from "@/lib/db";
 import type { PopularityTier } from "@/lib/order/budget";
+import type { OrderStore, StoredOrder } from "@/lib/order/run";
 import type { StoredProfile } from "@/lib/profile/run";
-import { createAdminClient } from "@/lib/supabase/admin";
 
-export function supabaseOrderStore(): OrderStore {
-  const db = () => createAdminClient();
+type PopularityRow = { popularity_tier: PopularityTier; reason: string; prompt_hash: string };
+
+export function orderStore(): OrderStore {
   return {
-    async latestRun(userId) {
-      const { data, error } = await db()
-        .from("analysis_runs")
-        .select("*")
-        .eq("user_id", userId)
-        .order("started_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw new Error(error.message);
-      if (!data) return null;
-      const run = data as RunRecord;
-      return { ...run, counts: { ...emptyCounts(), ...run.counts }, checkpoint: run.checkpoint ?? {} };
+    latestRun: loadLatestRun,
+    saveRun: saveAnalysisRun,
+    async getProfile(userId, runId) {
+      const rows = await sql()<StoredProfile[]>`
+        select run_id, user_id, persona_name, tagline, insights, traits, caveats, signals, prompt_version, prompt_hash
+        from spotdonalds.taste_profiles
+        where run_id = ${runId} and user_id = ${userId}
+      `;
+      return rows[0] ?? null;
     },
-    async saveRun(run) {
-      const { error } = await db()
-        .from("analysis_runs")
-        .update({ status: run.status, stage: run.stage, finished_at: run.finished_at, error: run.error })
-        .eq("id", run.id)
-        .eq("user_id", run.user_id);
-      if (error) throw new Error(error.message);
-    },
-    async getProfile(runId) {
-      const { data, error } = await db().from("taste_profiles").select("*").eq("run_id", runId).maybeSingle();
-      if (error) throw new Error(error.message);
-      return (data as StoredProfile | null) ?? null;
-    },
-    async getOrder(runId) {
-      const { data, error } = await db().from("orders").select("*").eq("run_id", runId).maybeSingle();
-      if (error) throw new Error(error.message);
-      return (data as StoredOrder | null) ?? null;
+    async getOrder(userId, runId) {
+      const rows = await sql()<StoredOrder[]>`
+        select
+          run_id, user_id, items, invented_rules, summary, how_we_decided, confidence_note,
+          totals, budget, popularity, signals, inputs, rules_version, prompt_version, prompt_hash,
+          popularity_prompt_hash, menu_retrieved_at
+        from spotdonalds.orders
+        where run_id = ${runId} and user_id = ${userId}
+      `;
+      return rows[0] ?? null;
     },
     async saveOrder(order) {
-      const { error } = await db().from("orders").upsert(order);
-      if (error) throw new Error(error.message);
+      const db = sql();
+      const result = await db`
+        insert into spotdonalds.orders (
+          run_id, user_id, items, invented_rules, summary, how_we_decided, confidence_note,
+          totals, budget, popularity, signals, inputs, rules_version, prompt_version, prompt_hash,
+          popularity_prompt_hash, menu_retrieved_at
+        ) values (
+          ${order.run_id},
+          ${order.user_id},
+          ${db.json(order.items as Parameters<typeof db.json>[0])},
+          ${db.json(order.invented_rules as Parameters<typeof db.json>[0])},
+          ${order.summary},
+          ${db.json(order.how_we_decided as Parameters<typeof db.json>[0])},
+          ${order.confidence_note},
+          ${db.json(order.totals)},
+          ${db.json(order.budget)},
+          ${db.json(order.popularity)},
+          ${db.json(order.signals)},
+          ${db.json(order.inputs as Parameters<typeof db.json>[0])},
+          ${order.rules_version},
+          ${order.prompt_version},
+          ${order.prompt_hash},
+          ${order.popularity_prompt_hash},
+          ${order.menu_retrieved_at}
+        )
+        on conflict (run_id) do update set
+          items = excluded.items,
+          invented_rules = excluded.invented_rules,
+          summary = excluded.summary,
+          how_we_decided = excluded.how_we_decided,
+          confidence_note = excluded.confidence_note,
+          totals = excluded.totals,
+          budget = excluded.budget,
+          popularity = excluded.popularity,
+          signals = excluded.signals,
+          inputs = excluded.inputs,
+          rules_version = excluded.rules_version,
+          prompt_version = excluded.prompt_version,
+          prompt_hash = excluded.prompt_hash,
+          popularity_prompt_hash = excluded.popularity_prompt_hash,
+          menu_retrieved_at = excluded.menu_retrieved_at
+        where spotdonalds.orders.user_id = ${order.user_id}
+      `;
+      if (result.count !== 1) throw new Error("order was not saved");
     },
-    async deleteOrder(runId) {
-      const { error } = await db().from("orders").delete().eq("run_id", runId);
-      if (error) throw new Error(error.message);
+    async deleteOrder(userId, runId) {
+      await sql()`
+        delete from spotdonalds.orders
+        where run_id = ${runId} and user_id = ${userId}
+      `;
     },
     async getPopularity(tagsKey) {
-      const { data, error } = await db().from("genre_popularity").select("*").eq("tags_key", tagsKey).maybeSingle();
-      if (error) throw new Error(error.message);
-      if (!data) return null;
-      const row = data as { popularity_tier: PopularityTier; reason: string; prompt_hash: string };
-      return row;
+      const rows = await sql()<PopularityRow[]>`
+        select popularity_tier, reason, prompt_hash
+        from spotdonalds.genre_popularity
+        where tags_key = ${tagsKey}
+      `;
+      return rows[0] ?? null;
     },
     async savePopularity(row) {
-      const { error } = await db().from("genre_popularity").upsert(row);
-      if (error) throw new Error(error.message);
+      await sql()`
+        insert into spotdonalds.genre_popularity (tags_key, popularity_tier, reason, prompt_hash)
+        values (${row.tags_key}, ${row.popularity_tier}, ${row.reason}, ${row.prompt_hash})
+        on conflict (tags_key) do update set
+          popularity_tier = excluded.popularity_tier,
+          reason = excluded.reason,
+          prompt_hash = excluded.prompt_hash
+      `;
     },
   };
 }

@@ -1,17 +1,17 @@
 import { loadAggregates } from "@/lib/aggregates/load";
 import { loadMenu } from "@/lib/menu/load";
-import { supabaseOrderStore } from "@/lib/order/store";
-import { supabaseProfileStore } from "@/lib/profile/store";
+import { orderStore } from "@/lib/order/store";
+import { profileStore } from "@/lib/profile/store";
 import type { ReceiptMenuItem } from "@/components/order/OrderReceipt";
 
 export async function loadResults(userId: string) {
-  const profiles = supabaseProfileStore();
-  const orders = supabaseOrderStore();
+  const profiles = profileStore();
+  const orders = orderStore();
   const run = await profiles.latestRun(userId);
   if (!run) return null;
   const [profile, order, aggregates] = await Promise.all([
-    profiles.getProfile(run.id),
-    orders.getOrder(run.id),
+    profiles.getProfile(userId, run.id),
+    orders.getOrder(userId, run.id),
     loadAggregates(userId),
   ]);
   const menu: ReceiptMenuItem[] = loadMenu().items.map((item) => ({

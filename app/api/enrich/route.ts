@@ -3,7 +3,7 @@ import { createDeezer } from "@/lib/enrich/deezer";
 import { createRateLimiter, musicbrainzUserAgent } from "@/lib/enrich/limiter";
 import { createMusicBrainz } from "@/lib/enrich/musicbrainz";
 import { runEnrich } from "@/lib/enrich/run";
-import { supabaseEnrichStore } from "@/lib/enrich/store";
+import { enrichStore } from "@/lib/enrich/store";
 import { ndjsonResponse } from "@/lib/stream/ndjson";
 
 export const runtime = "nodejs";
@@ -24,7 +24,7 @@ export async function POST() {
   return ndjsonResponse((emit) =>
     runEnrich({
       userId: user.id,
-      store: supabaseEnrichStore(),
+      store: enrichStore(),
       musicbrainz,
       deezer,
       emit,

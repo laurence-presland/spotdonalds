@@ -1,49 +1,55 @@
-import { emptyCounts, type RunRecord } from "@/lib/ingest/types";
+import { loadLatestRun, saveAnalysisRun } from "@/lib/analysis-run";
+import { sql } from "@/lib/db";
 import type { ProfileStore, StoredProfile } from "@/lib/profile/run";
 import { loadListening } from "@/lib/signals/load";
-import { createAdminClient } from "@/lib/supabase/admin";
 
-export function supabaseProfileStore(): ProfileStore {
-  const db = () => createAdminClient();
+export function profileStore(): ProfileStore {
   return {
-    async latestRun(userId) {
-      const { data, error } = await db()
-        .from("analysis_runs")
-        .select("*")
-        .eq("user_id", userId)
-        .order("started_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw new Error(error.message);
-      if (!data) return null;
-      const run = data as RunRecord;
-      return { ...run, counts: { ...emptyCounts(), ...run.counts }, checkpoint: run.checkpoint ?? {} };
-    },
-    async saveRun(run) {
-      const { error } = await db()
-        .from("analysis_runs")
-        .update({
-          status: run.status,
-          stage: run.stage,
-          finished_at: run.finished_at,
-          error: run.error,
-        })
-        .eq("id", run.id)
-        .eq("user_id", run.user_id);
-      if (error) throw new Error(error.message);
-    },
-    async getProfile(runId) {
-      const { data, error } = await db().from("taste_profiles").select("*").eq("run_id", runId).maybeSingle();
-      if (error) throw new Error(error.message);
-      return (data as StoredProfile | null) ?? null;
+    latestRun: loadLatestRun,
+    saveRun: saveAnalysisRun,
+    async getProfile(userId, runId) {
+      const rows = await sql()<StoredProfile[]>`
+        select run_id, user_id, persona_name, tagline, insights, traits, caveats, signals, prompt_version, prompt_hash
+        from spotdonalds.taste_profiles
+        where run_id = ${runId} and user_id = ${userId}
+      `;
+      return rows[0] ?? null;
     },
     async saveProfile(profile) {
-      const { error } = await db().from("taste_profiles").upsert(profile);
-      if (error) throw new Error(error.message);
+      const db = sql();
+      const result = await db`
+        insert into spotdonalds.taste_profiles (
+          run_id, user_id, persona_name, tagline, insights, traits, caveats, signals, prompt_version, prompt_hash
+        ) values (
+          ${profile.run_id},
+          ${profile.user_id},
+          ${profile.persona_name},
+          ${profile.tagline},
+          ${db.json(profile.insights)},
+          ${db.json(profile.traits)},
+          ${db.json(profile.caveats)},
+          ${db.json(profile.signals)},
+          ${profile.prompt_version},
+          ${profile.prompt_hash}
+        )
+        on conflict (run_id) do update set
+          persona_name = excluded.persona_name,
+          tagline = excluded.tagline,
+          insights = excluded.insights,
+          traits = excluded.traits,
+          caveats = excluded.caveats,
+          signals = excluded.signals,
+          prompt_version = excluded.prompt_version,
+          prompt_hash = excluded.prompt_hash
+        where spotdonalds.taste_profiles.user_id = ${profile.user_id}
+      `;
+      if (result.count !== 1) throw new Error("taste profile was not saved");
     },
-    async deleteProfile(runId) {
-      const { error } = await db().from("taste_profiles").delete().eq("run_id", runId);
-      if (error) throw new Error(error.message);
+    async deleteProfile(userId, runId) {
+      await sql()`
+        delete from spotdonalds.taste_profiles
+        where run_id = ${runId} and user_id = ${userId}
+      `;
     },
     loadListening,
   };

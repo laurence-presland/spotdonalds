@@ -11,6 +11,8 @@ const REDACTED_KEYS = new Set([
   "secret",
   "api_key",
   "apikey",
+  "database_url",
+  "password",
 ]);
 
 function redact(value: unknown): unknown {

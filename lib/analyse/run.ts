@@ -1,24 +1,24 @@
 import { getSpotifyAccessToken, SpotifyTokenError } from "@/lib/auth/tokens";
-import { supabaseTokenStore } from "@/lib/auth/token-store";
+import { tokenStore } from "@/lib/auth/token-store";
 import { createDeezer } from "@/lib/enrich/deezer";
 import { createRateLimiter, musicbrainzUserAgent } from "@/lib/enrich/limiter";
 import { createMusicBrainz } from "@/lib/enrich/musicbrainz";
 import { runEnrich } from "@/lib/enrich/run";
-import { supabaseEnrichStore } from "@/lib/enrich/store";
-import { supabaseIngestStore } from "@/lib/ingest/store";
+import { enrichStore } from "@/lib/enrich/store";
+import { ingestStore } from "@/lib/ingest/store";
 import { runIngest } from "@/lib/ingest/run";
 import type { RunRecord } from "@/lib/ingest/types";
 import { runOrder } from "@/lib/order/run";
-import { supabaseOrderStore } from "@/lib/order/store";
+import { orderStore } from "@/lib/order/store";
 import { generateOrder, generatePopularity } from "@/lib/order/model";
 import { generateProfile } from "@/lib/profile/model";
 import { runTasteProfile } from "@/lib/profile/run";
-import { supabaseProfileStore } from "@/lib/profile/store";
+import { profileStore } from "@/lib/profile/store";
 import { createSpotifyClient } from "@/lib/spotify/client";
 import type { StreamEvent } from "@/lib/stream/events";
 
 export async function runAnalyse(input: { userId: string; emit: (event: StreamEvent) => void }): Promise<void> {
-  const profiles = supabaseProfileStore();
+  const profiles = profileStore();
   const read = () => profiles.latestRun(input.userId);
   let run = await read();
   if (run?.stage === "done" && run.status === "complete") {
@@ -28,11 +28,11 @@ export async function runAnalyse(input: { userId: string; emit: (event: StreamEv
 
   if (!run || (run.stage === "ingest" && run.status !== "complete")) {
     try {
-      const token = await getSpotifyAccessToken(input.userId, { store: supabaseTokenStore(), now: Date.now, fetch });
+      const token = await getSpotifyAccessToken(input.userId, { store: tokenStore(), now: Date.now, fetch });
       run = await runIngest({
         userId: input.userId,
         client: createSpotifyClient(token),
-        store: supabaseIngestStore(),
+        store: ingestStore(),
         emit: input.emit,
       });
     } catch (error) {
@@ -67,7 +67,7 @@ export async function runAnalyse(input: { userId: string; emit: (event: StreamEv
     try {
       await runOrder({
         userId: input.userId,
-        store: supabaseOrderStore(),
+        store: orderStore(),
         complete: async (call) => (call.kind === "popularity" ? generatePopularity(call) : generateOrder({
           system: call.system,
           prompt: call.prompt,
@@ -87,7 +87,7 @@ async function finishEnrich(
   emit: (event: StreamEvent) => void,
   run: RunRecord | null,
 ): Promise<RunRecord | null> {
-  const store = supabaseEnrichStore();
+  const store = enrichStore();
   const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
   let current = run;
   for (let pass = 0; pass < 8; pass += 1) {

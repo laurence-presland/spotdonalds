@@ -30,6 +30,20 @@ begin
   if hits is not null then
     raise exception 'reserved table names: %', hits;
   end if;
+
+  select string_agg(c.relname, ', ' order by c.relname)
+    into hits
+  from pg_class c
+  join pg_namespace n on n.oid = c.relnamespace
+  where n.nspname = 'spotdonalds'
+    and c.relkind = 'r'
+    and not exists (
+      select 1 from pg_policy p
+      where p.polrelid = c.oid and p.polname = 'spotdonalds_app_all'
+    );
+  if hits is not null then
+    raise exception 'tables missing spotdonalds_app_all: %', hits;
+  end if;
 end
 $$;
 

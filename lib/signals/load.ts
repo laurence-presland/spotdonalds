@@ -1,6 +1,6 @@
 import type { TagInput } from "@/lib/aggregates/tags";
+import { sql } from "@/lib/db";
 import type { ListeningInput, ListeningTrack } from "@/lib/signals/compute";
-import { createAdminClient } from "@/lib/supabase/admin";
 import type { Term } from "@/lib/stream/events";
 
 type StoredTag = {
@@ -9,59 +9,59 @@ type StoredTag = {
   provenance?: { source?: string; source_url?: string };
 };
 
-export async function loadListening(userId: string): Promise<ListeningInput> {
-  const db = createAdminClient();
-  const plays = await db.from("plays").select("track_id").eq("user_id", userId);
-  if (plays.error) throw new Error(plays.error.message);
-  const tops = await db.from("top_items").select("kind, time_range, spotify_id").eq("user_id", userId);
-  if (tops.error) throw new Error(tops.error.message);
+type EnrichmentRow = {
+  spotify_track_id: string;
+  matched: boolean;
+  tags: StoredTag[] | null;
+  bpm: number | string | null;
+  fields: { failures?: ("musicbrainz" | "deezer")[] } | null;
+};
 
-  const playRows = (plays.data ?? []).map((row) => ({ trackId: String((row as { track_id: string }).track_id) }));
-  const topTracks = (tops.data ?? []).filter((row) => (row as { kind: string }).kind === "track");
-  const trackIds = [...new Set([...playRows.map((play) => play.trackId), ...topTracks.map((row) => String((row as { spotify_id: string }).spotify_id))])];
+export async function loadListening(userId: string): Promise<ListeningInput> {
+  const db = sql();
+  const plays = await db<{ track_id: string }[]>`
+    select track_id from spotdonalds.plays where user_id = ${userId}
+  `;
+  const tops = await db<{ kind: string; time_range: Term; spotify_id: string }[]>`
+    select kind, time_range, spotify_id from spotdonalds.top_items where user_id = ${userId}
+  `;
+  const playRows = plays.map((play) => ({ trackId: play.track_id }));
+  const topTracks = tops.filter((row) => row.kind === "track");
+  const trackIds = [...new Set([...playRows.map((play) => play.trackId), ...topTracks.map((row) => row.spotify_id)])];
   const windowsByTrack = new Map<string, Term[]>();
-  for (const row of topTracks) {
-    const item = row as { spotify_id: string; time_range: Term };
+  for (const item of topTracks) {
     const list = windowsByTrack.get(item.spotify_id) ?? [];
     list.push(item.time_range);
     windowsByTrack.set(item.spotify_id, list);
   }
 
   const tracks = trackIds.length
-    ? await db.from("tracks").select("spotify_id, release_date, explicit").in("spotify_id", trackIds)
-    : { data: [], error: null };
-  if (tracks.error) throw new Error(tracks.error.message);
+    ? await db<{ spotify_id: string; release_date: string | null; explicit: boolean }[]>`
+        select spotify_id, release_date, explicit from spotdonalds.tracks where spotify_id in ${db(trackIds)}
+      `
+    : [];
   const links = trackIds.length
-    ? await db.from("track_artists").select("track_id, artist_id, position").in("track_id", trackIds)
-    : { data: [], error: null };
-  if (links.error) throw new Error(links.error.message);
+    ? await db<{ track_id: string; artist_id: string; position: number }[]>`
+        select track_id, artist_id, position from spotdonalds.track_artists where track_id in ${db(trackIds)}
+      `
+    : [];
   const enriched = trackIds.length
-    ? await db.from("track_enrichment").select("spotify_track_id, matched, tags, bpm, fields").in("spotify_track_id", trackIds)
-    : { data: [], error: null };
-  if (enriched.error) throw new Error(enriched.error.message);
+    ? await db<EnrichmentRow[]>`
+        select spotify_track_id, matched, tags, bpm::float8 as bpm, fields
+        from spotdonalds.track_enrichment
+        where spotify_track_id in ${db(trackIds)}
+      `
+    : [];
 
   const artistsByTrack = new Map<string, { id: string; position: number }[]>();
-  for (const row of links.data ?? []) {
-    const link = row as { track_id: string; artist_id: string; position: number };
+  for (const link of links) {
     const list = artistsByTrack.get(link.track_id) ?? [];
     list.push({ id: link.artist_id, position: link.position });
     artistsByTrack.set(link.track_id, list);
   }
-  const enrichment = new Map(
-    (enriched.data ?? []).map((row) => {
-      const item = row as {
-        spotify_track_id: string;
-        matched: boolean;
-        tags: StoredTag[] | null;
-        bpm: number | null;
-        fields: { failures?: ("musicbrainz" | "deezer")[] } | null;
-      };
-      return [item.spotify_track_id, item] as const;
-    }),
-  );
+  const enrichment = new Map(enriched.map((item) => [item.spotify_track_id, item] as const));
 
-  const listeningTracks: ListeningTrack[] = (tracks.data ?? []).map((row) => {
-    const track = row as { spotify_id: string; release_date: string | null; explicit: boolean };
+  const listeningTracks: ListeningTrack[] = tracks.map((track) => {
     const extra = enrichment.get(track.spotify_id);
     const tags: TagInput[] =
       extra?.matched === true
@@ -86,7 +86,7 @@ export async function loadListening(userId: string): Promise<ListeningInput> {
       releaseDate: track.release_date,
       explicit: Boolean(track.explicit),
       tags,
-      bpm: extra?.matched ? extra.bpm : null,
+      bpm: extra?.matched && extra.bpm != null ? Number(extra.bpm) : null,
       windows: windowsByTrack.get(track.spotify_id) ?? [],
       failures: extra?.fields?.failures ?? [],
     };
@@ -95,11 +95,8 @@ export async function loadListening(userId: string): Promise<ListeningInput> {
   return {
     tracks: listeningTracks,
     plays: playRows,
-    topArtists: (tops.data ?? [])
-      .filter((row) => (row as { kind: string }).kind === "artist")
-      .map((row) => {
-        const item = row as { spotify_id: string; time_range: Term };
-        return { id: item.spotify_id, time_range: item.time_range };
-      }),
+    topArtists: tops
+      .filter((row) => row.kind === "artist")
+      .map((item) => ({ id: item.spotify_id, time_range: item.time_range })),
   };
 }

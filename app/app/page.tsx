@@ -3,7 +3,7 @@ import { DriveThrough } from "@/components/flow/DriveThrough";
 import { ResultsScreen } from "@/components/flow/ResultsScreen";
 import { screenForRun } from "@/lib/flow/screen";
 import { loadResults } from "@/lib/results/load";
-import { supabaseProfileStore } from "@/lib/profile/store";
+import { profileStore } from "@/lib/profile/store";
 import { createSupabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -18,7 +18,7 @@ export default async function ProtectedHome({
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect("/");
   const params = await searchParams;
-  const run = await supabaseProfileStore().latestRun(data.user.id);
+  const run = await profileStore().latestRun(data.user.id);
   const screen = screenForRun(run, params.welcome === "1");
   if (screen === "results" && run) {
     const results = await loadResults(data.user.id);
