@@ -89,4 +89,35 @@ describe("handleAuthCallback", () => {
     expect(JSON.stringify(signedIn)).not.toContain("provider-access");
     expect(JSON.stringify(signedIn)).not.toContain("email");
   });
+
+  it("starts the flow on a successful sign-in and not when Spotify rejects the account", async () => {
+    const started: string[] = [];
+    await handleAuthCallback({
+      origin: "http://localhost:3000",
+      params: new URLSearchParams({ code: "abc" }),
+      exchange: async () => ({ session }),
+      store: store(),
+      probe: async () => "ok",
+      signOut: async () => {},
+      beginFlow: async (userId) => {
+        started.push(userId);
+      },
+    });
+    expect(started).toEqual(["user-1"]);
+
+    const rejected: string[] = [];
+    const result = await handleAuthCallback({
+      origin: "http://localhost:3000",
+      params: new URLSearchParams({ code: "abc" }),
+      exchange: async () => ({ session }),
+      store: store(),
+      probe: async () => "not_allowlisted",
+      signOut: async () => {},
+      beginFlow: async (userId) => {
+        rejected.push(userId);
+      },
+    });
+    expect(result.redirectTo).toBe("http://localhost:3000/not-allowlisted");
+    expect(rejected).toEqual([]);
+  });
 });

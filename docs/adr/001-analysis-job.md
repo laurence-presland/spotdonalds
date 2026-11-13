@@ -30,6 +30,8 @@ A run with fewer than 50 distinct tracks after ingest (`plays.track_id` union to
 
 ## How it runs
 
-The runner is a Vercel Queue. See [ADR 002](002-analysis-queue.md). The row above is still the source of truth: each message processes one stage idempotently against the checkpoint, then enqueues the next unfinished stage.
+The runner is one Vercel Workflow per open run. See [ADR 003](003-analysis-workflow.md). [ADR 002](002-analysis-queue.md) is superseded.
 
-`workflow_id` is the in-flight queue message (`pending` while the message is being published). The column name is unchanged. A second start loses the compare-and-set while the heartbeat is fresh. A stale heartbeat can be taken over. A consumer refuses to work a row that a different live message owns.
+The first step, `ensureTracks`, counts distinct tracks already in the database. At 50 or more it does not call Spotify. Below 50 it fetches the remaining Spotify sources, and if that still cannot reach 50 the run finishes `insufficient_data` without the later steps. Enrich, profile, popularity, and order then each look for their own output and skip when it is already stored. Every step writes its stage onto the run row. The workflow always writes `complete` / `done` after the last step, including when every step skipped. That is the fix for run `5c3177c8-0d62-403d-993e-dd80db563e95`.
+
+`workflow_id` stores the workflow run id (`pending` while `start()` is in flight). A second start loses the compare-and-set while the heartbeat is fresh. A read of a running row with no workflow id, or with a heartbeat older than 3 minutes, starts the workflow again. The steps skip work that is already stored. The browser does not start it.

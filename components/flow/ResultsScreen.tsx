@@ -25,7 +25,7 @@ export function ResultsScreen({
   orderFailed: boolean;
 }) {
   const [history, setHistory] = useState(false);
-  if (history) return <AnalysingScreen autostart={false} />;
+  if (history) return <AnalysingScreen />;
 
   const decided = (order?.how_we_decided ?? {}) as { text?: string };
   return (
@@ -33,6 +33,7 @@ export function ResultsScreen({
       <header className="bar">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="wordmark wordmark-bar" src="/brand/wordmark-yellow.svg" alt="SpotDonalds" />
+        <QuietLogout />
       </header>
       <main className="results-main">
         <button type="button" className="back" onClick={() => setHistory(true)}>
@@ -64,7 +65,6 @@ export function ResultsScreen({
         <GenreMixChart mix={aggregates.tags} status={aggregates.tags.buckets.length ? "ready" : "empty"} />
         <BpmHistogram stats={aggregates.bpm} status={aggregates.bpm.count ? "ready" : "empty"} />
         <TopArtistsByWindow artists={aggregates.artists} status="ready" />
-        <QuietLogout />
       </main>
     </div>
   );

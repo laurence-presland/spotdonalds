@@ -76,5 +76,6 @@ describe("ResultsScreen", () => {
     expect(html).not.toContain("hidden caveat");
     expect(html).not.toContain("SECRET");
     expect(html.indexOf("class=\"bar\"")).toBeLessThan(html.indexOf("Log out"));
+    expect(html.indexOf("Log out")).toBeLessThan(html.indexOf(">Back<"));
   });
 });

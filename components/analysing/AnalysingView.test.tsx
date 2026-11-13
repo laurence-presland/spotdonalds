@@ -37,7 +37,8 @@ describe("AnalysingView", () => {
     expect(html).toContain("Data provided by Spotify, MusicBrainz, and Deezer.");
     expect(html).toContain("https://i.scdn.co/image/humble");
     expect(html).toContain("1 track");
-    expect(html).not.toContain("Log out");
+    expect(html.indexOf("wordmark-bar")).toBeLessThan(html.indexOf("Log out"));
+    expect(html.indexOf("Log out")).toBeLessThan(html.indexOf("Analysing your listening history"));
     expect(html).not.toContain(">S<");
   });
 

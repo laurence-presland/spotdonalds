@@ -104,9 +104,9 @@ Landing → Welcome → Analysing → Results
                  ingest → enrich → profile → popularity → order → done
 ```
 
-One authenticated route, `/app`, chooses the screen from `analysis_runs`. The welcome is only for a brand-new sign-in (`/app?welcome=1` with no run yet). The state machine is [docs/adr/001-analysis-job.md](docs/adr/001-analysis-job.md). The runner is a Vercel Queue, described in [docs/adr/002-analysis-queue.md](docs/adr/002-analysis-queue.md).
+One authenticated route, `/app`, chooses the screen from `analysis_runs`. The first run starts in the auth callback, before the redirect to `/app?welcome=1`. The page only displays that row. The state machine is [docs/adr/001-analysis-job.md](docs/adr/001-analysis-job.md). The runner is one Vercel Workflow, described in [docs/adr/003-analysis-workflow.md](docs/adr/003-analysis-workflow.md).
 
-`POST /api/analyse` creates a run, retries a failed one (`?retry=1`), or closes it and starts another (`?fresh=1`). Each stage is a queue message. The consumer writes the checkpoint, then enqueues the next unfinished stage. While a run is open the page reads `GET /api/runs/watch`: one JSON snapshot when the run has finished, or an NDJSON stream that replays stored tracks and follows new ones until the run finishes or the function hands back a resume cursor. A finished run with fewer than 50 distinct tracks is `outcome = insufficient_data` and does not continue into the profile. A partial unique index allows one open run per person. A stale heartbeat is re-driven once from the read path, then closed if that recovery also goes quiet. Supabase Realtime is not used.
+`POST /api/analyse` is the Try again button (`?retry=1`) and Start fresh (`?fresh=1`). The server starts the workflow. The page does not call it on load. While a run is open the page reads `GET /api/runs/watch`: one JSON snapshot when the run has finished, or an NDJSON stream that replays stored tracks and follows new ones until the run finishes or the function hands back a resume cursor. A finished run with fewer than 50 distinct tracks is `outcome = insufficient_data` and does not continue into the profile. A partial unique index allows one open run per person. A running row with a stale heartbeat is started again from the read path; the steps skip work that is already stored. Supabase Realtime is not used.
 
 Spotify tokens are stored in `spotify_tokens` at the callback, the only moment Supabase Auth exposes them, and read later over the direct Postgres connection. Catalogue tables are server-only. Each query for plays, top items, runs, a profile or an order is limited to that user's id.
 
@@ -140,7 +140,7 @@ The order step maps tempo to a calorie budget, the energy score to beef or chick
 
 **1 day.** Add Discogs as a third enrichment source. Add a mainstreamness signal next to the popularity tier. Script a menu refresh. Tighten tag aliases.
 
-**5 days.** Search-grounded fill for metadata no structured source has, with citations, never from model memory. Backfill a longer history from a Spotify privacy export. Replace indicative prices with store prices. Move enrichment off the request and into a queue. Add an evaluation harness for profile and order quality.
+**5 days.** Search-grounded fill for metadata no structured source has, with citations, never from model memory. Backfill a longer history from a Spotify privacy export. Replace indicative prices with store prices. Add an evaluation harness for profile and order quality.
 
 **20 days.** Draw the order. Raise the Spotify quota or add another music source so more than five people can sign in. Let people share and compare profiles. Re-ingest on a schedule and show how taste drifts.
 

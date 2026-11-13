@@ -4,10 +4,8 @@ import { DriveThrough } from "@/components/flow/DriveThrough";
 import { InsufficientData } from "@/components/flow/InsufficientData";
 import { ResultsScreen } from "@/components/flow/ResultsScreen";
 import { RunError } from "@/components/flow/RunError";
-import { shouldStartWorker } from "@/lib/analyse/machine";
 import { analysisErrorCopy } from "@/lib/analyse/progress";
 import { reviveOrClose } from "@/lib/analyse/reconcile";
-import { ensureAnalysisJob } from "@/lib/analyse/start";
 import { AuthUnavailable, getSessionUser } from "@/lib/auth/session";
 import { safeDbMessage } from "@/lib/db";
 import { screenForRun } from "@/lib/flow/screen";
@@ -52,16 +50,13 @@ export default async function ProtectedHome({
       />
     );
   }
-  return <DriveThrough welcome={loaded.kind === "welcome"} autostart={loaded.kind === "welcome"} />;
+  const showWelcome = params.welcome === "1" && (loaded.kind === "welcome" || loaded.kind === "analysing");
+  return <DriveThrough welcome={showWelcome} />;
 }
 
 async function loadScreen(userId: string, welcome: boolean) {
   try {
-    let run = await reviveOrClose(await profileStore().latestRun(userId));
-    if (run?.status === "running" && shouldStartWorker(run, Date.now()) && !run.checkpoint.recovery_at) {
-      await ensureAnalysisJob(userId, run.id);
-      run = (await profileStore().latestRun(userId)) ?? run;
-    }
+    const run = await reviveOrClose(await profileStore().latestRun(userId));
     const screen = screenForRun(run, welcome);
     if (screen === "insufficient") return { kind: "insufficient" as const, count: run?.checkpoint.track_count ?? 0 };
     if (screen === "error") {

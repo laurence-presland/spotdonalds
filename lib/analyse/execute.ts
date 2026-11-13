@@ -1,15 +1,6 @@
-import { assertWorker, loadRun, saveAnalysisRun } from "@/lib/analysis-run";
-import { settleAttempt, type SettleResult } from "@/lib/analyse/job";
-import { countDistinctTracks } from "@/lib/analyse/tracks";
-import {
-  ingestCheckpointDone,
-  MIN_RESULT_TRACKS,
-  terminalInsufficient,
-  WorkerLost,
-  type Artifacts,
-  type WorkStage,
-} from "@/lib/analyse/machine";
-import { getSpotifyAccessToken, SpotifyTokenError } from "@/lib/auth/tokens";
+import { loadRun } from "@/lib/analysis-run";
+import type { Artifacts, WorkStage } from "@/lib/analyse/machine";
+import { getSpotifyAccessToken } from "@/lib/auth/tokens";
 import { tokenStore } from "@/lib/auth/token-store";
 import { createDeezer } from "@/lib/enrich/deezer";
 import { createRateLimiter, musicbrainzUserAgent } from "@/lib/enrich/limiter";
@@ -28,37 +19,6 @@ import { runTasteProfile } from "@/lib/profile/run";
 import { profileStore } from "@/lib/profile/store";
 import { createSpotifyClient } from "@/lib/spotify/client";
 
-export async function performStage(
-  stage: WorkStage,
-  userId: string,
-  runId: string,
-  workflowRunId: string,
-  attempt: number,
-  maxAttempts: number,
-): Promise<SettleResult["result"]> {
-  const loaded = await loadAnalysisContext(userId, runId);
-  if (!loaded) return "stop";
-  const outcome = await settleAttempt({
-    ...loaded,
-    requested: stage,
-    attempt,
-    maxAttempts,
-    now: new Date().toISOString(),
-    reload: () => loadAnalysisContext(userId, runId),
-    save: (run) => saveAnalysisRun(run),
-    prepare: async () => assertWorker(runId, userId, workflowRunId),
-    work: (nextStage, run) => runStage(nextStage, userId, run, workflowRunId),
-  });
-  if (outcome.result === "retry") {
-    log("warn", "analyse.retry", { run_id: runId, user_id: userId, stage, attempt, message: outcome.message ?? null });
-  } else if (outcome.reason === "failed") {
-    log("error", "analyse.failed", { run_id: runId, user_id: userId, stage, message: outcome.message ?? null });
-  } else if (outcome.reason === "finished") {
-    log("info", "analyse.finished", { run_id: runId, user_id: userId, stage: "done" });
-  }
-  return outcome.result;
-}
-
 export async function loadAnalysisContext(userId: string, runId: string): Promise<{ run: RunRecord; artifacts: Artifacts } | null> {
   const run = await loadRun(runId, userId);
   if (!run) return null;
@@ -76,35 +36,13 @@ export async function loadAnalysisContext(userId: string, runId: string): Promis
   };
 }
 
-async function runStage(stage: WorkStage, userId: string, run: RunRecord, workflowRunId: string): Promise<RunRecord> {
-  const owned = await assertWorker(run.id, userId, workflowRunId);
-  if (!owned) throw new WorkerLost();
-  log("info", "analyse.stage", { run_id: run.id, user_id: userId, stage, status: "running" });
-  try {
-    if (stage === "ingest") await ingest(userId);
-    else if (stage === "enrich") await enrich(userId);
-    else if (stage === "profile") await runTasteProfile({ userId, store: profileStore(), complete: generateProfile, emit: () => undefined });
-    else if (stage === "popularity") await runPopularity({ userId, store: orderStore(), complete: completeOrder, emit: () => undefined });
-    else await runOrder({ userId, store: orderStore(), complete: completeOrder, emit: () => undefined });
-  } catch (error) {
-    if (error instanceof WorkerLost || error instanceof SpotifyTokenError) {
-      if (error instanceof SpotifyTokenError) {
-        const failed: RunRecord = { ...run, status: "error", stage, error: error.code, finished_at: null };
-        await saveAnalysisRun(failed);
-        return failed;
-      }
-      throw error;
-    }
-    const latest = await loadRun(run.id, userId);
-    if (latest?.status === "error") return latest;
-    throw error;
-  }
-  const latest = (await loadRun(run.id, userId)) ?? run;
-  if (stage !== "ingest" || latest.status === "error" || !ingestCheckpointDone(latest.checkpoint)) return latest;
-  const count = await countDistinctTracks(userId);
-  const counted: RunRecord = { ...latest, checkpoint: { ...latest.checkpoint, track_count: count } };
-  if (count < MIN_RESULT_TRACKS) return terminalInsufficient(counted, count, new Date().toISOString());
-  return counted;
+export async function runLiveWork(stage: WorkStage, userId: string, runId: string): Promise<void> {
+  log("info", "analyse.stage", { run_id: runId, user_id: userId, stage, status: "running" });
+  if (stage === "ingest") await ingest(userId);
+  else if (stage === "enrich") await enrich(userId);
+  else if (stage === "profile") await runTasteProfile({ userId, store: profileStore(), complete: generateProfile, emit: () => undefined });
+  else if (stage === "popularity") await runPopularity({ userId, store: orderStore(), complete: completeOrder, emit: () => undefined });
+  else await runOrder({ userId, store: orderStore(), complete: completeOrder, emit: () => undefined });
 }
 
 async function ingest(userId: string): Promise<void> {

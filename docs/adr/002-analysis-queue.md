@@ -1,6 +1,8 @@
 # ADR 002: Analysis stages run on Vercel Queues
 
-ADR 001 still describes the run row and the stage order. This note replaces the runner. The database remains the source of truth.
+**Superseded by [ADR 003](003-analysis-workflow.md).** The runner is a Vercel Workflow again. The notes below are the queue decision as it stood on 13 November 2026. They are not the current design.
+
+ADR 001 still describes the run row and the stage order. This note replaced the runner for one deployment. The database remained the source of truth.
 
 ## Decision
 

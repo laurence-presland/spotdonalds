@@ -1,3 +1,4 @@
+import { beginFirstFlow } from "@/lib/analyse/begin";
 import { handleAuthCallback, probeSpotifyAccess } from "@/lib/auth/callback";
 import { tokenStore } from "@/lib/auth/token-store";
 import { createSupabaseServer } from "@/lib/supabase/server";
@@ -13,6 +14,7 @@ export async function GET(request: Request) {
     params: url.searchParams,
     store,
     probe: (token) => probeSpotifyAccess(token),
+    beginFlow: (userId) => beginFirstFlow(userId),
     signOut: async () => {
       await supabase.auth.signOut();
     },
