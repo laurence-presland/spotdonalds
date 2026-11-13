@@ -158,4 +158,45 @@ describe("runEnrich", () => {
     expect([...saved.cache.values()].filter((row) => row.matched)).toHaveLength(1);
     expect([...saved.cache.values()].filter((row) => !row.matched)[0]?.expires_at).not.toBeNull();
   });
+
+  it("starts the Deezer lookup without waiting for MusicBrainz", async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let deezerStarted = false;
+    const saved = store();
+    const task = runEnrich({
+      userId: "user-1",
+      store: saved,
+      maxTracks: 1,
+      musicbrainz: {
+        name: "musicbrainz",
+        lookup: () => gate.then(() => ({
+          source: "musicbrainz" as const,
+          matched: true,
+          confidence: "high" as const,
+          sourceUrl: "https://musicbrainz.org/recording/abc",
+          tags: [],
+          bpm: null,
+          raw: {},
+        })),
+      },
+      deezer: {
+        name: "deezer",
+        lookup: async () => {
+          deezerStarted = true;
+          return hit(100);
+        },
+      },
+      emit: () => undefined,
+    });
+    try {
+      for (let i = 0; i < 20 && !deezerStarted; i += 1) await Promise.resolve();
+      expect(deezerStarted).toBe(true);
+    } finally {
+      release();
+      await task;
+    }
+  });
 });

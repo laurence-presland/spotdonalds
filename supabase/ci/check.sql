@@ -71,9 +71,9 @@ insert into spotdonalds.top_items (user_id, kind, time_range, rank, spotify_id)
 values ('00000000-0000-0000-0000-000000000001', 'track', 'short_term', 1, 'track-1')
 on conflict (user_id, kind, time_range, spotify_id) do update set rank = excluded.rank;
 
-insert into spotdonalds.analysis_runs (id, user_id, status, stage)
-values ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'complete', 'done')
-on conflict (id) do nothing;
+insert into spotdonalds.analysis_runs (id, user_id, status, stage, open)
+values ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'complete', 'done', false)
+on conflict (id) do update set open = false;
 
 insert into spotdonalds.track_enrichment (cache_key, spotify_track_id, matched)
 values ('track-1', 'track-1', true)

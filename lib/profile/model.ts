@@ -1,5 +1,5 @@
 import { gateway } from "@ai-sdk/gateway";
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { profileModelSchema } from "@/lib/profile/schema";
 
 export const DEFAULT_AI_MODEL = "google/gemini-2.5-flash";
@@ -12,16 +12,16 @@ export async function generateProfile(input: { system: string; prompt: string })
   object: unknown;
   usage: { inputTokens?: number; outputTokens?: number };
 }> {
-  const result = await generateObject({
+  const result = await generateText({
     model: gateway(aiModel()),
-    schema: profileModelSchema,
+    output: Output.object({ schema: profileModelSchema }),
     system: input.system,
     prompt: input.prompt,
     temperature: 0.2,
     maxRetries: 0,
   });
   return {
-    object: result.object,
+    object: result.output,
     usage: {
       inputTokens: result.usage.inputTokens,
       outputTokens: result.usage.outputTokens,

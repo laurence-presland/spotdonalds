@@ -91,6 +91,7 @@ Migrations, in order:
 5. `20261113124000_taste_profiles.sql` — one profile per run
 6. `20261113125000_orders.sql` — one order per run, and the genre-popularity cache
 7. `20261113126000_app_role.sql` — `spotdonalds_app` grants and per-table policies
+8. `20261113127000_run_lease.sql` — one open analysis run per person, and a short lease so a second start attaches to it
 
 ## Architecture
 
@@ -103,11 +104,11 @@ Landing → Welcome → Analysing → Results
 
 One authenticated route, `/app`, chooses the screen from `analysis_runs.stage`. The welcome is only for a brand-new sign-in (`/app?welcome=1` with no run yet).
 
-`POST /api/analyse` is one NDJSON stream. Each stage emits `{ "type": "stage", "stage": "..." }`. An endpoint's own `{ "type": "done" }` means that step finished. The pipeline `{ "type": "stage", "stage": "done" }` means the order was stored. HTTP streaming is enough: the browser already holds one long request, and a dropped connection resumes from the run checkpoint instead of needing a second socket.
+`POST /api/analyse` claims the person's open run and returns immediately. The pipeline keeps going in `after()`, so a refresh does not cancel it and does not start a second run. A partial unique index allows one open run per person, and a lease column stops a second request from driving the same run. The page polls `GET /api/runs` every couple of seconds for the stage, counts and errors. Supabase Realtime is not used. The order step runs only after a profile has been stored.
 
 Spotify tokens are stored in `spotify_tokens` at the callback, the only moment Supabase Auth exposes them, and read later over the direct Postgres connection. Catalogue tables are server-only. Each query for plays, top items, runs, a profile or an order is limited to that user's id.
 
-Enrichment asks MusicBrainz (at most one request a second) and Deezer, caches the result, and drops a track only when both miss. The Analysing list shows a track after that succeeds.
+Enrichment asks MusicBrainz (at most one request a second) and Deezer. Deezer calls run alongside MusicBrainz. A result is cached in `track_enrichment`, and a track is dropped only when both sources miss. The profile uses the top-ranked tracks first, then the newest plays, capped at 30 distinct tracks so the first enrichment stays around a minute.
 
 ## AI
 
@@ -117,7 +118,7 @@ Signals (`lib/signals`) cover tag mix, tempo, overlap, concentration, repeats, r
 
 Prompts are text files in `prompts/blocks/`, joined by `lib/prompts/build.ts` from `prompts/profile.v1.json`, `prompts/order.v1.json` and `prompts/popularity.v1.json`. Shared blocks are the same files for the profile and the order. Each stored profile and order keeps the template hash from before the placeholders are filled.
 
-The model is called with the Vercel AI SDK `generateObject` and a zod schema, through the AI Gateway (`AI_MODEL`, default `google/gemini-2.5-flash`). A second check rejects a citation that is not in the snapshot, a quoted number that does not match that signal, and any public sentence that mentions coverage or missing data. Failures are sent back, at most three attempts, then the run records a typed error and stores nothing.
+The model is called with the Vercel AI SDK `generateText` and `Output.object` (a zod schema), through the AI Gateway (`AI_MODEL`, default `google/gemini-2.5-flash`). A second check rejects a citation that is not in the snapshot, a quoted statistic that contradicts a cited signal, and any public sentence that mentions coverage or missing data. Small counts in prose, such as "3 artists" or "top 5", are not statistics. Failures are sent back on the next attempt, at most three attempts, then the run records a typed error and stores nothing.
 
 The order step maps tempo to a calorie budget, the energy score to beef or chicken, and a popularity tier (`niche`, `mid`, `mainstream`) to a dollar budget. The model picks item ids from the candidate set and may invent up to three `x-` rules. Code adds up calories and the indicative prices. `how_we_decided` is stored separately from the line justifications and is shown without citation chips. The confidence note is never shown.
 
@@ -125,7 +126,7 @@ The order step maps tempo to a calorie budget, the energy score to beef or chick
 
 - Recently played is one page, about 50 plays. There is no Spotify audio-features or popularity field in this app.
 - Coverage gaps are used inside the budget and the caveats. The screens do not mention them.
-- MusicBrainz is limited to one request a second, so a first run can take a few minutes. Later runs hit the cache.
+- MusicBrainz is limited to one request a second. Its ISRC endpoint returns 404 when that ISRC is not in MusicBrainz; that is not a User-Agent rejection (a bad User-Agent is 403). Spotify's development mode still returns ISRCs. A 404 falls back to a recording search by artist and title. Enrichment covers at most 30 tracks per run, and later runs reuse `track_enrichment`.
 - `price_aud` in the menu file is always null. The receipt uses indicative category prices in `lib/order/prices.ts`. They are not McDonald's prices.
 - About 31 menu items have no nutrition and are left out of the candidate set.
 - The `late-night` order tag has no listening-hour signal. The model may still apply the tag; nothing in the registry claims a time of day.

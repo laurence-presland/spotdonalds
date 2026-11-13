@@ -7,6 +7,7 @@ export function ingestStore(): IngestStore {
   return {
     async resumeOrCreate(userId, now) {
       const latest = await loadLatestRun(userId);
+      if (latest?.open !== false && latest?.status === "running") return latest;
       if (latest && latest.stage === "ingest" && latest.status !== "complete") return latest;
       return insertRun(userId, now);
     },

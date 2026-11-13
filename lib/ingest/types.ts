@@ -6,6 +6,8 @@ export type IngestCheckpoint = {
   top_tracks?: Partial<Record<Term, boolean>>;
   top_artists?: Partial<Record<Term, boolean>>;
   enrich?: boolean;
+  enrich_done?: number;
+  enrich_total?: number;
 };
 
 export type IngestCounts = {
@@ -27,6 +29,8 @@ export type RunRecord = {
   counts: IngestCounts;
   error: string | null;
   checkpoint: IngestCheckpoint;
+  open?: boolean;
+  heartbeat_at?: string | null;
 };
 
 export type IngestStore = {

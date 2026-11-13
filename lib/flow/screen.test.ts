@@ -9,8 +9,9 @@ describe("screen flow", () => {
     expect(screenForRun(null, false)).toBe("analysing");
     expect(screenForRun({ stage: "enrich", status: "running" }, true)).toBe("analysing");
     expect(screenForRun({ stage: "done", status: "complete" }, true)).toBe("results");
-    expect(screenForRun({ stage: "order", status: "error" }, false)).toBe("results");
-    expect(screenForRun({ stage: "ingest", status: "error" }, false)).toBe("analysing");
+    expect(screenForRun({ stage: "order", status: "error" }, false)).toBe("error");
+    expect(screenForRun({ stage: "profile", status: "error" }, false)).toBe("error");
+    expect(screenForRun({ stage: "ingest", status: "error" }, false)).toBe("error");
   });
 
   it("walks a scripted stream from ingest to done", () => {

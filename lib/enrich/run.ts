@@ -12,6 +12,7 @@ import { log } from "@/lib/log";
 import type { StreamEvent } from "@/lib/stream/events";
 
 const NEGATIVE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const DEEZER_CONCURRENCY = 6;
 
 export type EnrichProvider = {
   name: "musicbrainz" | "deezer";
@@ -51,9 +52,11 @@ export async function runEnrich(input: {
 
   const tracks = dedupe(await input.store.listTracks(input.userId));
   input.emit({ type: "enrich_start", total: tracks.length });
+  run.checkpoint = { ...run.checkpoint, enrich_done: 0, enrich_total: tracks.length };
   let processed = 0;
+  const pending: EnrichTrack[] = [];
   for (const track of tracks) {
-    if (input.maxTracks != null && processed >= input.maxTracks) break;
+    if (input.maxTracks != null && processed + pending.length >= input.maxTracks) break;
     if (input.timeBudgetMs != null && processed > 0 && now() - started >= input.timeBudgetMs) break;
     const key = cacheKey(track);
     const cached = await input.store.getCache(key);
@@ -63,21 +66,37 @@ export async function runEnrich(input: {
       input.emit({ type: "progress", done: processed, total: tracks.length, endpoint: "enrich" });
       continue;
     }
+    pending.push(track);
+  }
+  const deezerTasks = new Map<string, Promise<SourceHit>>();
+  const startDeezer = (track: EnrichTrack | undefined) => {
+    if (!track || deezerTasks.has(track.spotify_id)) return;
+    deezerTasks.set(track.spotify_id, safeLookup("deezer", () => input.deezer.lookup(track)));
+  };
+  for (const track of pending.slice(0, DEEZER_CONCURRENCY)) startDeezer(track);
+  for (let index = 0; index < pending.length; index += 1) {
+    const track = pending[index];
+    if (!track) continue;
+    if (input.timeBudgetMs != null && processed > 0 && now() - started >= input.timeBudgetMs) break;
+    startDeezer(pending[index + DEEZER_CONCURRENCY]);
     const musicbrainz = await safeLookup("musicbrainz", () => input.musicbrainz.lookup(track));
-    const deezer = await safeLookup("deezer", () => input.deezer.lookup(track));
+    const deezer = await (deezerTasks.get(track.spotify_id) ?? safeLookup("deezer", () => input.deezer.lookup(track)));
     const fetchedAt = new Date(now()).toISOString();
     const chosen = chooseEnrichment(musicbrainz, deezer, fetchedAt);
     if (!musicbrainz.matched || !deezer.matched) {
       log("info", "enrich.source", {
         user_id: input.userId,
+        run_id: run.id,
         track_id: track.spotify_id,
         musicbrainz: musicbrainz.error ?? (musicbrainz.matched ? "match" : "miss"),
         deezer: deezer.error ?? (deezer.matched ? "match" : "miss"),
       });
     }
-    await input.store.saveCache(cacheRow(track, key, chosen, musicbrainz, deezer, fetchedAt, now()));
+    await input.store.saveCache(cacheRow(track, cacheKey(track), chosen, musicbrainz, deezer, fetchedAt, now()));
     if (chosen) emitMatch(input.emit, track, chosen.failures);
     processed += 1;
+    run.checkpoint = { ...run.checkpoint, enrich_done: processed, enrich_total: tracks.length };
+    await input.store.saveRun(run);
     input.emit({ type: "progress", done: processed, total: tracks.length, endpoint: "enrich" });
   }
 
