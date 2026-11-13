@@ -63,13 +63,13 @@ function memoryStore(): IngestStore & {
         plays.set(`${userId}|${play.track.spotify_id}|${play.played_at}`, play);
       }
     },
-    async replaceTop(userId, kind, window, rows) {
+    async replaceTop(userId, kind, timeRange, rows) {
       for (const key of [...tops.keys()]) {
-        if (key.startsWith(`${userId}|${kind}|${window}|`)) tops.delete(key);
+        if (key.startsWith(`${userId}|${kind}|${timeRange}|`)) tops.delete(key);
       }
       for (const row of rows) {
         const id = row.track?.spotify_id ?? row.artist?.spotify_id ?? "";
-        tops.set(`${userId}|${kind}|${window}|${id}`, row);
+        tops.set(`${userId}|${kind}|${timeRange}|${id}`, row);
       }
     },
   };

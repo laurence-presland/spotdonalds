@@ -65,7 +65,7 @@ export async function runIngest(input: {
         await input.store.save(run);
         for (const row of rows) {
           if (!row.track) continue;
-          input.emit(trackEvent(row.track, { source: "top", window: term, rank: row.rank }));
+          input.emit(trackEvent(row.track, { source: "top", time_range: term, rank: row.rank }));
         }
       }
       done += 1;
@@ -88,7 +88,7 @@ export async function runIngest(input: {
             id: row.artist.spotify_id,
             name: row.artist.name,
             source: "top",
-            window: term,
+            time_range: term,
             rank: row.rank,
           });
         }
@@ -135,7 +135,7 @@ async function persistTracks(store: IngestStore, tracks: TrackRow[]) {
 
 function trackEvent(
   track: TrackRow,
-  extra: { source: "recent" | "top"; played_at?: string; window?: Term; rank?: number },
+  extra: { source: "recent" | "top"; played_at?: string; time_range?: Term; rank?: number },
 ): StreamEvent {
   return {
     type: "track",

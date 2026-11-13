@@ -82,7 +82,7 @@ function reduceEvent(state: AnalysingState, event: StreamEvent): AnalysingState 
       sources: [],
     };
     const source: TrackSource = event.source === "top"
-      ? { kind: "top-track", window: event.window ?? "short_term", rank: event.rank ?? 0 }
+      ? { kind: "top-track", time_range: event.time_range ?? "short_term", rank: event.rank ?? 0 }
       : { kind: "recent" };
     return {
       ...state,
@@ -94,7 +94,7 @@ function reduceEvent(state: AnalysingState, event: StreamEvent): AnalysingState 
   }
   if (event.type === "artist") {
     const artists = mergeArtists(state.artists, [
-      { id: event.id, name: event.name, window: event.window, rank: event.rank },
+      { id: event.id, name: event.name, time_range: event.time_range, rank: event.rank },
     ]);
     return { ...state, artists };
   }
@@ -131,8 +131,8 @@ function mergeTracks(current: VisibleTrack[], extra: VisibleTrack[]): VisibleTra
 }
 
 function mergeArtists(current: VisibleArtist[], extra: VisibleArtist[]): VisibleArtist[] {
-  const byId = new Map(current.map((artist) => [`${artist.id}:${artist.window}`, artist]));
-  for (const artist of extra) byId.set(`${artist.id}:${artist.window}`, artist);
+  const byId = new Map(current.map((artist) => [`${artist.id}:${artist.time_range}`, artist]));
+  for (const artist of extra) byId.set(`${artist.id}:${artist.time_range}`, artist);
   return [...byId.values()];
 }
 
@@ -140,7 +140,7 @@ function dedupeSources(sources: TrackSource[]): TrackSource[] {
   const seen = new Set<string>();
   const out: TrackSource[] = [];
   for (const source of sources) {
-    const key = source.kind === "recent" ? "recent" : `top:${source.window}:${source.rank}`;
+    const key = source.kind === "recent" ? "recent" : `top:${source.time_range}:${source.rank}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(source);

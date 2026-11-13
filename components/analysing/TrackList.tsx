@@ -14,12 +14,12 @@ export function TrackList({
   window: Term | "all";
 }) {
   if (tab === "top-artists") {
-    const artists = state.artists.filter((artist) => window === "all" || artist.window === window);
+    const artists = state.artists.filter((artist) => window === "all" || artist.time_range === window);
     if (artists.length === 0) return <p className="empty-list">Nothing in this tab yet.</p>;
     return (
       <ul className="track-list">
         {artists.map((artist) => (
-          <li key={`${artist.id}:${artist.window}`} className="track-row">
+          <li key={`${artist.id}:${artist.time_range}`} className="track-row">
             <span className="letter-tile" aria-hidden="true">
               {artist.name.charAt(0).toUpperCase()}
             </span>
@@ -29,7 +29,7 @@ export function TrackList({
             </div>
             <p className="track-album" />
             <p className="track-source">
-              Top · {windowName(artist.window)} · #{artist.rank}
+              Top · {windowName(artist.time_range)} · #{artist.rank}
             </p>
           </li>
         ))}
@@ -40,7 +40,7 @@ export function TrackList({
   const tracks = state.tracks.filter((track) => {
     if (tab === "recent") return track.sources.some((source) => source.kind === "recent");
     return track.sources.some(
-      (source) => source.kind === "top-track" && (window === "all" || source.window === window),
+      (source) => source.kind === "top-track" && (window === "all" || source.time_range === window),
     );
   });
   if (tracks.length === 0) return <p className="empty-list">Nothing in this tab yet.</p>;

@@ -11,6 +11,7 @@ describe("ingestion migration", () => {
     expect(sql).toMatch(/user_id = auth\.uid\(\)/);
     expect(sql).not.toMatch(/create table if not exists public\./i);
     expect(sql).toMatch(/primary key \(user_id, track_id, played_at\)/i);
-    expect(sql).toMatch(/primary key \(user_id, kind, window, spotify_id\)/i);
+    expect(sql).toMatch(/primary key \(user_id, kind, time_range, spotify_id\)/i);
+    expect(sql).not.toMatch(/\bwindow\b/);
   });
 });

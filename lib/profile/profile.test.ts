@@ -129,7 +129,7 @@ describe("runTasteProfile", () => {
             { id: "t3", artistIds: ["c"], releaseDate: null, explicit: true, tags: [], bpm: null, windows: [] },
           ],
           plays: [{ trackId: "t1" }],
-          topArtists: [{ id: "a", window: "long_term" as const }],
+          topArtists: [{ id: "a", time_range: "long_term" as const }],
         };
       },
     };

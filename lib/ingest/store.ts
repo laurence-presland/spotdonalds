@@ -102,21 +102,21 @@ export function supabaseIngestStore(): IngestStore {
         .upsert(rows, { onConflict: "user_id,track_id,played_at" });
       if (error) throw new Error(error.message);
     },
-    async replaceTop(userId, kind, window, rows) {
+    async replaceTop(userId, kind, timeRange, rows) {
       const supabase = db();
       const removed = await supabase
         .from("top_items")
         .delete()
         .eq("user_id", userId)
         .eq("kind", kind)
-        .eq("window", window);
+        .eq("time_range", timeRange);
       if (removed.error) throw new Error(removed.error.message);
       if (rows.length === 0) return;
       const inserted = await supabase.from("top_items").insert(
         rows.map((row) => ({
           user_id: userId,
           kind: row.kind,
-          window: row.window,
+          time_range: row.time_range,
           rank: row.rank,
           spotify_id: row.track?.spotify_id ?? row.artist?.spotify_id,
           raw: row.raw,

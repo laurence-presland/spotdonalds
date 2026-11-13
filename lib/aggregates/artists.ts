@@ -3,13 +3,13 @@ import type { Term } from "@/lib/stream/events";
 export type WindowArtist = {
   id: string;
   name: string;
-  window: Term;
+  time_range: Term;
   rank: number;
 };
 
 export type WindowItem = {
   id: string;
-  window: Term;
+  time_range: Term;
 };
 
 const WINDOWS: Term[] = ["short_term", "medium_term", "long_term"];
@@ -19,7 +19,7 @@ export function topArtistsByWindow(artists: WindowArtist[]): Record<Term, Window
     Term,
     WindowArtist[]
   >;
-  for (const artist of artists) grouped[artist.window].push(artist);
+  for (const artist of artists) grouped[artist.time_range].push(artist);
   for (const window of WINDOWS) grouped[window].sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name));
   return grouped;
 }
@@ -35,7 +35,7 @@ function shared(items: WindowItem[]): string[] {
   const windows = new Map<string, Set<Term>>();
   for (const item of items) {
     const set = windows.get(item.id) ?? new Set<Term>();
-    set.add(item.window);
+    set.add(item.time_range);
     windows.set(item.id, set);
   }
   return [...windows.entries()]

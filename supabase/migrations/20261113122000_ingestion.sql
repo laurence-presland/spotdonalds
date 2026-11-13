@@ -41,11 +41,11 @@ create table if not exists spotdonalds.plays (
 create table if not exists spotdonalds.top_items (
   user_id uuid not null references auth.users (id) on delete cascade,
   kind text not null check (kind in ('track', 'artist')),
-  window text not null check (window in ('short_term', 'medium_term', 'long_term')),
+  time_range text not null check (time_range in ('short_term', 'medium_term', 'long_term')),
   rank integer not null,
   spotify_id text not null,
   raw jsonb not null default '{}'::jsonb,
-  primary key (user_id, kind, window, spotify_id)
+  primary key (user_id, kind, time_range, spotify_id)
 );
 
 create table if not exists spotdonalds.analysis_runs (

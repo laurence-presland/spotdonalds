@@ -75,9 +75,11 @@ supabase link --project-ref svukzdmlzjebdizvulku
 supabase db push
 ```
 
-Then add `spotdonalds` to the project's exposed Data API schemas (Supabase dashboard, Project Settings, API, Exposed schemas). The server queries that schema explicitly. Do not apply these migrations to `public`.
+Expose `spotdonalds` in the Data API (Supabase dashboard, Project Settings, API, Exposed schemas). Every server read and write goes through supabase-js with `db: { schema: 'spotdonalds' }` in `lib/supabase/admin.ts`, and PostgREST hides the schema until it is exposed. The browser auth client does not query these tables. Do not apply these migrations to `public`.
 
 `GET /api/health` returns `{ "ok": true }` only when it can read `spotdonalds.healthcheck`.
+
+`scripts/apply-migrations.sh` loads `supabase/ci/auth-stub.sql` and then applies these files twice. CI runs that script against Postgres 15. The stub is only for that check. Do not apply it to the hosted project.
 
 Migrations, in order:
 

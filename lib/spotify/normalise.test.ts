@@ -38,7 +38,7 @@ describe("normalise", () => {
   it("ranks top tracks and artists per window and keeps unreliable artist genres", () => {
     const tracks = normaliseTopTracks(topTracksPayload, "short_term");
     expect(tracks.map((row) => row.rank)).toEqual([1, 2]);
-    expect(tracks[0]?.window).toBe("short_term");
+    expect(tracks[0]?.time_range).toBe("short_term");
     const artists = normaliseTopArtists(topArtistsPayload, "long_term");
     expect(artists[0]?.artist).toMatchObject({
       spotify_id: "artist-1",
