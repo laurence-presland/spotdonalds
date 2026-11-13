@@ -26,13 +26,13 @@ The menu is drink-heavy (112 McCafé drinks plus 52 cold/frozen drinks and 20 sh
 - Re-scraping the site as part of this ticket unless the refresh script is chosen.
 
 ## Acceptance criteria
-- [ ] `data/menu/menu.json` validates against `data/menu/menu.schema.json` in CI.
-- [ ] Types for menu items exist and the loader returns typed, validated data; invalid data fails loudly at startup/test, not silently.
-- [ ] Item ids are unique, and a test asserts the item count and the share of items with nutrition against the committed file's metadata.
-- [ ] Every menu item's `tag_ids` come only from `data/order-tags.json`, assigned by the rules file, and the same input gives the same tags (tested).
-- [ ] The candidate-set function never returns items without nutrition, caps drinks, and is deterministic for the same input (tested).
-- [ ] `data/menu/SOURCES.md` documents the known gaps (no prices, ~31 items without nutrition tables, milk alternatives, withdrawn limited-time items) and the retrieval date.
-- [ ] The refresh approach (script or documented snapshot) is written down and linked from the main README.
+- [x] `data/menu/menu.json` validates against `data/menu/menu.schema.json` in CI.
+- [x] Types for menu items exist and the loader returns typed, validated data; invalid data fails loudly at startup/test, not silently.
+- [x] Item ids are unique, and a test asserts the item count and the share of items with nutrition against the committed file's metadata.
+- [x] Every menu item's `tag_ids` come only from `data/order-tags.json`, assigned by the rules file, and the same input gives the same tags (tested).
+- [x] The candidate-set function never returns items without nutrition, caps drinks, and is deterministic for the same input (tested).
+- [x] `data/menu/SOURCES.md` documents the known gaps (no prices, ~31 items without nutrition tables, milk alternatives, withdrawn limited-time items) and the retrieval date.
+- [x] The refresh approach (script or documented snapshot) is written down and linked from the main README.
 
 ## Technical notes
 - `energy_kcal` is the published figure, never derived from kJ in this dataset; keep that invariant if the refresh script is built.
