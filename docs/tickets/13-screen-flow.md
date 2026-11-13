@@ -39,16 +39,16 @@ The welcome exists to cover ingestion start-up latency, not to delay the user. R
 - A separate URL tree for every screen unless it falls out naturally; a single authenticated route that picks the screen from run status is enough.
 
 ## Acceptance criteria
-- [ ] An unauthenticated user only ever sees the landing page.
-- [ ] After a successful allowlisted login, the pipeline starts without a further click, the welcome appears, then fades out to Analysing, which is already running underneath (rows that arrived during the welcome are visible as it fades).
-- [ ] The welcome copy is exactly "Please drive through...", the three dots appear one at a time, and there is no skip control.
-- [ ] The welcome lasts about 3 seconds regardless of how fast rows arrive, then fades out. With `prefers-reduced-motion` forced, the dots and fade don't animate and the screen swaps after the hold.
-- [ ] The bar on Analysing and Results is the yellow wordmark only. On Results, Back sits under that bar, above the order, on the left, and returns to Analysing without starting a new run.
-- [ ] Reloading mid-run returns to Analysing, not Welcome, and the list resumes from persisted data.
-- [ ] Reloading after a completed run goes straight to Results, with no welcome and without starting a new run.
-- [ ] Results shows the order as the hero. Beside it, a card reads "We think you're a", the persona name, how we decided, and a primary "Regenerate order" button. Below that: taste insights and traits, and aggregates. There is no track list on Results.
-- [ ] The client can tell the current pipeline stage from the run record and from `stage` events (tested with a scripted stream: ingest → enrich → profile → order → done).
-- [ ] If order generation fails after the profile has been stored, the user is not trapped on Analysing: they reach Results with the order hero in an error/retry state.
+- [x] An unauthenticated user only ever sees the landing page.
+- [x] After a successful allowlisted login, the pipeline starts without a further click, the welcome appears, then fades out to Analysing, which is already running underneath (rows that arrived during the welcome are visible as it fades).
+- [x] The welcome copy is exactly "Please drive through...", the three dots appear one at a time, and there is no skip control.
+- [x] The welcome lasts about 3 seconds regardless of how fast rows arrive, then fades out. With `prefers-reduced-motion` forced, the dots and fade don't animate and the screen swaps after the hold.
+- [x] The bar on Analysing and Results is the yellow wordmark only. On Results, Back sits under that bar, above the order, on the left, and returns to Analysing without starting a new run.
+- [x] Reloading mid-run returns to Analysing, not Welcome, and the list resumes from persisted data.
+- [x] Reloading after a completed run goes straight to Results, with no welcome and without starting a new run.
+- [x] Results shows the order as the hero. Beside it, a card reads "We think you're a", the persona name, how we decided, and a primary "Regenerate order" button. Below that: taste insights and traits, and aggregates. There is no track list on Results.
+- [x] The client can tell the current pipeline stage from the run record and from `stage` events (tested with a scripted stream: ingest → enrich → profile → order → done).
+- [x] If order generation fails after the profile has been stored, the user is not trapped on Analysing: they reach Results with the order hero in an error/retry state.
 - [ ] The flow works at 360px and desktop widths and the transitions pass an automated accessibility check (including reduced motion and focus after a screen change).
 
 ## Technical notes
