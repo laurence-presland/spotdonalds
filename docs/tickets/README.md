@@ -9,7 +9,7 @@ Spotify is the only connected service. The user signs in with Spotify, we pull t
 The product is four screens:
 
 1. **Landing** (unauthenticated): the wordmark, the slogan "Your Spotify taste assembled as a drive-through order.", and a "Log in with Spotify" button. No icon and no line about which data is read. A not-allowlisted user still gets the friendly 403 screen.
-2. **Welcome** (after login): one line, "Please drive through...", covering ingestion start-up latency, then out into Analysing. No skip control. Honours `prefers-reduced-motion`.
+2. **Welcome** (after login): one line, "Please drive through", with the dots appearing one by one. It holds for about 3 seconds while ingestion starts, then fades out to reveal Analysing, already running underneath. No skip control. Honours `prefers-reduced-motion`.
 3. **Analysing** (loading screen): the heading "Analysing your listening history", three stages (Reading your history, Analysing your taste, Assembling your order), and the track list. A track appears only once it has been enriched. A track we can't enrich is dropped and never shown. Stays up through taste profile and order generation.
 4. **Results**: the drive-thru order as the hero, plus the taste profile, aggregate data, and an LLM-generated "how we decided your order" explanation. Back returns to Analysing. A completed run reloads straight here; an in-progress run rejoins Analysing.
 
@@ -59,7 +59,7 @@ The order is the hero of Results, so if time runs short, **simplify the order ra
 
 - **Must have:** 01, 02, 03, 04 (MusicBrainz only is acceptable), 05, 06 (a reduced version is fine, but the aggregation module is needed by 07), 07, 08, 09, 10, 11, 13 (the four-screen flow and Results with the order as hero), 12.
 - **Should have:** 04 Deezer BPM, the full 06 charts, a more polished welcome fade.
-- **If time is short:** fewer rules and a smaller candidate set in 10, a simpler receipt in 11, and a tighter Results layout (order and profile first; aggregates more compact). A basic welcome (the one line, reduced-motion safe) is enough. Don't move the order feature to future work.
+- **If time is short:** fewer rules and a smaller candidate set in 10, a simpler receipt in 11, and a tighter Results layout (order and profile first; aggregates more compact). A basic welcome (the one line on a fixed ~3s hold, reduced-motion safe) is enough. Don't move the order feature to future work.
 
 ## Future work (collected here, goes into the README in 12)
 
