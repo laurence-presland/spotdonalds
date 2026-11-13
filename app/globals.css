@@ -406,6 +406,113 @@ a {
   padding-left: 1.2rem;
 }
 
+.profile-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+}
+
+.profile-card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+}
+
+.insights,
+.trait-bars {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.insight p,
+.trait-why,
+.trait-sources {
+  margin: 0;
+}
+
+.trait-sources,
+.trait-why {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.signal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.45rem;
+}
+
+.signal-chip {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  background: var(--cream);
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 0.85rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+}
+
+.trait-bars li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.2rem 0.75rem;
+}
+
+.trait-name {
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.trait-score {
+  font-weight: 800;
+}
+
+.trait-track {
+  grid-column: 1 / -1;
+  height: 0.45rem;
+  background: var(--track);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.trait-track span {
+  display: block;
+  height: 100%;
+  background: var(--yellow);
+}
+
+.trait-why,
+.trait-sources {
+  grid-column: 1 / -1;
+}
+
+.trait-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.trait-table th,
+.trait-table td {
+  text-align: left;
+  padding: 0.25rem 0.4rem;
+  border-bottom: 1px solid var(--line);
+  text-transform: capitalize;
+}
+
+.button-quiet {
+  background: transparent;
+  color: var(--ink);
+  border: 2px solid var(--charcoal);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

@@ -24,10 +24,10 @@ First generation is automatic, as part of the analysis pipeline (13). This ticke
 - Image generation of the profile (future work).
 
 ## Acceptance criteria
-- [ ] The profile section renders 2-3 insights and traits from the stored profile. The persona name is not repeated in this section.
-- [ ] Each insight shows its cited signals with correct values from the stored signals snapshot.
-- [ ] Clicking or focusing a cited signal chip navigates to the related aggregate section.
-- [ ] A profile that includes caveats does not render them, and there is no "how this was made" panel.
+- [x] The profile section renders 2-3 insights and traits from the stored profile. The persona name is not repeated in this section.
+- [x] Each insight shows its cited signals with correct values from the stored signals snapshot.
+- [x] Clicking or focusing a cited signal chip navigates to the related aggregate section.
+- [x] A profile that includes caveats does not render them, and there is no "how this was made" panel.
 - [ ] Charts have text alternatives and the card passes an automated accessibility check.
 - [ ] Renders correctly at 360px width and at desktop width, both on its own and in the Results layout.
 

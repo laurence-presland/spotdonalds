@@ -32,6 +32,7 @@ export type ProfileStore = {
   saveRun(run: RunRecord): Promise<void>;
   getProfile(runId: string): Promise<StoredProfile | null>;
   saveProfile(profile: StoredProfile): Promise<void>;
+  deleteProfile(runId: string): Promise<void>;
   loadListening(userId: string): Promise<ListeningInput>;
 };
 
@@ -48,6 +49,7 @@ export async function runTasteProfile(input: {
   complete: ProfileCompletion;
   emit: (event: StreamEvent) => void;
   log?: typeof writeLog;
+  force?: boolean;
 }): Promise<StoredProfile> {
   const record = writeLogOr(input.log);
   const run = await input.store.latestRun(input.userId);
@@ -57,10 +59,11 @@ export async function runTasteProfile(input: {
   }
   const existing = await input.store.getProfile(run.id);
   input.emit({ type: "stage", stage: "profile" });
-  if (existing) {
+  if (existing && !input.force) {
     input.emit({ type: "done", stage: "profile" });
     return existing;
   }
+  if (existing) await input.store.deleteProfile(run.id);
 
   run.stage = "profile";
   run.status = "running";
