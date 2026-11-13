@@ -6,7 +6,7 @@
 For each ingested track, look up the metadata Spotify no longer gives us (genre/tags, BPM, and a little more) from real databases, record exactly where every value came from, cache it, and stream progress to the client. The LLM plays no part here.
 
 ## Context
-This is the slowest stage, which is why it streams and persists as it goes. Sources, in order:
+This is the slowest stage, which is why it streams and persists as it goes. It is the second stage of the analysis pipeline (ingest → enrich → profile → order), and the analysing screen (05) stays up through it. Sources, in order:
 1. **MusicBrainz** by ISRC: `GET https://musicbrainz.org/ws/2/isrc/{ISRC}?inc=tags+artist-credits&fmt=json`. Rate limit is 1 request per second and a meaningful `User-Agent` (app name, version, contact) is required. Tags are community data under CC BY-NC-SA, so attribution is needed in the UI and README.
 2. **Deezer** by ISRC: `GET https://api.deezer.com/track/isrc:{ISRC}` for `bpm` (0 means unknown, treat as missing) and `gain`, plus a preview URL and other useful fields if present.
 
@@ -19,14 +19,15 @@ Discogs and web-search gap-fill are explicitly out of scope and listed as future
 - ISRC-first matching, with a fallback to artist + title search when the ISRC is missing or unmatched, flagged as lower confidence.
 - Global rate limiter honouring MusicBrainz's 1 req/s across concurrent invocations for the same user and run (a simple per-run queue is acceptable; note cross-user limits as a known limitation).
 - Cache by ISRC (table `track_enrichment`) so a track seen before is never looked up again, across users and runs. Negative results are cached too, with a shorter TTL.
-- `POST /api/enrich` (Node runtime): streams NDJSON events using the shared schema from 03 (`enrich_start`, `enrich_result`, `progress`, `done`, `error`), processes unenriched tracks for the user's latest run, and is resumable.
+- `POST /api/enrich` (Node runtime): streams NDJSON events using the shared schema from 03 (`enrich_start`, `enrich_result`, `progress`, `done`, `error`, `stage`), processes unenriched tracks for the user's latest run, and is resumable. Emit a `stage` event and update the run record when this stage starts and when it finishes. Endpoint-level `done` means enrichment finished, not that the whole pipeline is finished.
 - Retry/backoff for 429/503 from either source; failure of one source does not fail the other.
 
 ## Out of scope
 - Discogs, web search or any LLM-based lookup (future work).
 - Artist-level genre data from Spotify (deprecated, unreliable).
-- UI (05 and 06).
+- UI (05, 06, 13).
 - Popularity / mainstreamness metrics (future work).
+- Starting the taste profile or order stages (07, 10, 13).
 
 ## Acceptance criteria
 - [ ] For a track with a valid ISRC known to MusicBrainz, tags are stored with source `musicbrainz`, a `source_url` to the recording, and a confidence value.
@@ -35,6 +36,7 @@ Discogs and web-search gap-fill are explicitly out of scope and listed as future
 - [ ] MusicBrainz requests never exceed 1/s and always send the configured `User-Agent` (test with a fake clock).
 - [ ] A second run over the same tracks makes zero external requests (cache hit), verified in a test.
 - [ ] Stream events arrive progressively and the endpoint can be interrupted and resumed without redoing completed tracks.
+- [ ] The run record's `stage` reflects enrichment while this endpoint is working, and is updated when it finishes.
 - [ ] One source being down (simulated 503) still yields results from the other, and the failure is recorded in the event stream and logs.
 - [ ] Matching and chosen-value logic have unit tests with recorded MusicBrainz and Deezer fixtures, including the ISRC-missing fallback.
 - [ ] Attribution text for MusicBrainz data is available for the UI to render.

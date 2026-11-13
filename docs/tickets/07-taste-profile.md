@@ -10,6 +10,8 @@ The brief calls the AI insight "the heart of the exercise" and asks us to show o
 
 Signals available at this stage are limited by what Spotify and our enrichment sources provide (no audio features, no reliable popularity), so the profile is built on what we can ground.
 
+This is the third stage of the analysis pipeline (ingest → enrich → profile → order). It runs automatically once enrichment is complete; the user stays on the Analysing screen until the later stages finish (13). The McDonald's order (10) reads this profile. The profile UI lives on the Results screen, not as a page of its own (08, 13).
+
 ## In scope
 - `lib/signals`: builds on `lib/aggregates` (06) to produce a typed `TasteSignals` object:
   - genre/tag mix (top tags with shares) and genre diversity (for example normalised Shannon entropy),
@@ -24,11 +26,11 @@ Signals available at this stage are limited by what Spotify and our enrichment s
 - Prompt design: system prompt that states the rules (use only the supplied signals, cite keys, don't invent artists/genres/numbers, acknowledge low coverage), plus the signals as structured JSON input.
 - Use the AI SDK's structured output (`generateObject` or equivalent) with the schema, via an AI Gateway or provider key configured by env.
 - Post-validation: every cited key exists in the signals; any number quoted in an insight must match the cited signal (simple check on formatted values); traits within range; otherwise retry (bounded), then fail with a clear error.
-- `POST /api/taste-profile`: computes signals, calls the model, validates, stores the result with the signals snapshot and prompt version (table `taste_profiles`), returns it. Cached per run so reloads don't re-bill.
+- `POST /api/taste-profile`: computes signals, calls the model, validates, stores the result with the signals snapshot and prompt version (table `taste_profiles`), returns it. Cached per run so reloads don't re-bill. Emit a `stage` event and update the run record when this stage starts and when it finishes.
 - Fixtures and an evaluation test: a few signal fixtures (high BPM / narrow genres, low coverage, very diverse) with assertions on schema validity, citation validity and that low-coverage input produces a caveat. Model calls stubbed in unit tests; one optional live eval script run manually.
 
 ## Out of scope
-- UI (08).
+- UI (08) and screen flow (13).
 - McDonald's anything (09-11).
 - Web search, Discogs and popularity metrics (future work).
 - Fine-tuning or embeddings.
@@ -41,6 +43,7 @@ Signals available at this stage are limited by what Spotify and our enrichment s
 - [ ] A quoted statistic that disagrees with its cited signal causes a validation failure and retry (tested with a deliberately wrong stub).
 - [ ] With low enrichment coverage, the profile includes a caveat and does not make claims about the missing signal (checked in the eval fixtures).
 - [ ] The profile is cached per run and a repeat call doesn't hit the model.
+- [ ] The run record's `stage` reflects this stage while the endpoint is working, and is updated when it finishes.
 - [ ] Token usage, latency and retry count are logged per call.
 - [ ] API keys are env-only and listed in `.env.example`.
 
