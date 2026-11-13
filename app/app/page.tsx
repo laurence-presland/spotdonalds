@@ -4,6 +4,7 @@ import { DriveThrough } from "@/components/flow/DriveThrough";
 import { ResultsScreen } from "@/components/flow/ResultsScreen";
 import { RunError } from "@/components/flow/RunError";
 import { analysisErrorCopy } from "@/lib/analyse/progress";
+import { ensureAnalysisJob } from "@/lib/analyse/start";
 import { safeDbMessage } from "@/lib/db";
 import { screenForRun } from "@/lib/flow/screen";
 import { log } from "@/lib/log";
@@ -43,7 +44,7 @@ export default async function ProtectedHome({
       />
     );
   }
-  return <DriveThrough welcome={loaded.kind === "welcome"} />;
+  return <DriveThrough welcome={loaded.kind === "welcome"} autostart={loaded.kind === "welcome"} />;
 }
 
 async function loadScreen(userId: string, welcome: boolean) {
@@ -57,6 +58,13 @@ async function loadScreen(userId: string, welcome: boolean) {
     if (screen === "results" && run) {
       const results = await loadResults(userId);
       if (results) return { kind: "results" as const, results };
+    }
+    if (run?.status === "running") {
+      try {
+        await ensureAnalysisJob(userId, run.id);
+      } catch (error) {
+        log("error", "analyse.start_failed", { message: safeDbMessage(error), run_id: run.id });
+      }
     }
     return { kind: screen === "welcome" ? "welcome" as const : "analysing" as const };
   } catch (error) {

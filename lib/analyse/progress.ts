@@ -1,10 +1,11 @@
+import { heartbeatExpired, jobAction } from "@/lib/analyse/machine";
 import type { IngestCheckpoint, RunRecord } from "@/lib/ingest/types";
 
 export const LEASE_STALE_MS = 30_000;
 
 export type RunClaim = "attach" | "reopen" | "finished" | "idle" | "insert";
 
-export type PipelineStep = "ingest" | "enrich" | "profile" | "order" | "stop";
+export type PipelineStep = "ingest" | "enrich" | "profile" | "popularity" | "order" | "stop";
 
 export function decideClaim(
   run: { status: string; stage: string; open?: boolean } | null,
@@ -20,14 +21,15 @@ export function decideClaim(
 }
 
 export function nextPipelineStep(
-  run: { status: string; stage: string; checkpoint: Pick<IngestCheckpoint, "enrich"> },
+  run: { status: string; stage: string; checkpoint: IngestCheckpoint },
   profileSaved: boolean,
 ): PipelineStep {
-  if (run.status === "error" || run.stage === "done") return "stop";
-  if (run.stage === "ingest" && run.status !== "complete") return "ingest";
-  if (!run.checkpoint.enrich) return "enrich";
-  if (!profileSaved) return "profile";
-  return "order";
+  const action = jobAction(run, {
+    profile: profileSaved || Boolean(run.checkpoint.profile),
+    popularity: Boolean(run.checkpoint.popularity),
+    order: false,
+  });
+  return action.type === "work" ? action.stage : "stop";
 }
 
 export function analysisErrorCopy(error: string | null | undefined): string {
@@ -38,9 +40,7 @@ export function analysisErrorCopy(error: string | null | undefined): string {
 }
 
 export function isHeartbeatStale(heartbeatAt: string | null | undefined, now: number, staleMs = LEASE_STALE_MS): boolean {
-  if (!heartbeatAt) return true;
-  const at = Date.parse(heartbeatAt);
-  return !Number.isFinite(at) || now - at > staleMs;
+  return heartbeatExpired(heartbeatAt, now, staleMs);
 }
 
 export function runStatus(run: RunRecord | null) {

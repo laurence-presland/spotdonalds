@@ -74,6 +74,7 @@ export async function runOrder(input: {
   const existing = await input.store.getOrder(input.userId, run.id);
   input.emit({ type: "stage", stage: "order" });
   if (existing && !input.force) {
+    await finishRun(input, run);
     input.emit({ type: "stage", stage: "done" });
     return existing;
   }
@@ -87,23 +88,21 @@ export async function runOrder(input: {
   run.stage = "order";
   run.status = "running";
   run.error = null;
+  run.finished_at = null;
   await input.store.saveRun(run);
 
   const rules = loadOrderRules();
   const candidates = input.candidates ?? orderCandidates();
-  const popularityPrompt = buildPrompt("popularity.v1");
-  const tagsKey = JSON.stringify(profile.signals["tags.top"]);
-  let popularity = await input.store.getPopularity(tagsKey);
-  if (!popularity || popularity.prompt_hash !== popularityPrompt.hash) {
-    try {
-      popularity = await callPopularity(input, record, popularityPrompt.text, popularityPrompt.hash, tagsKey, profile);
-    } catch (error) {
-      run.status = "error";
-      run.error = error instanceof Error ? error.message : "popularity_invalid";
-      await input.store.saveRun(run);
-      input.emit({ type: "error", code: "order_invalid", message: "The order didn't pass checking." });
-      throw error;
-    }
+  let popularity: { popularity_tier: PopularityTier; reason: string; prompt_hash: string };
+  try {
+    popularity = await resolvePopularity(input, record, run.id, profile);
+  } catch (error) {
+    run.status = "error";
+    run.stage = "popularity";
+    run.error = error instanceof Error ? error.message : "popularity_invalid";
+    await input.store.saveRun(run);
+    input.emit({ type: "error", code: "order_invalid", message: "The order didn't pass checking." });
+    throw error;
   }
   const budget = orderBudget({
     signals: profile.signals,
@@ -181,7 +180,7 @@ export async function runOrder(input: {
         rules_version: rules.version,
         prompt_version: orderPrompt.version,
         prompt_hash: orderPrompt.hash,
-        popularity_prompt_hash: popularityPrompt.hash,
+        popularity_prompt_hash: popularity.prompt_hash,
         menu_retrieved_at: loadMenu().metadata.retrieved_at,
       };
       await input.store.saveOrder(stored);
@@ -210,6 +209,62 @@ export async function runOrder(input: {
   throw new Error(run.error || "order_invalid");
 }
 
+export async function runPopularity(input: {
+  userId: string;
+  store: OrderStore;
+  complete: OrderCompletion;
+  emit: (event: StreamEvent) => void;
+  log?: typeof writeLog;
+}): Promise<void> {
+  const record = input.log ?? writeLog;
+  const run = await input.store.latestRun(input.userId);
+  if (!run) throw new Error("no_run");
+  if (run.status === "error") throw new Error(run.error || "profile_failed");
+  if (run.checkpoint.popularity) return;
+  const profile = await input.store.getProfile(input.userId, run.id);
+  if (!profile) throw new Error("no_profile");
+  run.stage = "popularity";
+  run.status = "running";
+  run.error = null;
+  run.finished_at = null;
+  await input.store.saveRun(run);
+  try {
+    await resolvePopularity(input, record, run.id, profile);
+  } catch (error) {
+    run.status = "error";
+    run.stage = "popularity";
+    run.error = error instanceof Error ? error.message : "popularity_invalid";
+    await input.store.saveRun(run);
+    throw error;
+  }
+  run.checkpoint = { ...run.checkpoint, popularity: true };
+  run.status = "running";
+  run.finished_at = null;
+  await input.store.saveRun(run);
+}
+
+async function finishRun(input: { store: OrderStore }, run: RunRecord): Promise<void> {
+  if (run.stage === "done" && run.status === "complete" && run.finished_at) return;
+  run.stage = "done";
+  run.status = "complete";
+  run.error = null;
+  run.finished_at = new Date().toISOString();
+  await input.store.saveRun(run);
+}
+
+async function resolvePopularity(
+  input: { userId: string; store: OrderStore; complete: OrderCompletion },
+  record: typeof writeLog,
+  runId: string,
+  profile: StoredProfile,
+): Promise<{ popularity_tier: PopularityTier; reason: string; prompt_hash: string }> {
+  const popularityPrompt = buildPrompt("popularity.v1");
+  const tagsKey = JSON.stringify(profile.signals["tags.top"]);
+  const cached = await input.store.getPopularity(tagsKey);
+  if (cached && cached.prompt_hash === popularityPrompt.hash) return cached;
+  return callPopularity(input, record, popularityPrompt.text, popularityPrompt.hash, tagsKey, profile, runId);
+}
+
 async function callPopularity(
   input: { userId: string; store: OrderStore; complete: OrderCompletion },
   record: typeof writeLog,
@@ -217,6 +272,7 @@ async function callPopularity(
   hash: string,
   tagsKey: string,
   profile: StoredProfile,
+  runId: string,
 ): Promise<{ popularity_tier: PopularityTier; reason: string; prompt_hash: string }> {
   let errors: string[] = [];
   for (let attempt = 1; attempt <= ATTEMPTS; attempt += 1) {
@@ -229,6 +285,7 @@ async function callPopularity(
     const checked = validatePopularity(result.object);
     record("info", "order.popularity", {
       user_id: input.userId,
+      run_id: runId,
       attempt,
       retry_count: attempt - 1,
       latency_ms: Date.now() - started,

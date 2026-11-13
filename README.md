@@ -92,19 +92,20 @@ Migrations, in order:
 6. `20261113125000_orders.sql` — one order per run, and the genre-popularity cache
 7. `20261113126000_app_role.sql` — `spotdonalds_app` grants and per-table policies
 8. `20261113127000_run_lease.sql` — one open analysis run per person, and a short lease so a second start attaches to it
+9. `20261113128000_run_job.sql` — `attempts`, `workflow_id`, and a `popularity` stage
 
 ## Architecture
 
 ```text
 Landing → Welcome → Analysing → Results
-                \_________________/
-                 POST /api/analyse
-                 ingest → enrich → profile → order
+                         |
+                         GET /api/runs
+                 ingest → enrich → profile → popularity → order → done
 ```
 
-One authenticated route, `/app`, chooses the screen from `analysis_runs.stage`. The welcome is only for a brand-new sign-in (`/app?welcome=1` with no run yet).
+One authenticated route, `/app`, chooses the screen from `analysis_runs`. The welcome is only for a brand-new sign-in (`/app?welcome=1` with no run yet). The state machine is [docs/adr/001-analysis-job.md](docs/adr/001-analysis-job.md).
 
-`POST /api/analyse` claims the person's open run and returns immediately. The pipeline keeps going in `after()`, so a refresh does not cancel it and does not start a second run. A partial unique index allows one open run per person, and a lease column stops a second request from driving the same run. The page polls `GET /api/runs` every couple of seconds for the stage, counts and errors. Supabase Realtime is not used. The order step runs only after a profile has been stored.
+`POST /api/analyse` creates a run, retries a failed one (`?retry=1`), or closes it and starts another (`?fresh=1`). A Vercel Workflow then runs each stage as its own step. The page polls `GET /api/runs` and does not POST again while the run is open. A partial unique index allows one open run per person. A run with no heartbeat for 3 minutes is marked failed, and the next page load of a running row with no live worker starts the workflow from the last finished stage. Supabase Realtime is not used.
 
 Spotify tokens are stored in `spotify_tokens` at the callback, the only moment Supabase Auth exposes them, and read later over the direct Postgres connection. Catalogue tables are server-only. Each query for plays, top items, runs, a profile or an order is limited to that user's id.
 

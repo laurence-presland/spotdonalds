@@ -8,6 +8,7 @@ describe("accessDecision", () => {
     expect(accessDecision("/api/health", false)).toBe("allow");
     expect(accessDecision("/auth/login", false)).toBe("allow");
     expect(accessDecision("/auth/callback", false)).toBe("allow");
+    expect(accessDecision("/.well-known/workflow/v1/flow", false)).toBe("allow");
   });
 
   it("redirects anonymous visitors away from protected pages and rejects their API calls", () => {
