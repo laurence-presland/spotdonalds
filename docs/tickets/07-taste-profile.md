@@ -23,7 +23,7 @@ This is the third stage of the analysis pipeline (ingest → enrich → profile 
   - explicit-content share.
   Each signal has a stable key (for example `bpm.mean`) and a value, so the model can cite it.
 - A `TasteProfile` output schema (zod): `persona_name`, `tagline`, `insights[]` (2-3 items, each `{text, cites: signalKey[]}`), `traits[]` (name, score 0-100, `cites`), and `caveats[]` where signals are weak.
-- Prompt design: system prompt that states the rules (use only the supplied signals, cite keys, don't invent artists/genres/numbers, acknowledge low coverage), plus the signals as structured JSON input.
+- Prompt design: system prompt that states the rules (use only the supplied signals, cite keys, don't invent artists/genres/numbers, and never mention missing data, coverage, unlabeled tracks, or a smaller sample in persona, tagline, or insights), plus the signals as structured JSON input.
 - Use the AI SDK's structured output (`generateObject` or equivalent) with the schema, via an AI Gateway or provider key configured by env.
 - Post-validation: every cited key exists in the signals; any number quoted in an insight must match the cited signal (simple check on formatted values); traits within range; otherwise retry (bounded), then fail with a clear error.
 - `POST /api/taste-profile`: computes signals, calls the model, validates, stores the result with the signals snapshot and prompt version (table `taste_profiles`), returns it. Cached per run so reloads don't re-bill. Emit a `stage` event and update the run record when this stage starts and when it finishes.
@@ -41,7 +41,7 @@ This is the third stage of the analysis pipeline (ingest → enrich → profile 
 - [ ] Output always parses against the schema or the endpoint returns a typed error after bounded retries.
 - [ ] Every `cites` key in a stored profile exists in the signals snapshot (enforced in code and tested).
 - [ ] A quoted statistic that disagrees with its cited signal causes a validation failure and retry (tested with a deliberately wrong stub).
-- [ ] With low enrichment coverage, the profile includes a caveat and does not make claims about the missing signal (checked in the eval fixtures).
+- [ ] With low enrichment coverage, persona, tagline, and insights do not mention the gap, and they do not make claims about a signal that was not supplied (checked in the eval fixtures).
 - [ ] The profile is cached per run and a repeat call doesn't hit the model.
 - [ ] The run record's `stage` reflects this stage while the endpoint is working, and is updated when it finishes.
 - [ ] Token usage, latency and retry count are logged per call.

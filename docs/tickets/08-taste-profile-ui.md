@@ -3,20 +3,18 @@
 **Size:** M · **Depends on:** 07, 06
 
 ## Summary / goal
-Present the generated taste profile on the Results screen: persona, insight lines with the stats they come from, and trait scores, with a clear path from each claim back to the underlying data. The drive-thru order is the hero of Results (11, 13); this card sits with it, not above it as a separate destination.
+Present the generated taste profile on the Results screen: insight lines with the stats they come from, and trait scores, with a clear path from each claim back to the underlying data. The persona name is not a heading on this section. 13 places it in the hero, beside the order: small text "We think you're a", then the persona name. The drive-thru order stays the hero.
 
 ## Context
-The AI output is what evaluators care about most, so the profile still deserves a polished, evidence-backed treatment. The "visualise the AI output" option in the brief is satisfied here and in the order receipt (11). Trust matters: every sentence should show its evidence, and caveats about weak data should be visible rather than buried.
+The AI output is what evaluators care about most, so the profile still deserves a polished, evidence-backed treatment. The "visualise the AI output" option in the brief is satisfied here and in the order receipt (11). Insight lines keep their signal chips. Caveats and the "how this was made" note are not shown on the results screen.
 
 First generation is automatic, as part of the analysis pipeline (13). This ticket owns the card and regenerate, not when the user first arrives on Results.
 
 ## In scope
-- `TasteProfileCard`: persona name and tagline, with a distinct but tasteful visual identity, built as a composable section for the Results screen (13).
+- `TasteProfileCard`: the insights and traits, built as a section under the hero on the Results screen (13). The persona name and tagline are not repeated here.
 - Insight list where each line is paired with chips for the cited signals (label, value, sample size) that link or scroll to the matching aggregate panel on Results.
 - Trait visualisation (radar chart or bar chart) with score and the signal each is based on.
-- Caveats section when the profile reports weak coverage.
-- Regenerate action (rate-limited) and loading, error and retry states for regenerate (and for the rare case the stored profile is missing).
-- A "how this was made" disclosure: signals in, model output out, prompt version, and the statement that the model sees only computed signals.
+- Do not render `caveats` or a "how this was made" disclosure. The stored profile can still carry them (07); this screen leaves them out.
 - Responsive layout, accessible chart alternatives, and a shareable-looking card (no sharing feature required).
 
 ## Out of scope
@@ -26,20 +24,17 @@ First generation is automatic, as part of the analysis pipeline (13). This ticke
 - Image generation of the profile (future work).
 
 ## Acceptance criteria
-- [ ] The profile card renders with persona, tagline, 2-3 insights and traits from the stored profile.
+- [ ] The profile section renders 2-3 insights and traits from the stored profile. The persona name is not repeated in this section.
 - [ ] Each insight shows its cited signals with correct values from the stored signals snapshot.
 - [ ] Clicking or focusing a cited signal chip navigates to the related aggregate section.
-- [ ] A profile with caveats renders them visibly.
-- [ ] Loading, error, and retry states work (tested with a stubbed API failing then succeeding).
-- [ ] Regenerate is disabled while a request is in flight and doesn't produce duplicate cards.
-- [ ] The "how this was made" panel displays the real prompt version and signals used.
+- [ ] A profile that includes caveats does not render them, and there is no "how this was made" panel.
 - [ ] Charts have text alternatives and the card passes an automated accessibility check.
 - [ ] Renders correctly at 360px width and at desktop width, both on its own and in the Results layout.
 
 ## Technical notes
 - Render the stored profile; don't re-derive anything client-side.
 - Keep the card self-contained (props in, markup out) so it's easy to snapshot-test and screenshot for the README.
-- Components: `TasteProfileCard`, `InsightLine`, `SignalChip`, `TraitChart`, `ProfileProvenance`.
+- Components: `TasteProfileCard`, `InsightLine`, `SignalChip`, `TraitChart`. Persona placement is owned by 13.
 
 ## Dependencies
 07 for the endpoint and types; 06 for the dashboard anchors. 13 places the card on Results.

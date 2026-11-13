@@ -15,18 +15,19 @@ This is the last stage of the analysis pipeline (ingest → enrich → profile �
   - higher average BPM raises the calorie budget,
   - a narrow genre mix leans towards "comfort" picks, a diverse mix towards variety across categories,
   - high artist concentration (lots of repeats) favours repeating a category (for example two of the same style),
-  - low enrichment coverage widens the budget uncertainty and must be mentioned.
+  - low enrichment coverage may widen the budget in code, and must not be mentioned in any user-facing sentence.
 - A deterministic budget step in code: from signals and rules, compute `calorie_budget {min, max}` and any category constraints (for example max drinks, at most one dessert). The model is told the budget; it does not compute it.
 - Input assembly: taste profile, signals snapshot, rules (with the budget results), and the candidate set from 09, as compact structured JSON (item id, name, category, kcal, kJ, protein, tags).
-- Output schema (zod): `items[] {item_id, quantity, justification, rule_ids[], cites[]}`, `total_kcal` (reported but recomputed server-side), `summary` (one or two playful lines), `confidence_note`, and `how_we_decided` (a short, user-facing explanation of how the system arrived at this order, citing rule ids and signal keys). `how_we_decided` is distinct from the per-item justifications and from `summary`.
+- Output schema (zod): `items[] {item_id, quantity, justification, tag_ids[], rule_ids[], cites[]}`, `total_kcal` (reported but recomputed server-side), `summary` (one or two playful lines), `confidence_note`, and `how_we_decided` (a short, user-facing explanation of how the system arrived at this order, citing rule ids and signal keys). `how_we_decided` is distinct from the per-item justifications and from `summary`.
+- Item tags come only from `data/order-tags.json`. Each `tag_ids` entry must be an id in that file. The model is given the list and does not invent labels. The why sentence can still explain the pick; the tags on the line are this closed set.
 - Prompt in its own versioned module, instructing the model to choose only from supplied ids, respect the budget, cite rules and signals, write `how_we_decided` in plain language grounded only in those citations, and be playful without making health claims.
-- Server-side validation and retry: every `item_id` exists in the menu and in the candidate set, quantities are integers within limits, recomputed total kcal is inside the budget, category constraints hold, every `rule_ids` entry and `cites` key exists (including on `how_we_decided`), any number quoted in `how_we_decided` or a justification matches the cited signal, and no pick has missing nutrition. On failure, retry with the specific errors fed back (bounded, for example 2 retries), then return a typed error.
+- Server-side validation and retry: every `item_id` exists in the menu and in the candidate set, quantities are integers within limits, recomputed total kcal is inside the budget, category constraints hold, every `tag_ids` entry exists in `data/order-tags.json`, every `rule_ids` entry and `cites` key exists (including on `how_we_decided`), any number quoted in `how_we_decided` or a justification matches the cited signal, and no pick has missing nutrition. On failure, retry with the specific errors fed back (bounded, for example 2 retries), then return a typed error.
 - `POST /api/order`: builds inputs, calls the model, validates, stores the result (table `orders`) with the inputs snapshot and versions, and returns it. Cached per profile. Emit a `stage` event and update the run record when this stage starts; on success, set `stage` to `done`.
 - Fixtures and tests: signal fixtures for a high-BPM, low-BPM and low-coverage user; a stubbed model returning valid output, an invented menu id, a blown calorie budget, a `how_we_decided` that quotes a wrong number or cites a missing key, and malformed JSON, all asserting the validator's behaviour.
 
 ## Out of scope
 - UI (11) and screen flow (13).
-- Prices or order total in dollars (no price data).
+- Choosing or inventing prices. The model does not set a price. The receipt looks up each item's AUD price and sums it.
 - Real ordering, deep links or any McDonald's integration.
 - Drawn images of the order (future work).
 - Health or dietary advice.
@@ -37,13 +38,14 @@ This is the last stage of the analysis pipeline (ingest → enrich → profile �
 - [ ] A response whose recomputed calories fall outside the budget is rejected and retried (tested).
 - [ ] After bounded retries, the endpoint returns a typed error and no order is stored.
 - [ ] Every stored justification, and `how_we_decided`, references at least one valid rule id and one valid signal key.
+- [ ] Every item tag id exists in `data/order-tags.json`. An invented tag is rejected and retried (tested).
 - [ ] A `how_we_decided` (or justification) that quotes a statistic disagreeing with its cited signal is rejected and retried (tested with a deliberately wrong stub).
 - [ ] The calorie budget is computed by code with unit tests covering each rule, and the same inputs give the same budget.
 - [ ] The result stores rules version, prompt version, menu `retrieved_at` and the inputs snapshot.
 - [ ] A cached order is returned on repeat calls without a model call.
 - [ ] The run record's `stage` reflects this stage while the endpoint is working, and is `done` when a valid order is stored.
 - [ ] Token usage, latency, retry count and validation failures are logged.
-- [ ] A low-coverage fixture produces an order whose summary, confidence note or `how_we_decided` mentions the uncertainty.
+- [ ] A low-coverage fixture produces an order whose summary, justifications, and `how_we_decided` do not mention missing data, coverage, unlabeled tracks, or uncertainty from incomplete enrichment (tested).
 
 ## Technical notes
 - Candidate set from 09 keeps the prompt small (cap drinks, drop items without nutrition). Aim for a few dozen items rather than all 327.

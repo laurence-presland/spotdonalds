@@ -8,15 +8,15 @@ Spotify is the only connected service. The user signs in with Spotify, we pull t
 
 The product is four screens:
 
-1. **Landing** (unauthenticated): wordmark and icon, the slogan "Your Spotify taste, served as a drive-thru order.", and a "Log in with Spotify" button. A not-allowlisted user still gets the friendly 403 screen.
-2. **Welcome** (after login): a short, skippable full-screen fade — "Welcome to SpotDonalds. We're assembling your order." — covering ingestion start-up latency, then out into Analysing. Honours `prefers-reduced-motion`.
-3. **Analysing** (loading screen): "Analysing your listening history", with the track list filling in as ingestion and enrichment stream in. Stays up through taste profile and order generation.
-4. **Results**: the drive-thru order as the hero, plus the taste profile, aggregate data, a collapsed/expandable track list, and an LLM-generated "how we decided your order" explanation. A completed run reloads straight here; an in-progress run rejoins Analysing.
+1. **Landing** (unauthenticated): the wordmark, the slogan "Your Spotify taste assembled as a drive-through order.", and a "Log in with Spotify" button. No icon and no line about which data is read. A not-allowlisted user still gets the friendly 403 screen.
+2. **Welcome** (after login): one line, "Please drive through...", covering ingestion start-up latency, then out into Analysing. No skip control. Honours `prefers-reduced-motion`.
+3. **Analysing** (loading screen): the heading "Analysing your listening history", three stages (Reading your history, Analysing your taste, Assembling your order), and the track list. A track appears only once it has been enriched. A track we can't enrich is dropped and never shown. Stays up through taste profile and order generation.
+4. **Results**: the drive-thru order as the hero, plus the taste profile, aggregate data, and an LLM-generated "how we decided your order" explanation. Back returns to Analysing. A completed run reloads straight here; an in-progress run rejoins Analysing.
 
 An analysis pipeline (ingest → enrich → profile → order → done) is started server-side as soon as the session exists, streams `stage` events, and is resumable from the run record.
 
 Principles:
-- The LLM never guesses metadata and never does arithmetic. Missing data stays blank and is shown as missing.
+- The LLM never guesses metadata and never does arithmetic. A track we can't enrich is dropped and never shown. A field we can't fill on a kept track stays blank. User-facing copy never mentions missing, partial, or unlabeled data.
 - Every enriched field carries its value, source, source URL and confidence.
 - LLM output is JSON, schema-validated, and checked server-side before anything is shown.
 - Each ticket owns its own error handling, logging and tests. There are no separate "tests" or "hardening" tickets.
@@ -59,7 +59,7 @@ The order is the hero of Results, so if time runs short, **simplify the order ra
 
 - **Must have:** 01, 02, 03, 04 (MusicBrainz only is acceptable), 05, 06 (a reduced version is fine, but the aggregation module is needed by 07), 07, 08, 09, 10, 11, 13 (the four-screen flow and Results with the order as hero), 12.
 - **Should have:** 04 Deezer BPM, the full 06 charts, a more polished welcome fade.
-- **If time is short:** fewer rules and a smaller candidate set in 10, a simpler receipt in 11, and a tighter Results layout (order and profile first; aggregates and the track list more compact). A basic welcome (short, skippable, reduced-motion safe) is enough. Don't move the order feature to future work.
+- **If time is short:** fewer rules and a smaller candidate set in 10, a simpler receipt in 11, and a tighter Results layout (order and profile first; aggregates more compact). A basic welcome (the one line, reduced-motion safe) is enough. Don't move the order feature to future work.
 
 ## Future work (collected here, goes into the README in 12)
 
@@ -68,7 +68,7 @@ The order is the hero of Results, so if time runs short, **simplify the order ra
 - More taste-profile metrics, starting with popularity and how mainstream the listening is.
 - Drawn or generated images of the order.
 - Backfill longer listening history from Spotify's privacy data export (extended streaming history).
-- Menu prices (not published nationally, they vary by store).
+- Store-specific prices. The receipt shows a price and a total; a national list is not published, and restaurant prices vary.
 
 ## Known unknowns to resolve early
 

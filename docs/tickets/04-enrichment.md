@@ -10,7 +10,7 @@ This is the slowest stage, which is why it streams and persists as it goes. It i
 1. **MusicBrainz** by ISRC: `GET https://musicbrainz.org/ws/2/isrc/{ISRC}?inc=tags+artist-credits&fmt=json`. Rate limit is 1 request per second and a meaningful `User-Agent` (app name, version, contact) is required. Tags are community data under CC BY-NC-SA, so attribution is needed in the UI and README.
 2. **Deezer** by ISRC: `GET https://api.deezer.com/track/isrc:{ISRC}` for `bpm` (0 means unknown, treat as missing) and `gain`, plus a preview URL and other useful fields if present.
 
-Discogs and web-search gap-fill are explicitly out of scope and listed as future work. If neither source has a value, it stays missing. Never fill a gap with model recall.
+Discogs and web-search gap-fill are explicitly out of scope and listed as future work. If neither source matches the track, or the lookup errors, drop the track. It is not stored as a row, not shown on the analysing list, and not passed to taste or order. Never fill a gap with model recall. A track that did match can still have a blank field (Deezer `bpm` of 0 stays blank) and is kept.
 
 ## In scope
 - Provider interface (`lookup(track) -> EnrichmentResult`) with MusicBrainz and Deezer implementations, so Discogs can be added later without touching callers.
@@ -32,14 +32,14 @@ Discogs and web-search gap-fill are explicitly out of scope and listed as future
 ## Acceptance criteria
 - [ ] For a track with a valid ISRC known to MusicBrainz, tags are stored with source `musicbrainz`, a `source_url` to the recording, and a confidence value.
 - [ ] Deezer BPM is stored when non-zero, and `bpm = 0` is stored as missing, not as a value.
-- [ ] A track with no match from either source ends as `missing` for those fields, with no invented values.
+- [ ] A track with no match from either source, or a failed lookup, is dropped. It is absent from stored rows and from the stream of visible tracks, with no invented values.
 - [ ] MusicBrainz requests never exceed 1/s and always send the configured `User-Agent` (test with a fake clock).
 - [ ] A second run over the same tracks makes zero external requests (cache hit), verified in a test.
 - [ ] Stream events arrive progressively and the endpoint can be interrupted and resumed without redoing completed tracks.
 - [ ] The run record's `stage` reflects enrichment while this endpoint is working, and is updated when it finishes.
 - [ ] One source being down (simulated 503) still yields results from the other, and the failure is recorded in the event stream and logs.
 - [ ] Matching and chosen-value logic have unit tests with recorded MusicBrainz and Deezer fixtures, including the ISRC-missing fallback.
-- [ ] Attribution text for MusicBrainz data is available for the UI to render.
+- [ ] The list footer can render "Data provided by Spotify, MusicBrainz, and Deezer."
 
 ## Technical notes
 - At 1 req/s, 100 unique tracks take at least ~100s for MusicBrainz alone. That fits within Hobby's 300s but only just; batch work so the client can re-invoke and continue if the function hits its limit. Dedupe by ISRC first (top tracks overlap heavily with recent plays).
