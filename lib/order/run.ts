@@ -37,6 +37,7 @@ export type OrderStore = {
   getProfile(runId: string): Promise<StoredProfile | null>;
   getOrder(runId: string): Promise<StoredOrder | null>;
   saveOrder(order: StoredOrder): Promise<void>;
+  deleteOrder(runId: string): Promise<void>;
   getPopularity(tagsKey: string): Promise<{ popularity_tier: PopularityTier; reason: string; prompt_hash: string } | null>;
   savePopularity(row: { tags_key: string; popularity_tier: PopularityTier; reason: string; prompt_hash: string }): Promise<void>;
 };
@@ -58,6 +59,7 @@ export async function runOrder(input: {
   emit: (event: StreamEvent) => void;
   log?: typeof writeLog;
   candidates?: OrderCandidate[];
+  force?: boolean;
 }): Promise<StoredOrder> {
   const record = input.log ?? writeLog;
   const run = await input.store.latestRun(input.userId);
@@ -67,10 +69,11 @@ export async function runOrder(input: {
   }
   const existing = await input.store.getOrder(run.id);
   input.emit({ type: "stage", stage: "order" });
-  if (existing) {
+  if (existing && !input.force) {
     input.emit({ type: "stage", stage: "done" });
     return existing;
   }
+  if (existing) await input.store.deleteOrder(run.id);
   const profile = await input.store.getProfile(run.id);
   if (!profile) {
     input.emit({ type: "error", code: "no_profile", message: "Build a taste profile before the order." });

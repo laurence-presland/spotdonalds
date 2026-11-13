@@ -42,6 +42,10 @@ export function supabaseOrderStore(): OrderStore {
       const { error } = await db().from("orders").upsert(order);
       if (error) throw new Error(error.message);
     },
+    async deleteOrder(runId) {
+      const { error } = await db().from("orders").delete().eq("run_id", runId);
+      if (error) throw new Error(error.message);
+    },
     async getPopularity(tagsKey) {
       const { data, error } = await db().from("genre_popularity").select("*").eq("tags_key", tagsKey).maybeSingle();
       if (error) throw new Error(error.message);
