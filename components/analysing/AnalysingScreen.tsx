@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { NotAllowlisted } from "@/components/NotAllowlisted";
 import { AnalysingView } from "@/components/analysing/AnalysingView";
 import { reconnectDelay } from "@/lib/analysing/backoff";
@@ -10,9 +10,20 @@ import { parseNdjsonChunk } from "@/lib/stream/parse";
 import type { StreamEvent } from "@/lib/stream/events";
 
 const STOP_CODES = new Set(["not_allowlisted", "reauth_required", "missing"]);
+const ADVANCE_CODES = new Set(["order_invalid", "profile_invalid"]);
 
-export function AnalysingScreen() {
+export function AnalysingScreen({
+  autostart = true,
+  onAdvance,
+}: {
+  autostart?: boolean;
+  onAdvance?: () => void;
+}) {
   const [state, dispatch] = useReducer(reduceAnalysis, initialAnalysingState);
+  const onAdvanceRef = useRef(onAdvance);
+  useEffect(() => {
+    onAdvanceRef.current = onAdvance;
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -37,7 +48,8 @@ export function AnalysingScreen() {
         for (const event of parsed.events) {
           dispatch({ type: "event", event });
           const stop = terminal(event);
-          if (stop) return stop;
+          if (stop === "advance") onAdvanceRef.current?.();
+          if (stop) return stop === "advance" ? "stop" : stop;
         }
       }
       return "ok";
@@ -46,12 +58,10 @@ export function AnalysingScreen() {
       try {
         if (!cancelled) dispatch({ type: "connection", status: "streaming", message: null });
         await hydrate();
-        const ingest = await read("/api/ingest");
-        if (ingest === "stop" || cancelled) return;
-        if (ingest === "retry") throw new Error("ingest dropped");
-        const enrich = await read("/api/enrich");
-        if (enrich === "stop" || cancelled) return;
-        if (enrich === "retry") throw new Error("enrich dropped");
+        if (!autostart) return;
+        const analysis = await read("/api/analyse");
+        if (analysis === "stop" || cancelled) return;
+        if (analysis === "retry") throw new Error("analysis dropped");
       } catch {
         if (cancelled || attempt >= 6) {
           if (!cancelled) {
@@ -68,13 +78,16 @@ export function AnalysingScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [autostart]);
 
   if (state.status === "access") return <NotAllowlisted />;
   return <AnalysingView state={state} />;
 }
 
-function terminal(event: StreamEvent): "stop" | "retry" | null {
+function terminal(event: StreamEvent): "stop" | "retry" | "advance" | null {
+  if (event.type === "stage" && event.stage === "done") return "advance";
   if (event.type !== "error") return null;
-  return STOP_CODES.has(event.code) ? "stop" : "retry";
+  if (STOP_CODES.has(event.code)) return "stop";
+  if (ADVANCE_CODES.has(event.code)) return "advance";
+  return "retry";
 }
