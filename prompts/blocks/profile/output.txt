@@ -1,0 +1,6 @@
+WHAT TO WRITE
+- persona_name: 2-4 words naming this listener as a type, punchy and memorable (for example "Repeat-Button Romantic"). Not a real person or artist.
+- tagline: one line that sums them up.
+- insights: 2-3 items. Each has a text (one or two sentences pairing a real stat with an interpretation) and its cites.
+- traits: exactly the four given traits, each with a one-sentence explanation of why the score fits, and its cites.
+- caveats: short internal notes on any signal that looks weak. These are never shown to the person.

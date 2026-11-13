@@ -55,20 +55,20 @@ This is the third stage of the analysis pipeline (ingest → enrich → profile 
 - Fine-tuning or embeddings.
 
 ## Acceptance criteria
-- [ ] `lib/signals` is pure and unit tested, including empty and low-coverage cases, and produces the same output for the same input.
-- [ ] Every signal key used anywhere (computation, prompt, schema, UI chips) comes from the registry, and each entry has a meaning, unit and rounding (tested).
-- [ ] Trait scores are computed by code from registry signals, unit tested per trait, and the model's output contains no scores or other numbers it calculated.
-- [ ] The output schema rejects a `cites` key not in the registry and a trait name not in the fixed four (tested).
-- [ ] The profile prompt is assembled from its manifest of text blocks; the shared blocks are the same files the order prompt uses, and the assembled template's hash is stored with each profile (tested).
-- [ ] The model receives only structured signals, never raw Spotify payloads, and the prompt version is stored with each profile.
-- [ ] Output always parses against the schema or the endpoint returns a typed error after bounded retries.
-- [ ] Every `cites` key in a stored profile exists in the signals snapshot (enforced in code and tested).
-- [ ] A quoted statistic that disagrees with its cited signal causes a validation failure and retry (tested with a deliberately wrong stub).
-- [ ] With low enrichment coverage, persona, tagline, and insights do not mention the gap, and they do not make claims about a signal that was not supplied (checked in the eval fixtures).
-- [ ] The profile is cached per run and a repeat call doesn't hit the model.
-- [ ] The run record's `stage` reflects this stage while the endpoint is working, and is updated when it finishes.
-- [ ] Token usage, latency and retry count are logged per call.
-- [ ] API keys are env-only and listed in `.env.example`.
+- [x] `lib/signals` is pure and unit tested, including empty and low-coverage cases, and produces the same output for the same input.
+- [x] Every signal key used anywhere (computation, prompt, schema, UI chips) comes from the registry, and each entry has a meaning, unit and rounding (tested).
+- [x] Trait scores are computed by code from registry signals, unit tested per trait, and the model's output contains no scores or other numbers it calculated.
+- [x] The output schema rejects a `cites` key not in the registry and a trait name not in the fixed four (tested).
+- [x] The profile prompt is assembled from its manifest of text blocks; the shared blocks are the same files the order prompt uses, and the assembled template's hash is stored with each profile (tested).
+- [x] The model receives only structured signals, never raw Spotify payloads, and the prompt version is stored with each profile.
+- [x] Output always parses against the schema or the endpoint returns a typed error after bounded retries.
+- [x] Every `cites` key in a stored profile exists in the signals snapshot (enforced in code and tested).
+- [x] A quoted statistic that disagrees with its cited signal causes a validation failure and retry (tested with a deliberately wrong stub).
+- [x] With low enrichment coverage, persona, tagline, and insights do not mention the gap, and they do not make claims about a signal that was not supplied (checked in the eval fixtures).
+- [x] The profile is cached per run and a repeat call doesn't hit the model.
+- [x] The run record's `stage` reflects this stage while the endpoint is working, and is updated when it finishes.
+- [x] Token usage, latency and retry count are logged per call.
+- [x] API keys are env-only and listed in `.env.example`.
 
 ## Technical notes
 - Keep prompt text out of code, in the block files described under Prompt construction, so changes are diffable and the README can describe it.

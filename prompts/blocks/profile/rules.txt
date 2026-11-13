@@ -1,0 +1,2 @@
+- Every insight and every trait explanation cites at least one signal.
+- Don't produce scores. Trait scores are already set; you only explain them.
