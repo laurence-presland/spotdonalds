@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { loadLatestRun } from "@/lib/analysis-run";
-import { claimAnalysis } from "@/lib/analyse/claim";
+import { assertWorker, claimWorker, loadLatestRun } from "@/lib/analysis-run";
+import { claimAnalysis, startFreshAnalysis } from "@/lib/analyse/claim";
 import { tokenStore } from "@/lib/auth/token-store";
 import { sql } from "@/lib/db";
 import { checkHealth } from "@/lib/health";
@@ -54,5 +54,35 @@ describe.skipIf(!process.env.DATABASE_URL)("postgres access", () => {
     expect(open).toHaveLength(1);
     const again = await claimAnalysis(userA, false);
     expect(again?.id).toBe(first?.id);
+  });
+
+  it("claims a run once until its heartbeat is stale, and start fresh closes it", async () => {
+    await sql()`delete from spotdonalds.orders where user_id = ${userA}`;
+    await sql()`delete from spotdonalds.taste_profiles where user_id = ${userA}`;
+    await sql()`delete from spotdonalds.analysis_runs where user_id = ${userA}`;
+    const run = await claimAnalysis(userA, false);
+    expect(run).not.toBeNull();
+    const runId = run?.id ?? "";
+    expect(await claimWorker(runId, userA)).toBe(true);
+    expect(await claimWorker(runId, userA)).toBe(false);
+    expect(await assertWorker(runId, userA, "workflow-a")).toBe(true);
+    expect(await assertWorker(runId, userA, "workflow-b")).toBe(false);
+    await sql()`
+      update spotdonalds.analysis_runs
+      set heartbeat_at = now() - interval '5 minutes'
+      where id = ${runId}
+    `;
+    expect(await assertWorker(runId, userA, "workflow-b")).toBe(true);
+    await sql()`update spotdonalds.analysis_runs set stage = 'popularity' where id = ${runId}`;
+    const fresh = await startFreshAnalysis(userA, "2026-11-13T01:00:00.000Z");
+    expect(fresh.id).not.toBe(runId);
+    const open = await sql()<{ id: string }[]>`
+      select id from spotdonalds.analysis_runs where user_id = ${userA} and open
+    `;
+    expect(open).toEqual([{ id: fresh.id }]);
+    const closed = await sql()<{ status: string; open: boolean }[]>`
+      select status, open from spotdonalds.analysis_runs where id = ${runId}
+    `;
+    expect(closed[0]).toMatchObject({ status: "error", open: false });
   });
 });

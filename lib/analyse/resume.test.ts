@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { decideClaim, isHeartbeatStale, nextPipelineStep } from "@/lib/analyse/progress";
 import { initialAnalysingState, reduceAnalysis } from "@/lib/analysing/reduce";
 import { emptyCounts, type RunRecord } from "@/lib/ingest/types";
-import { runOrder, type OrderStore } from "@/lib/order/run";
+import { runOrder, type OrderStore, type StoredOrder } from "@/lib/order/run";
 
 describe("analysis resume", () => {
   it("attaches to the running run instead of inserting another", () => {
@@ -17,10 +17,17 @@ describe("analysis resume", () => {
 
   it("stops after a failed profile and does not continue to the order", () => {
     const failed = { status: "error", stage: "profile", checkpoint: { enrich: true } };
+    const ingested = {
+      recently_played: true,
+      top_tracks: { short_term: true, medium_term: true, long_term: true },
+      top_artists: { short_term: true, medium_term: true, long_term: true },
+      enrich: true,
+    };
     expect(nextPipelineStep(failed, false)).toBe("stop");
     expect(nextPipelineStep(failed, true)).toBe("stop");
-    expect(nextPipelineStep({ status: "complete", stage: "profile", checkpoint: { enrich: true } }, true)).toBe("order");
-    expect(nextPipelineStep({ status: "running", stage: "enrich", checkpoint: {} }, false)).toBe("enrich");
+    expect(nextPipelineStep({ status: "running", stage: "profile", checkpoint: ingested }, true)).toBe("popularity");
+    expect(nextPipelineStep({ status: "running", stage: "profile", checkpoint: { ...ingested, popularity: true } }, true)).toBe("order");
+    expect(nextPipelineStep({ status: "running", stage: "enrich", checkpoint: { ...ingested, enrich: false } }, false)).toBe("enrich");
   });
 
   it("treats a fresh heartbeat as still working", () => {
@@ -96,5 +103,57 @@ describe("analysis resume", () => {
       emit: () => undefined,
     })).rejects.toThrow(/Quoted number 5/);
     expect(calls).toBe(0);
+  });
+
+  it("marks the run finished when the order is already stored", async () => {
+    const run: RunRecord = {
+      id: "run-1",
+      user_id: "user-1",
+      status: "running",
+      stage: "profile",
+      started_at: "2026-11-13T00:00:00.000Z",
+      finished_at: null,
+      counts: emptyCounts(),
+      error: null,
+      checkpoint: { enrich: true },
+    };
+    const saved: { run: RunRecord | null } = { run: null };
+    await runOrder({
+      userId: "user-1",
+      store: {
+        async latestRun() {
+          return saved.run ?? run;
+        },
+        async saveRun(next) {
+          saved.run = next;
+        },
+        async getProfile() {
+          return null;
+        },
+        async getOrder() {
+          return { run_id: run.id } as StoredOrder;
+        },
+        async saveOrder() {
+          throw new Error("should not save");
+        },
+        async deleteOrder() {
+          return undefined;
+        },
+        async getPopularity() {
+          return null;
+        },
+        async savePopularity() {
+          throw new Error("should not save");
+        },
+      },
+      complete: async () => {
+        throw new Error("should not call the model");
+      },
+      emit: () => undefined,
+    });
+    expect(saved.run?.stage).toBe("done");
+    expect(saved.run?.status).toBe("complete");
+    expect(saved.run?.finished_at).not.toBeNull();
+    expect(saved.run?.error).toBeNull();
   });
 });

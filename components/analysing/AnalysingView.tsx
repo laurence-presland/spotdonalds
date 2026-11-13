@@ -24,10 +24,12 @@ export function AnalysingView({
   state,
   initialTab = "recent",
   onRetry,
+  onStartFresh,
 }: {
   state: AnalysingState;
   initialTab?: ListTab;
   onRetry?: () => void;
+  onStartFresh?: () => void;
 }) {
   const [tab, setTab] = useState<ListTab>(initialTab);
   const [window, setWindow] = useState<Term | "all">("all");
@@ -52,17 +54,21 @@ export function AnalysingView({
           </p>
         ) : null}
         {state.status === "error" ? (
-          <p className="status-banner" role="alert">
-            {state.message ?? "The analysis stopped."}
-            {onRetry ? (
-              <>
-                {" "}
+          <div className="status-banner" role="alert">
+            <p>{state.message ?? "The analysis stopped."}</p>
+            <div className="button-row">
+              {onRetry ? (
                 <button type="button" className="button" onClick={onRetry}>
                   Try again
                 </button>
-              </>
-            ) : null}
-          </p>
+              ) : null}
+              {onStartFresh ? (
+                <button type="button" className="button" onClick={onStartFresh}>
+                  Start fresh
+                </button>
+              ) : null}
+            </div>
+          </div>
         ) : null}
         <div className="tabs" role="tablist" aria-label="Listening lists">
           {TABS.map((item) => (

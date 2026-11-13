@@ -1,4 +1,4 @@
-import { insertRun, loadLatestRun, saveAnalysisRun } from "@/lib/analysis-run";
+import { insertRun, loadLatestRun, loadOpenRun, saveAnalysisRun } from "@/lib/analysis-run";
 import { sql } from "@/lib/db";
 import type { IngestStore, RunRecord } from "@/lib/ingest/types";
 import type { ArtistRow, TrackRow } from "@/lib/spotify/normalise";
@@ -6,8 +6,9 @@ import type { ArtistRow, TrackRow } from "@/lib/spotify/normalise";
 export function ingestStore(): IngestStore {
   return {
     async resumeOrCreate(userId, now) {
+      const open = await loadOpenRun(userId);
+      if (open) return open;
       const latest = await loadLatestRun(userId);
-      if (latest?.open !== false && latest?.status === "running") return latest;
       if (latest && latest.stage === "ingest" && latest.status !== "complete") return latest;
       return insertRun(userId, now);
     },

@@ -5,13 +5,12 @@ import { NotAllowlisted } from "@/components/NotAllowlisted";
 import { AnalysingView } from "@/components/analysing/AnalysingView";
 import { reconnectDelay } from "@/lib/analysing/backoff";
 import { initialAnalysingState, reduceAnalysis, type RunSnapshot } from "@/lib/analysing/reduce";
-import { isHeartbeatStale, LEASE_STALE_MS } from "@/lib/analyse/progress";
 import type { VisibleArtist, VisibleTrack } from "@/lib/catalogue/present";
 
 const POLL_MS = 1500;
 
 export function AnalysingScreen({
-  autostart = true,
+  autostart = false,
   onAdvance,
 }: {
   autostart?: boolean;
@@ -35,18 +34,12 @@ export function AnalysingScreen({
       if (!cancelled) dispatch({ type: "hydrate", tracks: body.tracks, artists: body.artists });
     }
 
-    async function kick(retry: boolean) {
-      await fetch(retry ? "/api/analyse?retry=1" : "/api/analyse", { method: "POST" });
-    }
-
     async function tick(attempt: number) {
       try {
         const response = await fetch("/api/runs");
         if (response.status === 401 || cancelled) return;
         if (!response.ok) throw new Error("status");
-        const body = (await response.json()) as {
-          run: (RunSnapshot & { id: string; heartbeat_at: string | null }) | null;
-        };
+        const body = (await response.json()) as { run: (RunSnapshot & { id: string }) | null };
         if (cancelled) return;
         dispatch({ type: "snapshot", run: body.run });
         await catalogue();
@@ -55,9 +48,6 @@ export function AnalysingScreen({
         if (run?.stage === "done" && run.status === "complete") {
           onAdvanceRef.current?.();
           return;
-        }
-        if (run?.status === "running" && isHeartbeatStale(run.heartbeat_at, Date.now(), LEASE_STALE_MS)) {
-          await kick(false);
         }
         dispatch({ type: "connection", status: "streaming", message: null });
         timer = setTimeout(() => void tick(0), POLL_MS);
@@ -74,7 +64,7 @@ export function AnalysingScreen({
 
     async function start() {
       dispatch({ type: "connection", status: "streaming", message: null });
-      if (autostart) await kick(generation > 0);
+      if (autostart && generation === 0) await fetch("/api/analyse", { method: "POST" });
       if (!cancelled) await tick(0);
     }
 
@@ -85,11 +75,22 @@ export function AnalysingScreen({
     };
   }, [autostart, generation]);
 
+  async function retry() {
+    await fetch("/api/analyse?retry=1", { method: "POST" });
+    setGeneration((value) => value + 1);
+  }
+
+  async function startFresh() {
+    await fetch("/api/analyse?fresh=1", { method: "POST" });
+    setGeneration((value) => value + 1);
+  }
+
   if (state.status === "access") return <NotAllowlisted />;
   return (
     <AnalysingView
       state={state}
-      onRetry={state.status === "error" ? () => setGeneration((value) => value + 1) : undefined}
+      onRetry={state.status === "error" ? () => void retry() : undefined}
+      onStartFresh={state.status === "error" ? () => void startFresh() : undefined}
     />
   );
 }

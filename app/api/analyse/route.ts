@@ -1,29 +1,27 @@
-import { after } from "next/server";
-import { claimAnalysis } from "@/lib/analyse/claim";
-import { decideClaim, runStatus } from "@/lib/analyse/progress";
-import { runPipeline, takeLease } from "@/lib/analyse/run";
+import { claimAnalysis, startFreshAnalysis } from "@/lib/analyse/claim";
+import { runStatus } from "@/lib/analyse/progress";
+import { ensureAnalysisJob } from "@/lib/analyse/start";
 import { getSessionUser } from "@/lib/auth/session";
+import { safeDbMessage } from "@/lib/db";
+import { log } from "@/lib/log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const user = await getSessionUser();
   if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
-  const retry = new URL(request.url).searchParams.get("retry") === "1";
-  const run = await claimAnalysis(user.id, retry);
-  if (run && shouldAdvance(run, retry)) {
-    const token = await takeLease(user.id, run.id);
-    if (token) {
-      run.heartbeat_at = new Date().toISOString();
-      after(() => runPipeline({ userId: user.id, token }));
+  const params = new URL(request.url).searchParams;
+  const fresh = params.get("fresh") === "1";
+  const retry = params.get("retry") === "1";
+  const run = fresh ? await startFreshAnalysis(user.id) : await claimAnalysis(user.id, retry);
+  if (run?.status === "running") {
+    try {
+      await ensureAnalysisJob(user.id, run.id);
+    } catch (error) {
+      log("error", "analyse.start_failed", { run_id: run.id, user_id: user.id, message: safeDbMessage(error) });
     }
   }
   return Response.json(runStatus(run));
-}
-
-function shouldAdvance(run: { status: string; stage: string; open?: boolean }, retry: boolean): boolean {
-  const decision = decideClaim(run, retry);
-  return decision === "attach" || decision === "reopen" || decision === "insert";
 }

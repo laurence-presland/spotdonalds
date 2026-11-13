@@ -13,7 +13,7 @@ The product is four screens:
 3. **Analysing** (loading screen): the heading "Analysing your listening history", three stages (Reading your history, Analysing your taste, Assembling your order), and the track list. A track appears only once it has been enriched. A track we can't enrich is dropped and never shown. Stays up through taste profile and order generation.
 4. **Results**: the drive-thru order as the hero, plus the taste profile, aggregate data, and an LLM-generated "how we decided your order" explanation. Back returns to Analysing. A completed run reloads straight here; an in-progress run rejoins Analysing.
 
-An analysis pipeline (ingest → enrich → profile → order → done) is started server-side as soon as the session exists, streams `stage` events, and is resumable from the run record.
+An analysis run is a backend job. The stage order is ingest → enrich → profile → popularity → order → done. The database row is the source of truth, and the state machine is written down in [docs/adr/001-analysis-job.md](../adr/001-analysis-job.md).
 
 Principles:
 - The LLM never guesses metadata and never does arithmetic. A track we can't enrich is dropped and never shown. A field we can't fill on a kept track stays blank. User-facing copy never mentions missing, partial, or unlabeled data.
