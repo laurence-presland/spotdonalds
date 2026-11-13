@@ -25,13 +25,13 @@ The brief prefers a hosted link, and deploying late is how hosted links break. S
 - Real README content (12).
 
 ## Acceptance criteria
-- [ ] `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck` and `npm test` all pass locally from a clean clone following the README.
-- [ ] CI runs lint, typecheck and tests on every push and PR, and fails the build when any of them fail.
+- [x] `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck` and `npm test` all pass locally from a clean clone following the README.
+- [x] CI runs lint, typecheck and tests on every push and PR, and fails the build when any of them fail.
 - [ ] The hello page is live at a Vercel URL from `main`.
 - [ ] `GET /api/health` on the deployed URL returns 200 with `{ ok: true }` only when the DB query succeeds, and a non-200 otherwise.
 - [ ] Migrations apply cleanly to the Supabase project from the repo (documented command).
-- [ ] `.env.example` exists, is complete for this ticket, and contains no real values.
-- [ ] No secrets in git history (check before pushing the first deploy).
+- [x] `.env.example` exists, is complete for this ticket, and contains no real values.
+- [x] No secrets in git history (check before pushing the first deploy).
 
 ## Technical notes
 - Keep service-role keys server-only. Only `NEXT_PUBLIC_` variables may reach the browser.
