@@ -1,7 +1,7 @@
 import { getSessionUser } from "@/lib/auth/session";
 import { generateProfile } from "@/lib/profile/model";
 import { runTasteProfile } from "@/lib/profile/run";
-import { supabaseProfileStore } from "@/lib/profile/store";
+import { profileStore } from "@/lib/profile/store";
 import { ndjsonResponse } from "@/lib/stream/ndjson";
 
 export const runtime = "nodejs";
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     try {
       await runTasteProfile({
         userId: user.id,
-        store: supabaseProfileStore(),
+        store: profileStore(),
         complete: generateProfile,
         force,
         emit: (event) => {

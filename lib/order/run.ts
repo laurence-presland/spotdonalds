@@ -34,10 +34,10 @@ export type StoredOrder = {
 export type OrderStore = {
   latestRun(userId: string): Promise<RunRecord | null>;
   saveRun(run: RunRecord): Promise<void>;
-  getProfile(runId: string): Promise<StoredProfile | null>;
-  getOrder(runId: string): Promise<StoredOrder | null>;
+  getProfile(userId: string, runId: string): Promise<StoredProfile | null>;
+  getOrder(userId: string, runId: string): Promise<StoredOrder | null>;
   saveOrder(order: StoredOrder): Promise<void>;
-  deleteOrder(runId: string): Promise<void>;
+  deleteOrder(userId: string, runId: string): Promise<void>;
   getPopularity(tagsKey: string): Promise<{ popularity_tier: PopularityTier; reason: string; prompt_hash: string } | null>;
   savePopularity(row: { tags_key: string; popularity_tier: PopularityTier; reason: string; prompt_hash: string }): Promise<void>;
 };
@@ -67,14 +67,14 @@ export async function runOrder(input: {
     input.emit({ type: "error", code: "no_run", message: "Ingest listening before building an order." });
     throw new Error("no_run");
   }
-  const existing = await input.store.getOrder(run.id);
+  const existing = await input.store.getOrder(input.userId, run.id);
   input.emit({ type: "stage", stage: "order" });
   if (existing && !input.force) {
     input.emit({ type: "stage", stage: "done" });
     return existing;
   }
-  if (existing) await input.store.deleteOrder(run.id);
-  const profile = await input.store.getProfile(run.id);
+  if (existing) await input.store.deleteOrder(input.userId, run.id);
+  const profile = await input.store.getProfile(input.userId, run.id);
   if (!profile) {
     input.emit({ type: "error", code: "no_profile", message: "Build a taste profile before the order." });
     throw new Error("no_profile");

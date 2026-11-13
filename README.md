@@ -38,10 +38,9 @@ Open http://localhost:3000.
 
 | Variable | What it is |
 | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL. Browser-safe. Already set on Vercel. |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key. Browser-safe. Already set on Vercel. |
-| `SUPABASE_SECRET_KEY` | Server-only key. Bypasses RLS. Never prefix with `NEXT_PUBLIC_`. Already set on Vercel. |
-| `SUPABASE_DB_SCHEMA` | Postgres schema. Must be `spotdonalds`. Already set on Vercel. |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL. Browser-safe. Used for Auth only. Already set on Vercel. |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key. Browser-safe. Used for Auth only. Already set on Vercel. |
+| `DATABASE_URL` | Server-only Postgres URL for the `spotdonalds_app` role on the transaction pooler. Already set on Vercel. The password is set out of band. |
 | `SPOTIFY_CLIENT_ID` | Public Spotify client id `682dcdb2828949ffb8718644e24d3a93`. The server uses it when refreshing a token. |
 | `SPOTIFY_CLIENT_SECRET` | Server-only Spotify secret. The same value is stored in Supabase Auth. It is **not** set on Vercel yet. Refresh fails closed without it. |
 | `MUSICBRAINZ_USER_AGENT` | MusicBrainz asks for an app name and a contact. If unset, the server uses `SpotDonalds/0.1` and the production URL. |
@@ -75,11 +74,13 @@ supabase link --project-ref svukzdmlzjebdizvulku
 supabase db push
 ```
 
-Expose `spotdonalds` in the Data API (Supabase dashboard, Project Settings, API, Exposed schemas). Every server read and write goes through supabase-js with `db: { schema: 'spotdonalds' }` in `lib/supabase/admin.ts`, and PostgREST hides the schema until it is exposed. The browser auth client does not query these tables. Do not apply these migrations to `public`.
+Leave the Data API disabled. This project is shared, and exposing schemas would publish another app's `public` tables. Server reads and writes use `DATABASE_URL` and postgres.js (`lib/db.ts`), with every table written as `spotdonalds.<table>`. Supabase Auth still uses the publishable key. Queries that belong to a person include that person's `user_id`, because `spotdonalds_app` is allowed through RLS by policy `spotdonalds_app_all` (`using (true)`).
+
+The role's login password is not in the repo. Set it out of band on the hosted database. `20261113126000_app_role.sql` creates `spotdonalds_app` with `NOLOGIN` only when the role is missing, so it does not change an existing password. A migration that adds a table must call `select spotdonalds.apply_app_policy('spotdonalds.<table>')`.
 
 `GET /api/health` returns `{ "ok": true }` only when it can read `spotdonalds.healthcheck`.
 
-`scripts/apply-migrations.sh` loads `supabase/ci/auth-stub.sql` and then applies these files twice. CI runs that script against Postgres 15. The stub is only for that check. Do not apply it to the hosted project.
+`scripts/apply-migrations.sh` loads `supabase/ci/auth-stub.sql` and then applies these files twice. CI runs that script against Postgres 15, then turns on a throwaway login (`SPOTDONALDS_CI_LOGIN=1`, `supabase/ci/app-login.sql`) and runs the integration tests. Do not point that script at the hosted database. Do not apply these migrations to `public`.
 
 Migrations, in order:
 
@@ -89,6 +90,7 @@ Migrations, in order:
 4. `20261113123000_enrichment.sql` — MusicBrainz and Deezer cache
 5. `20261113124000_taste_profiles.sql` — one profile per run
 6. `20261113125000_orders.sql` — one order per run, and the genre-popularity cache
+7. `20261113126000_app_role.sql` — `spotdonalds_app` grants and per-table policies
 
 ## Architecture
 
@@ -103,7 +105,7 @@ One authenticated route, `/app`, chooses the screen from `analysis_runs.stage`. 
 
 `POST /api/analyse` is one NDJSON stream. Each stage emits `{ "type": "stage", "stage": "..." }`. An endpoint's own `{ "type": "done" }` means that step finished. The pipeline `{ "type": "stage", "stage": "done" }` means the order was stored. HTTP streaming is enough: the browser already holds one long request, and a dropped connection resumes from the run checkpoint instead of needing a second socket.
 
-Spotify tokens are stored in `spotify_tokens` at the callback, the only moment Supabase exposes them, and read with the server secret key. Catalogue tables are server-only. A user can read their own plays, top items, runs, profile and order.
+Spotify tokens are stored in `spotify_tokens` at the callback, the only moment Supabase Auth exposes them, and read later over the direct Postgres connection. Catalogue tables are server-only. Each query for plays, top items, runs, a profile or an order is limited to that user's id.
 
 Enrichment asks MusicBrainz (at most one request a second) and Deezer, caches the result, and drops a track only when both miss. The Analysing list shows a track after that succeeds.
 

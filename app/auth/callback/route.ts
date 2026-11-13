@@ -1,5 +1,5 @@
 import { handleAuthCallback, probeSpotifyAccess } from "@/lib/auth/callback";
-import { supabaseTokenStore } from "@/lib/auth/token-store";
+import { tokenStore } from "@/lib/auth/token-store";
 import { createSupabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const supabase = await createSupabaseServer();
-  const store = supabaseTokenStore();
+  const store = tokenStore();
   const result = await handleAuthCallback({
     origin: url.origin,
     params: url.searchParams,

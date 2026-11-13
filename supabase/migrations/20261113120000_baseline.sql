@@ -1,7 +1,7 @@
 -- SpotDonalds baseline. Idempotent. Never touches the public schema.
 -- Apply with: supabase link --project-ref svukzdmlzjebdizvulku && supabase db push
--- Then, in the Supabase dashboard, add `spotdonalds` to Data API exposed schemas
--- (Settings → API → Exposed schemas). PostgREST will not see this schema until then.
+-- The Data API stays disabled. The app connects with DATABASE_URL, not PostgREST.
+-- Do not add `spotdonalds` to the exposed schemas.
 
 create schema if not exists spotdonalds;
 

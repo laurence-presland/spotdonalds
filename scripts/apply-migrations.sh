@@ -22,4 +22,10 @@ apply reapply
 
 echo "check"
 "${psql[@]}" -f "$root/supabase/ci/check.sql"
+
+if [[ "${SPOTDONALDS_CI_LOGIN:-}" == "1" ]]; then
+  echo "ci login"
+  "${psql[@]}" -f "$root/supabase/ci/app-login.sql"
+fi
+
 echo "migrations ok"

@@ -1,7 +1,7 @@
 import { getSpotifyAccessToken, SpotifyTokenError } from "@/lib/auth/tokens";
-import { supabaseTokenStore } from "@/lib/auth/token-store";
+import { tokenStore } from "@/lib/auth/token-store";
 import { getSessionUser } from "@/lib/auth/session";
-import { supabaseIngestStore } from "@/lib/ingest/store";
+import { ingestStore } from "@/lib/ingest/store";
 import { runIngest } from "@/lib/ingest/run";
 import { createSpotifyClient } from "@/lib/spotify/client";
 import { ndjsonResponse } from "@/lib/stream/ndjson";
@@ -17,14 +17,14 @@ export async function POST() {
   return ndjsonResponse(async (emit) => {
     try {
       const token = await getSpotifyAccessToken(user.id, {
-        store: supabaseTokenStore(),
+        store: tokenStore(),
         now: Date.now,
         fetch,
       });
       await runIngest({
         userId: user.id,
         client: createSpotifyClient(token),
-        store: supabaseIngestStore(),
+        store: ingestStore(),
         emit,
       });
     } catch (error) {
