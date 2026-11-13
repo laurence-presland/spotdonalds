@@ -18,9 +18,10 @@ const complete: OrderCompletion = async (input) => {
   });
 };
 
-export async function POST() {
+export async function POST(request: Request) {
   const user = await getSessionUser();
   if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+  const force = new URL(request.url).searchParams.get("force") === "1";
   return ndjsonResponse(async (emit) => {
     let emittedError = false;
     try {
@@ -28,6 +29,7 @@ export async function POST() {
         userId: user.id,
         store: supabaseOrderStore(),
         complete,
+        force,
         emit: (event) => {
           if (event.type === "error") emittedError = true;
           emit(event);

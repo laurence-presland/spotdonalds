@@ -182,6 +182,9 @@ describe("runOrder", () => {
       async saveOrder(order) {
         stored = order;
       },
+      async deleteOrder() {
+        stored = null;
+      },
       async getPopularity() {
         return null;
       },
@@ -253,6 +256,9 @@ describe("runOrder", () => {
       },
       async saveOrder() {
         saved = true;
+      },
+      async deleteOrder() {
+        return undefined;
       },
       async getPopularity() {
         return { popularity_tier: "mid", reason: "Jazz sits in the middle.", prompt_hash: buildPrompt("popularity.v1").hash };
