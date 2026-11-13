@@ -13,8 +13,8 @@ The brief asks for a public repo link, a hosted version (preferred) and a README
   - what it is, with a screenshot or two,
   - setup steps from a clean clone, including `.env.example` explained line by line (Supabase, Spotify, LLM provider, MusicBrainz contact),
   - Spotify developer app setup: redirect URIs, scopes, and the dev-mode limits (5 allowlisted users, owner needs Premium),
-  - architecture and design: data flow from sign-in to ingestion, enrichment, signals, taste profile and order; the streaming design and why HTTP streaming over WebSockets; database tables at a high level; a diagram,
-  - AI implementation: the code-computes / model-interprets split, prompts and schemas, validation and retry, how metadata is grounded (and that the model never guesses it), evaluation fixtures,
+  - architecture and design: the four-screen flow (landing → welcome → analysing → results); data flow from sign-in through the analysis pipeline (ingest → enrich → profile → order); the streaming design and why HTTP streaming over WebSockets; how a reload resumes to Analysing or skips straight to Results; database tables at a high level; a diagram,
+  - AI implementation: the code-computes / model-interprets split, prompts and schemas (including `how_we_decided`), validation and retry, how metadata is grounded (and that the model never guesses it), evaluation fixtures,
   - assumptions and limitations (below),
   - future enhancements for 1, 5 and 20 more days,
   - attribution for MusicBrainz (CC BY-NC-SA), Deezer and the McDonald's Australia source data, and the not-affiliated note.
@@ -23,7 +23,7 @@ The brief asks for a public repo link, a hosted version (preferred) and a README
   - **1 day:** Discogs as a third enrichment source; more taste-profile metrics including popularity and how mainstream the listening is; menu refresh script; better tag normalisation.
   - **5 days:** search-grounded gap-fill for metadata no structured source has (with citations, never model recall); Spotify privacy-export backfill for longer history; menu prices via store-specific data; background job queue so enrichment isn't tied to one request; evaluation harness for profile and order quality.
   - **20 days:** drawn or generated images of the order; extended Spotify quota or another music source for multi-user scale; additional connected services; sharing and comparing profiles; scheduled re-ingestion and taste drift over time.
-- Screenshots (login, live ingestion, dashboard, taste profile, order receipt) in `docs/screenshots/` and referenced from the README.
+- Screenshots in `docs/screenshots/` and referenced from the README: landing, welcome, analysing, and results (order as hero, with the taste profile, aggregates, collapsed track list and "how we decided" explanation visible).
 - Reviewer access: add each reviewer's name and Spotify email under User Management in the Spotify Developer Dashboard (max 5 users including the owner), and confirm each can sign in. This is a manual step done by the owner.
 - Hosted link: production deployment verified end to end with a fresh, allowlisted account.
 - Final clean-up pass: remove dead code and TODOs, run lint/typecheck/tests, check secrets history, fill the contact line on the access-denied screen from 02.
@@ -39,7 +39,8 @@ The brief asks for a public repo link, a hosted version (preferred) and a README
 - [ ] The README states the Spotify dev-mode limits and the assumptions made.
 - [ ] Attribution for MusicBrainz, Deezer and McDonald's Australia source data is present.
 - [ ] Each reviewer's Spotify account is allowlisted and a sign-in was tested on the production URL (or the access screen reviewed for anyone not yet added).
-- [ ] The hosted link works on a fresh browser session end to end: sign in, ingestion streams, profile and order render.
+- [ ] The hosted link works on a fresh browser session end to end: landing, sign in, welcome, analysing (list fills in), then results with the order as hero.
+- [ ] A second visit with a completed run goes straight to Results, with no welcome replay.
 - [ ] CI is green on `main` and `npm run lint && npm run typecheck && npm test` pass.
 - [ ] No secrets in the repository or its history.
 - [ ] Repository is public and the links have been sent.
@@ -50,7 +51,7 @@ The brief asks for a public repo link, a hosted version (preferred) and a README
 - Check which reviewers' emails differ between their Spotify account and their work address before allowlisting.
 
 ## Dependencies
-All other tickets (or a decision on what's cut, per the cut line in the index).
+All other tickets (or a decision on what's simplified, per the cut line in the index).
 
 ## Open questions
 - Who are the reviewers, and what are their Spotify account emails? (Needed before allowlisting; max 5 users total.)
