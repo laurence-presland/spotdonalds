@@ -17,7 +17,7 @@ export const streamEventSchema = z.discriminatedUnion("type", [
     album: z.string().nullable(),
     image: z.string().nullable(),
     source: z.enum(["recent", "top"]),
-    window: termSchema.optional(),
+    time_range: termSchema.optional(),
     rank: z.number().int().optional(),
     played_at: z.string().optional(),
   }),
@@ -26,7 +26,7 @@ export const streamEventSchema = z.discriminatedUnion("type", [
     id: z.string(),
     name: z.string(),
     source: z.literal("top"),
-    window: termSchema,
+    time_range: termSchema,
     rank: z.number().int(),
   }),
   z.object({

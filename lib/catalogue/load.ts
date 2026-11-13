@@ -6,15 +6,15 @@ export async function loadCatalogue(userId: string): Promise<{ tracks: VisibleTr
   const db = createAdminClient();
   const plays = await db.from("plays").select("track_id").eq("user_id", userId);
   if (plays.error) throw new Error(plays.error.message);
-  const tops = await db.from("top_items").select("kind, window, rank, spotify_id").eq("user_id", userId);
+  const tops = await db.from("top_items").select("kind, time_range, rank, spotify_id").eq("user_id", userId);
   if (tops.error) throw new Error(tops.error.message);
 
   const recentIds = [...new Set((plays.data ?? []).map((row) => String((row as { track_id: string }).track_id)))];
   const topTracks = (tops.data ?? [])
     .filter((row) => (row as { kind: string }).kind === "track")
     .map((row) => {
-      const item = row as { spotify_id: string; window: Term; rank: number };
-      return { id: item.spotify_id, window: item.window, rank: item.rank };
+      const item = row as { spotify_id: string; time_range: Term; rank: number };
+      return { id: item.spotify_id, time_range: item.time_range, rank: item.rank };
     });
   const topArtists = (tops.data ?? []).filter((row) => (row as { kind: string }).kind === "artist");
 
@@ -76,11 +76,11 @@ export async function loadCatalogue(userId: string): Promise<{ tracks: VisibleTr
     recentIds,
     topTracks,
     artists: topArtists.map((row) => {
-      const item = row as { spotify_id: string; window: Term; rank: number };
+      const item = row as { spotify_id: string; time_range: Term; rank: number };
       return {
         id: item.spotify_id,
         name: names.get(item.spotify_id) ?? "Artist",
-        window: item.window,
+        time_range: item.time_range,
         rank: item.rank,
       };
     }),

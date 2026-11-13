@@ -26,7 +26,7 @@ export type ListeningTrack = {
 export type ListeningInput = {
   tracks: ListeningTrack[];
   plays: { trackId: string }[];
-  topArtists: { id: string; window: Term }[];
+  topArtists: { id: string; time_range: Term }[];
 };
 
 export type TagShare = { tag: string; share: number };
@@ -55,8 +55,8 @@ export function computeSignals(input: ListeningInput, now = new Date("2026-11-13
     .map((track) => releaseYear(track.releaseDate))
     .filter((year): year is number => year != null);
   const recentCutoff = now.getUTCFullYear() - RECENT_YEARS;
-  const shortArtists = new Set(input.topArtists.filter((artist) => artist.window === "short_term").map((artist) => artist.id));
-  const longArtists = new Set(input.topArtists.filter((artist) => artist.window === "long_term").map((artist) => artist.id));
+  const shortArtists = new Set(input.topArtists.filter((artist) => artist.time_range === "short_term").map((artist) => artist.id));
+  const longArtists = new Set(input.topArtists.filter((artist) => artist.time_range === "long_term").map((artist) => artist.id));
   const shortTracks = new Set(input.tracks.filter((track) => track.windows.includes("short_term")).map((track) => track.id));
   const longTracks = new Set(input.tracks.filter((track) => track.windows.includes("long_term")).map((track) => track.id));
 

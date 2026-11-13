@@ -51,7 +51,7 @@ describe("AnalysingView", () => {
         album: "Blonde",
         image: null,
         source: "top",
-        window: "medium_term",
+        time_range: "medium_term",
         rank: 3,
       },
       { type: "enrich_result", id: "t2", name: "Nights", artists: ["Frank Ocean"], album: "Blonde", image: null, failures: [] },

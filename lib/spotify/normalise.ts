@@ -37,7 +37,7 @@ export type PlayRow = {
 
 export type TopRow = {
   kind: "track" | "artist";
-  window: Term;
+  time_range: Term;
   rank: number;
   track?: TrackRow;
   artist?: ArtistRow;
@@ -112,24 +112,24 @@ export function normaliseRecentPlays(payload: unknown): PlayRow[] {
   return plays;
 }
 
-export function normaliseTopTracks(payload: unknown, window: Term): TopRow[] {
+export function normaliseTopTracks(payload: unknown, timeRange: Term): TopRow[] {
   const items = isRecord(payload) && Array.isArray(payload.items) ? payload.items : [];
   const rows: TopRow[] = [];
   items.forEach((item, index) => {
     const track = normaliseTrack(item);
     if (!track) return;
-    rows.push({ kind: "track", window, rank: index + 1, track, raw: item });
+    rows.push({ kind: "track", time_range: timeRange, rank: index + 1, track, raw: item });
   });
   return rows;
 }
 
-export function normaliseTopArtists(payload: unknown, window: Term): TopRow[] {
+export function normaliseTopArtists(payload: unknown, timeRange: Term): TopRow[] {
   const items = isRecord(payload) && Array.isArray(payload.items) ? payload.items : [];
   const rows: TopRow[] = [];
   items.forEach((item, index) => {
     const artist = normaliseArtist(item);
     if (!artist) return;
-    rows.push({ kind: "artist", window, rank: index + 1, artist, raw: item });
+    rows.push({ kind: "artist", time_range: timeRange, rank: index + 1, artist, raw: item });
   });
   return rows;
 }

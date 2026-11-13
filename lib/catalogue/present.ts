@@ -2,7 +2,7 @@ import type { Term } from "@/lib/stream/events";
 
 export type TrackSource =
   | { kind: "recent" }
-  | { kind: "top-track"; window: Term; rank: number };
+  | { kind: "top-track"; time_range: Term; rank: number };
 
 export type VisibleTrack = {
   id: string;
@@ -16,7 +16,7 @@ export type VisibleTrack = {
 export type VisibleArtist = {
   id: string;
   name: string;
-  window: Term;
+  time_range: Term;
   rank: number;
 };
 
@@ -33,9 +33,9 @@ export function sourceLabel(sources: TrackSource[]): string {
   if (tops.length > 0) {
     const best = [...tops].sort((a, b) => {
       if (a.kind !== "top-track" || b.kind !== "top-track") return 0;
-      return WINDOW_ORDER.indexOf(a.window) - WINDOW_ORDER.indexOf(b.window) || a.rank - b.rank;
+      return WINDOW_ORDER.indexOf(a.time_range) - WINDOW_ORDER.indexOf(b.time_range) || a.rank - b.rank;
     })[0];
-    if (best && best.kind === "top-track") return `Top · ${WINDOW_LABEL[best.window]}`;
+    if (best && best.kind === "top-track") return `Top · ${WINDOW_LABEL[best.time_range]}`;
   }
   if (sources.some((source) => source.kind === "recent")) return "Recent play";
   return "";
@@ -50,7 +50,7 @@ export function presentCatalogue(input: {
     image: string | null;
   }[];
   recentIds: string[];
-  topTracks: { id: string; window: Term; rank: number }[];
+  topTracks: { id: string; time_range: Term; rank: number }[];
   artists: VisibleArtist[];
   enrichedIds: ReadonlySet<string>;
 }): { tracks: VisibleTrack[]; artists: VisibleArtist[] } {
@@ -60,7 +60,7 @@ export function presentCatalogue(input: {
       const sources: TrackSource[] = [];
       if (input.recentIds.includes(track.id)) sources.push({ kind: "recent" });
       for (const top of input.topTracks) {
-        if (top.id === track.id) sources.push({ kind: "top-track", window: top.window, rank: top.rank });
+        if (top.id === track.id) sources.push({ kind: "top-track", time_range: top.time_range, rank: top.rank });
       }
       return { ...track, sources };
     });

@@ -73,8 +73,8 @@ describe("catalogue", () => {
         { id: "dropped", name: "Dropped", artists: ["B"], album: null, image: null },
       ],
       recentIds: ["kept", "dropped"],
-      topTracks: [{ id: "kept", window: "short_term", rank: 1 }],
-      artists: [{ id: "ar1", name: "A", window: "long_term", rank: 1 }],
+      topTracks: [{ id: "kept", time_range: "short_term", rank: 1 }],
+      artists: [{ id: "ar1", name: "A", time_range: "long_term", rank: 1 }],
       enrichedIds: new Set(["kept"]),
     });
     expect(presented.tracks.map((track) => track.id)).toEqual(["kept"]);

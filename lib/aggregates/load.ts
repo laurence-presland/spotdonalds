@@ -15,7 +15,7 @@ export async function loadAggregates(userId: string): Promise<Aggregates> {
   const db = createAdminClient();
   const plays = await db.from("plays").select("track_id").eq("user_id", userId);
   if (plays.error) throw new Error(plays.error.message);
-  const tops = await db.from("top_items").select("kind, window, rank, spotify_id").eq("user_id", userId);
+  const tops = await db.from("top_items").select("kind, time_range, rank, spotify_id").eq("user_id", userId);
   if (tops.error) throw new Error(tops.error.message);
 
   const trackIds = [
@@ -78,14 +78,14 @@ export async function loadAggregates(userId: string): Promise<Aggregates> {
   });
 
   const windowArtists: WindowArtist[] = artistTops.map((row) => {
-    const item = row as { spotify_id: string; window: Term; rank: number };
-    return { id: item.spotify_id, name: names.get(item.spotify_id) ?? "Artist", window: item.window, rank: item.rank };
+    const item = row as { spotify_id: string; time_range: Term; rank: number };
+    return { id: item.spotify_id, name: names.get(item.spotify_id) ?? "Artist", time_range: item.time_range, rank: item.rank };
   });
   const topTracks = (tops.data ?? [])
     .filter((row) => (row as { kind: string }).kind === "track")
     .map((row) => {
-      const item = row as { spotify_id: string; window: Term };
-      return { id: item.spotify_id, window: item.window };
+      const item = row as { spotify_id: string; time_range: Term };
+      return { id: item.spotify_id, time_range: item.time_range };
     });
 
   const aggregates = buildAggregates({ tracks, artists: windowArtists, topTracks });

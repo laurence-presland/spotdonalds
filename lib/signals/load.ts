@@ -13,7 +13,7 @@ export async function loadListening(userId: string): Promise<ListeningInput> {
   const db = createAdminClient();
   const plays = await db.from("plays").select("track_id").eq("user_id", userId);
   if (plays.error) throw new Error(plays.error.message);
-  const tops = await db.from("top_items").select("kind, window, spotify_id").eq("user_id", userId);
+  const tops = await db.from("top_items").select("kind, time_range, spotify_id").eq("user_id", userId);
   if (tops.error) throw new Error(tops.error.message);
 
   const playRows = (plays.data ?? []).map((row) => ({ trackId: String((row as { track_id: string }).track_id) }));
@@ -21,9 +21,9 @@ export async function loadListening(userId: string): Promise<ListeningInput> {
   const trackIds = [...new Set([...playRows.map((play) => play.trackId), ...topTracks.map((row) => String((row as { spotify_id: string }).spotify_id))])];
   const windowsByTrack = new Map<string, Term[]>();
   for (const row of topTracks) {
-    const item = row as { spotify_id: string; window: Term };
+    const item = row as { spotify_id: string; time_range: Term };
     const list = windowsByTrack.get(item.spotify_id) ?? [];
-    list.push(item.window);
+    list.push(item.time_range);
     windowsByTrack.set(item.spotify_id, list);
   }
 
@@ -98,8 +98,8 @@ export async function loadListening(userId: string): Promise<ListeningInput> {
     topArtists: (tops.data ?? [])
       .filter((row) => (row as { kind: string }).kind === "artist")
       .map((row) => {
-        const item = row as { spotify_id: string; window: Term };
-        return { id: item.spotify_id, window: item.window };
+        const item = row as { spotify_id: string; time_range: Term };
+        return { id: item.spotify_id, time_range: item.time_range };
       }),
   };
 }

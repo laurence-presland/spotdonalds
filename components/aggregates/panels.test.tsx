@@ -15,9 +15,9 @@ describe("aggregate panels", () => {
         <TopArtistsByWindow
           status="ready"
           artists={{
-            short_term: [{ id: "a", name: "Kendrick Lamar", window: "short_term", rank: 1 }],
+            short_term: [{ id: "a", name: "Kendrick Lamar", time_range: "short_term", rank: 1 }],
             medium_term: [],
-            long_term: [{ id: "b", name: "Frank Ocean", window: "long_term", rank: 1 }],
+            long_term: [{ id: "b", name: "Frank Ocean", time_range: "long_term", rank: 1 }],
           }}
         />
       </>,

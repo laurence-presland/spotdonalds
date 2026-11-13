@@ -35,7 +35,7 @@ export type IngestStore = {
   upsertArtists(artists: ArtistRow[]): Promise<void>;
   upsertTracks(tracks: TrackRow[]): Promise<void>;
   upsertPlays(userId: string, plays: PlayRow[]): Promise<void>;
-  replaceTop(userId: string, kind: "track" | "artist", window: Term, rows: TopRow[]): Promise<void>;
+  replaceTop(userId: string, kind: "track" | "artist", timeRange: Term, rows: TopRow[]): Promise<void>;
 };
 
 export function emptyCounts(): IngestCounts {

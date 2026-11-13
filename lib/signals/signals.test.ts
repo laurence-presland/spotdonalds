@@ -41,9 +41,9 @@ const listening: ListeningInput = {
   ],
   plays: [{ trackId: "t1" }, { trackId: "t1" }, { trackId: "t2" }],
   topArtists: [
-    { id: "a", window: "short_term" },
-    { id: "a", window: "long_term" },
-    { id: "b", window: "medium_term" },
+    { id: "a", time_range: "short_term" },
+    { id: "a", time_range: "long_term" },
+    { id: "b", time_range: "medium_term" },
   ],
 };
 

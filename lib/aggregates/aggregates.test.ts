@@ -54,16 +54,16 @@ describe("bpm", () => {
 describe("artists and coverage", () => {
   it("keeps rank order, finds window overlap, and counts coverage", () => {
     const artists = topArtistsByWindow([
-      { id: "b", name: "B", window: "short_term", rank: 2 },
-      { id: "a", name: "A", window: "short_term", rank: 1 },
-      { id: "a", name: "A", window: "long_term", rank: 1 },
+      { id: "b", name: "B", time_range: "short_term", rank: 2 },
+      { id: "a", name: "A", time_range: "short_term", rank: 1 },
+      { id: "a", name: "A", time_range: "long_term", rank: 1 },
     ]);
     expect(artists.short_term.map((artist) => artist.id)).toEqual(["a", "b"]);
     expect(artists.medium_term).toEqual([]);
     expect(windowOverlap(artists.short_term.concat(artists.long_term), [
-      { id: "t1", window: "short_term" },
-      { id: "t1", window: "long_term" },
-      { id: "t2", window: "medium_term" },
+      { id: "t1", time_range: "short_term" },
+      { id: "t1", time_range: "long_term" },
+      { id: "t2", time_range: "medium_term" },
     ])).toEqual({ artists: ["a"], tracks: ["t1"] });
 
     const report = coverage([
@@ -91,8 +91,8 @@ describe("entropy and the combined aggregate", () => {
         { id: "t1", tags: [mb("jazz"), mb("soul")], bpm: 98 },
         { id: "t2", tags: [mb("jazz")], bpm: null },
       ],
-      artists: [{ id: "a", name: "A", window: "medium_term" as const, rank: 1 }],
-      topTracks: [{ id: "t1", window: "medium_term" as const }],
+      artists: [{ id: "a", name: "A", time_range: "medium_term" as const, rank: 1 }],
+      topTracks: [{ id: "t1", time_range: "medium_term" as const }],
     };
     expect(buildAggregates(input)).toEqual(buildAggregates(input));
     expect(buildAggregates(input).bpm.count).toBe(1);
