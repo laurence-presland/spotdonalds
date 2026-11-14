@@ -1,0 +1,30 @@
+flowchart TD
+  subgraph ingest["Ingest"]
+    count{"50 tracks stored?"} -->|yes| go["Continue"]
+    count -->|no| recent
+    subgraph spotify["Spotify calls"]
+      recent["Recently played, up to 50"]
+      recent --> ttShort["Top tracks, 4 weeks, short_term"]
+      ttShort --> ttMed["Top tracks, 6 months, medium_term"]
+      ttMed --> ttLong["Top tracks, 1 year, long_term"]
+      ttLong --> taShort["Top artists, 4 weeks, short_term"]
+      taShort --> taMed["Top artists, 6 months, medium_term"]
+      taMed --> taLong["Top artists, 1 year, long_term"]
+    end
+    taLong --> still{"Still under 50?"}
+    still -->|yes| short["insufficient_data"]
+    still -->|no| go
+    spotify -.-> iFail{"Fails?"}
+    iFail -->|retry up to 2x, 15s apart| spotify
+  end
+  go --> enrich
+  subgraph analyse["Analyse"]
+    enrich["MusicBrainz and Deezer"] --> stats["BPM and stats"]
+    stats --> profile["LLM taste profile"]
+    profile --> order["LLM order"]
+    order --> done["Complete"]
+    enrich -.-> aFail{"Fails?"}
+    aFail -->|retry up to 2x, 15s apart| enrich
+  end
+  iFail -->|last try or fatal| err["status error, then the next sign-in starts a new run"]
+  aFail -->|last try or fatal| err

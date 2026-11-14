@@ -1,0 +1,26 @@
+sequenceDiagram
+  actor Browser
+  participant App
+  participant Auth as Supabase Auth
+  participant Spotify
+  participant DB
+
+  Browser->>App: Sign in
+  App->>Auth: Start Spotify sign-in
+  Auth->>Spotify: Ask for consent
+  Spotify-->>Auth: Approved
+  Auth-->>Browser: Back to the app
+  Browser->>App: Callback
+  App->>Auth: Exchange the code
+  Auth-->>App: Session and tokens
+  App->>DB: Store the tokens
+  App->>Spotify: GET /me
+  Spotify-->>App: Allowlisted
+  App->>DB: Latest run
+  alt no run, or the last one errored
+    App->>App: Start the workflow
+  else running or complete
+    App->>App: Leave it
+  end
+  App-->>Browser: Open /app
+  Note over Browser,Spotify: Consent refused, a missing token, or a 403 from /me sends the person away.
