@@ -6,7 +6,7 @@ Supersedes the step list and the read path in [ADR 003](003-analysis-workflow.md
 
 The auth callback starts a workflow only when the latest run is missing or `status = error`. A `running` run is left to the worker that owns it. A `complete` run, including `outcome = insufficient_data`, is never started again by a later sign-in. Start fresh is the only way to rerun a completed flow. It closes the open row, inserts a new one, and starts a new workflow. Try again reopens an error and starts a workflow. Both buttons POST. The page does not.
 
-`GET /api/analysis/status` only reports the row. A read does not start, restart, or change a workflow. A `running` row with no workflow id, or with a stale heartbeat, stays `running` until Try again or Start fresh. The steps skip work that is already stored when a workflow is actually running. The last failure of a step writes `status = error` and the message.
+`GET /api/analysis/status` only reports the row. A read does not start, restart, or change a workflow. Every run ends `done` or `error`. If a step fails for good, including a timeout after its retries, the workflow writes `status = error` with a generic message and then fails the workflow run. That write leaves a `done` row and `insufficient_data` alone. The next sign-in starts that error run again. The steps skip work that is already stored when a workflow is actually running.
 
 ## Two steps
 
