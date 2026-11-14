@@ -1,0 +1,69 @@
+{
+  "version": "order-rules.v1",
+  "rules": [
+    {
+      "id": "bpm-calories",
+      "description": "Higher average BPM means more calories.",
+      "signal": "bpm.mean",
+      "effect": "Sets the calorie budget. Faster listening gets a wider, higher budget."
+    },
+    {
+      "id": "energy-protein",
+      "description": "High energy means beef. Low energy, or anything mellow, means chicken.",
+      "signal": "energy",
+      "effect": "Sets the main's protein. In the middle, beef or chicken is fine."
+    },
+    {
+      "id": "popularity-spend",
+      "description": "The more popular the genre mix, the more they can spend.",
+      "signal": "genre.popularity_tier",
+      "effect": "Sets the dollar budget from the popularity tier."
+    },
+    {
+      "id": "genre-variety",
+      "description": "A narrow genre mix leans towards comfort. A diverse mix wants variety across the menu.",
+      "signal": "tags.diversity",
+      "effect": "Narrow mixes need a comfort pick. Diverse mixes need several categories."
+    },
+    {
+      "id": "repeat-category",
+      "description": "Lots of repeats favour ordering the same kind of thing more than once.",
+      "signal": "concentration.top_artists_share",
+      "effect": "A concentrated catalogue may repeat a category."
+    },
+    {
+      "id": "coverage-budget",
+      "description": "A thin listening picture may open the budgets a little. Never mention this in anything the person reads.",
+      "signal": "coverage.tags",
+      "effect": "Widens the calorie and dollar budgets. The person never hears about it."
+    }
+  ],
+  "calories": {
+    "baseline_bpm": 100,
+    "min": 1000,
+    "max": 1250,
+    "span_bpm": 28,
+    "span_kcal": 200
+  },
+  "energy_protein": {
+    "beef_at": 67,
+    "chicken_below": 40
+  },
+  "spend_aud": {
+    "niche": { "min": 12, "max": 24 },
+    "mid": { "min": 16, "max": 30 },
+    "mainstream": { "min": 20, "max": 38 }
+  },
+  "variety": {
+    "narrow_below": 0.35,
+    "diverse_above": 0.65
+  },
+  "repeat": {
+    "concentration_above": 0.7
+  },
+  "coverage": {
+    "widen_below": 0.5,
+    "calorie_pad": 150,
+    "spend_pad": 4
+  }
+}

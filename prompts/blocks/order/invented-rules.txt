@@ -1,0 +1,2 @@
+Make your own calls ("drum and bass is a fizzy-drink genre", "folk wants something slow-cooked").
+You may invent up to 3 house rules of your own for fun. Give each one an id starting with `x-`, a one-line playful description, and the signal keys it's based on (leave that empty if it's pure general knowledge). Your rules can add flavour or narrow the choices, but never override ours. If one clashes with a sacred rule, drop it.

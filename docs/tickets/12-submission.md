@@ -33,16 +33,16 @@ The brief asks for a public repo link, a hosted version (preferred) and a README
 - New features. Anything unfinished goes in the README as a limitation or future work.
 
 ## Acceptance criteria
-- [ ] A reviewer can follow the README from a clean clone to a running local app using only `.env.example` and the documented steps.
+- [x] A reviewer can follow the README from a clean clone to a running local app using only `.env.example` and the documented steps.
 - [ ] README includes all sections the brief lists: setup with `.env.example`, high-level architecture and design, AI implementation, limitations and next steps, screenshots.
-- [ ] 1-, 5- and 20-day enhancement plans are present and concrete.
-- [ ] The README states the Spotify dev-mode limits and the assumptions made.
-- [ ] Attribution for MusicBrainz, Deezer and McDonald's Australia source data is present.
+- [x] 1-, 5- and 20-day enhancement plans are present and concrete.
+- [x] The README states the Spotify dev-mode limits and the assumptions made.
+- [x] Attribution for MusicBrainz, Deezer and McDonald's Australia source data is present.
 - [ ] Each reviewer's Spotify account is allowlisted and a sign-in was tested on the production URL (or the access screen reviewed for anyone not yet added).
 - [ ] The hosted link works on a fresh browser session end to end: landing, sign in, welcome, analysing (list fills in), then results with the order as hero.
 - [ ] A second visit with a completed run goes straight to Results, with no welcome replay.
 - [ ] CI is green on `main` and `npm run lint && npm run typecheck && npm test` pass.
-- [ ] No secrets in the repository or its history.
+- [x] No secrets in the repository or its history.
 - [ ] Repository is public and the links have been sent.
 
 ## Technical notes

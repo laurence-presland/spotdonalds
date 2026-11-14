@@ -93,10 +93,14 @@ The “Wraps” and “Burgers” site sections are category pages only; individ
 - **Serving weight** is not printed on product pages.
 - **Vegetarian / Halal certification** is not asserted here, following McDonald's own disclaimer.
 
+## Refresh
+
+This is a **point-in-time snapshot**, retrieved 13 November 2026 (AEDT). The repo does not include a refresh script or the raw page captures. Rebuilding the file means repeating the method above: read the official sitemap, fetch each live product page, and copy nutrition only from that page or from an official PDF the page itself links to. Do not call `/dnaapp/`. `energy_kcal` stays the published figure and is never derived from kJ. A reproducible refresh script is future work.
+
 ## Files
 
 - `data/menu/menu.json`: the dataset
 - `data/menu/menu.schema.json`: JSON Schema (2020-12)
+- `data/menu/tag-rules.json`: deterministic assignment of `data/order-tags.json` ids
+- `data/menu/candidate-policy.json`: which items the order step may see
 - `data/menu/SOURCES.md`: this file
-
-The fetch and build scripts and the raw page captures used to produce the dataset are not committed. Ticket 09 covers adding a reproducible refresh script.

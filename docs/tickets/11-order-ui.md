@@ -28,14 +28,14 @@ First generation is automatic, as the last stage of the analysis pipeline (13). 
 - Images of the order (future work).
 
 ## Acceptance criteria
-- [ ] The receipt renders items, quantities, prices and calories from the stored order. The dollar total matches the sum of the line prices, and the calorie total matches the sum of the items.
-- [ ] Each item shows its justification and tags whose labels match `data/order-tags.json` for the stored ids. An id missing from that file is not rendered as a made-up label.
-- [ ] The `how_we_decided` explanation is visible and has no citation chips.
-- [ ] The calorie budget and the rule that produced it are visible.
-- [ ] Menu retrieval date and source attribution are shown.
-- [ ] Loading, error and retry states work, and regenerate doesn't stack duplicate receipts.
+- [x] The receipt renders items, quantities, prices and calories from the stored order. The dollar total matches the sum of the line prices, and the calorie total matches the sum of the items.
+- [x] Each item shows its justification and tags whose labels match `data/order-tags.json` for the stored ids. An id missing from that file is not rendered as a made-up label.
+- [x] The `how_we_decided` explanation is visible and has no citation chips.
+- [x] The calorie budget and the rule that produced it are visible.
+- [x] Menu retrieval date and source attribution are shown.
+- [x] Loading, error and retry states work, and regenerate doesn't stack duplicate receipts.
 - [ ] Layout holds at 360px and desktop widths, including in a hero position on Results, and passes an automated accessibility check.
-- [ ] A component test covers rendering from a fixture order, including the explanation block and an item with missing optional fields.
+- [x] A component test covers rendering from a fixture order, including the explanation block and an item with missing optional fields.
 
 ## Technical notes
 - Look up item names and nutrition from the menu loader (09) by id, not from model text, so the display can't drift from the data.

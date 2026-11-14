@@ -1,0 +1,14 @@
+{
+  "version": "profile.v1",
+  "blocks": [
+    "profile/role",
+    "profile/input",
+    "shared/data-truth",
+    "profile/rules",
+    "shared/no-gaps",
+    "shared/be-creative",
+    "profile/output",
+    "shared/voice",
+    "shared/json-only"
+  ]
+}

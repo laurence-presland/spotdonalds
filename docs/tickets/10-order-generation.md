@@ -2,6 +2,10 @@
 
 **Size:** L · **Depends on:** 07, 09
 
+## Current shape
+
+The order runs inside the `analyse` workflow step. An order row already stored for this run is not generated again.
+
 ## Summary / goal
 A backend LLM step that decides what the user should order from McDonald's Australia based on their taste profile, using a small set of deliberately vague rules and a structured candidate menu. The model must return JSON, and we validate every pick on the server before anything reaches the UI. This is the fun layer on top of the taste profile, and its output is the hero of the Results screen (13).
 
@@ -43,25 +47,25 @@ This is the last stage of the analysis pipeline (ingest → enrich → profile �
 - Health or dietary advice.
 
 ## Acceptance criteria
-- [ ] An order with invented rules still passes every sacred-rule check, invented ids all start with `x-`, there are at most three, and a `rule_ids` entry pointing at an undefined `x-` id is rejected (tested).
-- [ ] The output schema rejects an item id, tag id, rule id or signal key that isn't in its source list (tested).
-- [ ] Total kcal and price are computed by code from the menu, never taken from model output.
-- [ ] The model is only ever given structured inputs and the candidate set, never the full menu description text.
-- [ ] A response containing an id not in the menu is rejected and retried (tested).
-- [ ] A response whose recomputed calories fall outside the budget is rejected and retried (tested).
-- [ ] After bounded retries, the endpoint returns a typed error and no order is stored.
-- [ ] Every stored justification, and `how_we_decided`, references at least one valid rule id and one valid signal key.
-- [ ] Every item tag id exists in `data/order-tags.json`. An invented tag is rejected and retried (tested).
-- [ ] A `how_we_decided` (or justification) that quotes a statistic disagreeing with its cited signal is rejected and retried (tested with a deliberately wrong stub).
-- [ ] The calorie budget is computed by code with unit tests covering each rule, and the same inputs give the same budget.
-- [ ] A high-energy fixture whose main isn't beef, or a low-energy fixture whose main isn't chicken, is rejected and retried (tested).
-- [ ] The popularity step returns only a tier from the fixed set and a reason, never a price. Code maps the tier to the spend budget (unit tested per tier), and an order whose AUD total falls outside the spend budget is rejected and retried (tested).
-- [ ] The order and popularity prompts are assembled from their manifests, reuse the shared blocks from 07, and the result stores each template's hash (tested).
-- [ ] The result stores rules version, prompt version, menu `retrieved_at` and the inputs snapshot.
-- [ ] A cached order is returned on repeat calls without a model call.
-- [ ] The run record's `stage` reflects this stage while the endpoint is working, and is `done` when a valid order is stored.
-- [ ] Token usage, latency, retry count and validation failures are logged.
-- [ ] A low-coverage fixture produces an order whose summary, justifications, and `how_we_decided` do not mention missing data, coverage, unlabeled tracks, or uncertainty from incomplete enrichment (tested).
+- [x] An order with invented rules still passes every sacred-rule check, invented ids all start with `x-`, there are at most three, and a `rule_ids` entry pointing at an undefined `x-` id is rejected (tested).
+- [x] The output schema rejects an item id, tag id, rule id or signal key that isn't in its source list (tested).
+- [x] Total kcal and price are computed by code from the menu, never taken from model output.
+- [x] The model is only ever given structured inputs and the candidate set, never the full menu description text.
+- [x] A response containing an id not in the menu is rejected and retried (tested).
+- [x] A response whose recomputed calories fall outside the budget is rejected and retried (tested).
+- [x] After bounded retries, the endpoint returns a typed error and no order is stored.
+- [x] Every stored justification, and `how_we_decided`, references at least one valid rule id and one valid signal key.
+- [x] Every item tag id exists in `data/order-tags.json`. An invented tag is rejected and retried (tested).
+- [x] A `how_we_decided` (or justification) that quotes a statistic disagreeing with its cited signal is rejected and retried (tested with a deliberately wrong stub).
+- [x] The calorie budget is computed by code with unit tests covering each rule, and the same inputs give the same budget.
+- [x] A high-energy fixture whose main isn't beef, or a low-energy fixture whose main isn't chicken, is rejected and retried (tested).
+- [x] The popularity step returns only a tier from the fixed set and a reason, never a price. Code maps the tier to the spend budget (unit tested per tier), and an order whose AUD total falls outside the spend budget is rejected and retried (tested).
+- [x] The order and popularity prompts are assembled from their manifests, reuse the shared blocks from 07, and the result stores each template's hash (tested).
+- [x] The result stores rules version, prompt version, menu `retrieved_at` and the inputs snapshot.
+- [x] A cached order is returned on repeat calls without a model call.
+- [x] The run record's `stage` reflects this stage while the endpoint is working, and is `done` when a valid order is stored.
+- [x] Token usage, latency, retry count and validation failures are logged.
+- [x] A low-coverage fixture produces an order whose summary, justifications, and `how_we_decided` do not mention missing data, coverage, unlabeled tracks, or uncertainty from incomplete enrichment (tested).
 
 ## Technical notes
 - Candidate set from 09 keeps the prompt small (cap drinks, drop items without nutrition). Aim for a few dozen items rather than all 327.

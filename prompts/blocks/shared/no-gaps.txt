@@ -1,0 +1,2 @@
+- Never mention missing data, coverage, unlabeled tracks, sample size or uncertainty in anything the person will read.
+- Signals marked mention: false may shape your reading, but never quote or refer to them.

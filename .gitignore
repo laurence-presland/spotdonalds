@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+coverage
+.vercel
+app/.well-known/workflow/
+public/.well-known/workflow/
+.env
+.env.local
+.env*.local
+*.tsbuildinfo
+.DS_Store
+/.swc
