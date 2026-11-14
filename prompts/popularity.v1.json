@@ -1,0 +1,4 @@
+{
+  "version": "popularity.v1",
+  "blocks": ["popularity/task", "shared/json-only"]
+}

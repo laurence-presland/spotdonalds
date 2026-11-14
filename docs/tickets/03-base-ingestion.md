@@ -2,6 +2,10 @@
 
 **Size:** M · **Depends on:** 01, 02
 
+## Current shape
+
+Ingest checks the database first. Fifty or more distinct tracks already stored means Spotify is not called. Otherwise each track is persisted as it is stored so `GET /api/analysis/tracks` can stream it. Fewer than 50 tracks finishes the run as `insufficient_data` and analyse does not run.
+
 ## Summary / goal
 Fetch everything useful Spotify will give us for the signed-in user (recent plays plus top tracks and artists for all three windows), normalise it, persist it, and stream each item to the browser as it arrives. A dropped connection must be resumable without refetching what's already saved.
 
@@ -27,14 +31,14 @@ After login, ingestion is kicked off immediately as the first stage of the analy
 ## Acceptance criteria
 - [ ] Hitting `/api/ingest` as a signed-in user streams events progressively (first event arrives before the last Spotify call completes) on the deployed Vercel app, not just locally.
 - [ ] Recent plays, and top tracks and artists for all three windows, are persisted and match what Spotify returned (spot check against a real account).
-- [ ] Running ingestion twice does not duplicate rows.
-- [ ] Killing the connection mid-stream and calling again completes the run without refetching persisted items (covered by a test with a stubbed Spotify client).
-- [ ] The run record exposes a readable `stage` and status after start, mid-run and completion, so a reload can tell this stage is in progress or finished.
-- [ ] Spotify 429 and 5xx responses are retried with backoff and the stream reports an error event if retries are exhausted.
-- [ ] A 403 from Spotify produces a typed error mapped to the access screen from 02.
-- [ ] The route requires auth and only ever reads/writes the caller's data.
-- [ ] Normalisation has unit tests using recorded Spotify response fixtures.
-- [ ] Each run logs duration and per-endpoint counts.
+- [x] Running ingestion twice does not duplicate rows.
+- [x] Killing the connection mid-stream and calling again completes the run without refetching persisted items (covered by a test with a stubbed Spotify client).
+- [x] The run record exposes a readable `stage` and status after start, mid-run and completion, so a reload can tell this stage is in progress or finished.
+- [x] Spotify 429 and 5xx responses are retried with backoff and the stream reports an error event if retries are exhausted.
+- [x] A 403 from Spotify produces a typed error mapped to the access screen from 02.
+- [x] The route requires auth and only ever reads/writes the caller's data.
+- [x] Normalisation has unit tests using recorded Spotify response fixtures.
+- [x] Each run logs duration and per-endpoint counts.
 
 ## Technical notes
 - Vercel response bodies are capped at 4.5 MB unless streamed; use a streamed `Response` from a Node route handler, with `export const maxDuration` set explicitly. Ingestion itself should be quick (a handful of calls); the long part is enrichment (04). Starting this work as soon as the session exists is what lets the welcome screen in 13 cover start-up latency.

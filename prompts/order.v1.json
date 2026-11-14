@@ -1,0 +1,15 @@
+{
+  "version": "order.v1",
+  "blocks": [
+    "order/role",
+    "order/input",
+    "shared/data-truth",
+    "order/rules",
+    "shared/no-gaps",
+    "shared/be-creative",
+    "order/invented-rules",
+    "order/output",
+    "shared/voice",
+    "shared/json-only"
+  ]
+}

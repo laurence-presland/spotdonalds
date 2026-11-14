@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "require_nutrition": true,
+  "exclude_categories": ["condiments", "happy_meal", "bundle_meals"],
+  "drink_categories": ["mccafe_drinks", "cold_and_frozen_drinks", "shakes_and_frappes"],
+  "prefer_size": "medium",
+  "one_size_per_product": true,
+  "max_per_category": {
+    "burgers": 8,
+    "chicken_and_fish": 6,
+    "breakfast": 4,
+    "sides": 4,
+    "desserts": 4,
+    "mccafe_food": 2,
+    "mccafe_drinks": 3,
+    "cold_and_frozen_drinks": 3,
+    "shakes_and_frappes": 2
+  }
+}

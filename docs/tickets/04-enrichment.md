@@ -2,6 +2,10 @@
 
 **Size:** L · **Depends on:** 03
 
+## Current shape
+
+Enrichment runs inside the `analyse` workflow step, not as its own visible stage. A track that already has a `track_enrichment` row is skipped.
+
 ## Summary / goal
 For each ingested track, look up the metadata Spotify no longer gives us (genre/tags, BPM, and a little more) from real databases, record exactly where every value came from, cache it, and stream progress to the client. The LLM plays no part here.
 
@@ -30,16 +34,16 @@ Discogs and web-search gap-fill are explicitly out of scope and listed as future
 - Starting the taste profile or order stages (07, 10, 13).
 
 ## Acceptance criteria
-- [ ] For a track with a valid ISRC known to MusicBrainz, tags are stored with source `musicbrainz`, a `source_url` to the recording, and a confidence value.
-- [ ] Deezer BPM is stored when non-zero, and `bpm = 0` is stored as missing, not as a value.
-- [ ] A track with no match from either source, or a failed lookup, is dropped. It is absent from stored rows and from the stream of visible tracks, with no invented values.
-- [ ] MusicBrainz requests never exceed 1/s and always send the configured `User-Agent` (test with a fake clock).
-- [ ] A second run over the same tracks makes zero external requests (cache hit), verified in a test.
-- [ ] Stream events arrive progressively and the endpoint can be interrupted and resumed without redoing completed tracks.
-- [ ] The run record's `stage` reflects enrichment while this endpoint is working, and is updated when it finishes.
-- [ ] One source being down (simulated 503) still yields results from the other, and the failure is recorded in the event stream and logs.
-- [ ] Matching and chosen-value logic have unit tests with recorded MusicBrainz and Deezer fixtures, including the ISRC-missing fallback.
-- [ ] The list footer can render "Data provided by Spotify, MusicBrainz, and Deezer."
+- [x] For a track with a valid ISRC known to MusicBrainz, tags are stored with source `musicbrainz`, a `source_url` to the recording, and a confidence value.
+- [x] Deezer BPM is stored when non-zero, and `bpm = 0` is stored as missing, not as a value.
+- [x] A track with no match from either source, or a failed lookup, is dropped. It is absent from stored rows and from the stream of visible tracks, with no invented values.
+- [x] MusicBrainz requests never exceed 1/s and always send the configured `User-Agent` (test with a fake clock).
+- [x] A second run over the same tracks makes zero external requests (cache hit), verified in a test.
+- [x] Stream events arrive progressively and the endpoint can be interrupted and resumed without redoing completed tracks.
+- [x] The run record's `stage` reflects enrichment while this endpoint is working, and is updated when it finishes.
+- [x] One source being down (simulated 503) still yields results from the other, and the failure is recorded in the event stream and logs.
+- [x] Matching and chosen-value logic have unit tests with recorded MusicBrainz and Deezer fixtures, including the ISRC-missing fallback.
+- [x] The list footer can render "Data provided by Spotify, MusicBrainz, and Deezer."
 
 ## Technical notes
 - At 1 req/s, 100 unique tracks take at least ~100s for MusicBrainz alone. That fits within Hobby's 300s but only just; batch work so the client can re-invoke and continue if the function hits its limit. Dedupe by ISRC first (top tracks overlap heavily with recent plays).

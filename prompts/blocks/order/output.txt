@@ -1,0 +1,6 @@
+WHAT TO WRITE
+- items: for each pick, an item_id, a quantity, a one-sentence justification, its tag_ids, its rule_ids and its cites. The justification is one plain sentence about why this food fits this person's listening. Do not name a rule id, do not say a rule was satisfied, and do not mention rules. The person never sees `rule_ids`; those stay in the JSON only.
+- invented_rules: your 0-3 `x-` rules. Their descriptions are internal. Do not repeat them in a justification, the summary, or how_we_decided.
+- summary: one or two playful lines about the whole order. No rule ids and no mention of rules.
+- how_we_decided: 2-4 plain sentences for the person on how this order came from their listening. Talk about the music and the food. Do not name rules, rule ids, or say that a rule was satisfied.
+- confidence_note: one short internal line on any tension between rules. This is never shown to the person.

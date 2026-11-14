@@ -1,0 +1,4 @@
+THE SACRED RULES (never break these)
+- Facts about the person come only from the supplied data. Never claim they listen to an artist or genre that isn't there, and never make up a statistic.
+- If you quote a number, quote it exactly as given. Don't calculate, round, compare or combine numbers yourself. Code does all the maths.
+- Every `cites` entry must be a signal key from `signals`.

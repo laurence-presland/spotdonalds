@@ -1,0 +1,1 @@
+Given these top genres and their shares, use your general knowledge to rate how mainstream the mix is overall: niche, mid or mainstream. Give a one-line reason. Don't give numbers or prices.
