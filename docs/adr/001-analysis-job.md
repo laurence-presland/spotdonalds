@@ -34,4 +34,4 @@ The runner is one Vercel Workflow per open run, with two steps: `ingest` and `an
 
 The visible `stage` is `ingest` or `analyse` (then `done`). Enrichment, the taste profile, popularity, and the order run inside `analyse` and skip when their output is already stored. The workflow writes `complete` / `done` at the end of `analyse`, including when every piece skipped.
 
-`workflow_id` stores the workflow run id (`pending` while `start()` is in flight). A second start loses the compare-and-set while the heartbeat is fresh. A read of a running row with no workflow id, or with a heartbeat older than 3 minutes, starts the workflow again. The browser does not start it.
+`workflow_id` stores the workflow run id (`pending` while `start()` is in flight). A second start loses the compare-and-set while the heartbeat is fresh. A read of a running row does not start the workflow again, even when `workflow_id` is missing or the heartbeat is stale. The browser does not start it. Sign-in starts one only when there is no run, or the latest run is `error`.
