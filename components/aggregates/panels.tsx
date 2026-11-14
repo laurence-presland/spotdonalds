@@ -27,7 +27,7 @@ export function GenreMixChart({ mix, status }: { mix: TagMix | null; status: Pan
   const empty = status === "ready" && (!mix || mix.buckets.length === 0);
   return (
     <section id="genre-mix" className="panel" aria-labelledby="genre-mix-title">
-      <h2 id="genre-mix-title">Tag mix</h2>
+      <h2 id="genre-mix-title">Genres</h2>
       {status !== "ready" || empty ? (
         <PanelMessage status={panelMessage(status)} />
       ) : (
@@ -124,9 +124,7 @@ export function TopArtistsByWindow({
               ) : (
                 <ol>
                   {artists![window.id].map((artist) => (
-                    <li key={artist.id}>
-                      {artist.rank}. {artist.name}
-                    </li>
+                    <li key={artist.id}>{artist.name}</li>
                   ))}
                 </ol>
               )}

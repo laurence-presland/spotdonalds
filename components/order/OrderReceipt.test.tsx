@@ -54,6 +54,7 @@ describe("OrderReceipt", () => {
     expect(html).toContain(`$${dollars.toFixed(2)}`);
     expect(html).toContain(`${calories} kcal`);
     expect(html).toContain("Big Mac");
+    expect(html).toContain("Why this was chosen");
     expect(html).toContain("A classic for a steady tempo.");
     expect(html).toContain("Classic");
     expect(html).toContain("The tempo pointed at a hearty meal.");

@@ -68,6 +68,17 @@ describe("TasteProfileCard", () => {
   it("formats stored values and points chips at the aggregate sections", () => {
     expect(formatStoredSignal("bpm.mean", signals)).toBe("128 BPM");
     expect(formatStoredSignal("tags.top", signals)).toBe("jazz 100%");
+    expect(
+      formatStoredSignal("tags.top", {
+        ...signals,
+        "tags.top": [
+          { tag: "jazz", share: 0.4 },
+          { tag: "soul", share: 0.3 },
+          { tag: "rock", share: 0.2 },
+          { tag: "pop", share: 0.1 },
+        ],
+      }),
+    ).toBe("jazz 40%, soul 30%, rock 20%");
     expect(signalAnchor("bpm.mean")).toBe("#bpm");
     expect(signalAnchor("tags.top")).toBe("#genre-mix");
     expect(signalAnchor("concentration.top_artists_share")).toBe("#top-artists");

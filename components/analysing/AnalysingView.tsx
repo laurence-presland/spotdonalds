@@ -26,11 +26,13 @@ export function AnalysingView({
   initialTab = "recent",
   onRetry,
   onStartFresh,
+  onForward,
 }: {
   state: AnalysingState;
   initialTab?: ListTab;
   onRetry?: () => void;
   onStartFresh?: () => void;
+  onForward?: () => void;
 }) {
   const [tab, setTab] = useState<ListTab>(initialTab);
   const [window, setWindow] = useState<Term | "all">("all");
@@ -43,12 +45,18 @@ export function AnalysingView({
         <QuietLogout />
       </header>
       <main className="analysing-main">
-        <h1>Analysing your listening history</h1>
+        {onForward ? (
+          <button type="button" className="back" onClick={onForward}>
+            Forward
+          </button>
+        ) : null}
+        <h1>{state.complete ? "Your listening history" : "Analysing your listening history"}</h1>
         <IngestionProgress
           stage={state.stage}
-          count={state.tracks.length}
+          count={state.complete ? state.ingested || state.tracks.length : state.tracks.length}
           progressDone={state.progressDone}
           progressTotal={state.progressTotal}
+          complete={state.complete}
         />
         {state.status === "reconnecting" ? (
           <p className="status-banner" role="status">

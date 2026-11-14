@@ -96,7 +96,12 @@ export function OrderLine({
         <span>{line.price == null ? "" : money(line.price)}</span>
       </p>
       <p className="line-kcal">{line.kcal == null ? "" : `${line.kcal} kcal`}</p>
-      {line.justification ? <p className="line-why">{line.justification}</p> : null}
+      {line.justification ? (
+        <aside className="why-chosen">
+          <h3>Why this was chosen</h3>
+          <p>{line.justification}</p>
+        </aside>
+      ) : null}
       {line.tags.length > 0 ? (
         <p className="line-tags">{line.tags.join(" · ")}</p>
       ) : null}

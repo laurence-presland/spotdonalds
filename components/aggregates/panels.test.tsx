@@ -29,6 +29,9 @@ describe("aggregate panels", () => {
     expect(html).toContain("6 months");
     expect(html).toContain("1 year");
     expect(html).toContain("Kendrick Lamar");
+    expect(html).toContain("Genres");
+    expect(html).not.toContain("1. Kendrick Lamar");
+    expect(html).not.toContain("Tag mix");
     expect(html).not.toContain("left out");
     expect(html).not.toContain("sample");
     expect(html).not.toContain("missing");
