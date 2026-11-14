@@ -1,7 +1,6 @@
 import { formatStoredSignal, signalAnchor } from "@/lib/profile/present";
 import type { StoredProfile } from "@/lib/profile/run";
 import { SIGNAL_REGISTRY, TRAIT_REGISTRY, type SignalKey } from "@/lib/signals/registry";
-import { RegenerateButton } from "@/components/profile/RegenerateButton";
 
 export function TasteProfileCard({ profile }: { profile: StoredProfile }) {
   return (
@@ -14,7 +13,6 @@ export function TasteProfileCard({ profile }: { profile: StoredProfile }) {
       </ul>
       <h2>Traits</h2>
       <TraitChart profile={profile} />
-      <RegenerateButton />
     </section>
   );
 }

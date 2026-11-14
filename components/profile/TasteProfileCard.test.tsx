@@ -62,7 +62,7 @@ describe("TasteProfileCard", () => {
     expect(html).not.toContain("Internal note about thin enrichment");
     expect(html).not.toContain("how this was made");
     expect(html).toContain("Trait scores out of 100");
-    expect(html).toContain("Regenerate");
+    expect(html).not.toContain("Regenerate");
   });
 
   it("formats stored values and points chips at the aggregate sections", () => {
