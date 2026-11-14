@@ -1,0 +1,23 @@
+flowchart TD
+  browser["Browser: Sign in with Spotify"] --> login["Next.js GET /auth/login"]
+  login --> oauth["Supabase Auth signInWithOAuth, provider Spotify, redirectTo origin/auth/callback"]
+  oauth --> consent["Spotify OAuth consent"]
+  consent --> supaCb["Spotify returns to Supabase /auth/v1/callback"]
+  supaCb --> appCb["Browser lands on Next.js GET /auth/callback"]
+  appCb --> oauthErr{"error param, or no code?"}
+  oauthErr -->|allowlist wording| denied["/not-allowlisted"]
+  oauthErr -->|anything else| deniedConsent["/?notice=consent-denied"]
+  oauthErr -->|code present| exchange["Supabase exchangeCodeForSession"]
+  exchange -->|no session, allowlist wording| denied
+  exchange -->|no session| deniedConsent
+  exchange -->|session| hasAccess{"provider access token?"}
+  hasAccess -->|yes| save["Upsert spotdonalds.spotify_tokens: access, refresh, expiry, scopes"]
+  save --> probe["Allowlist check: GET api.spotify.com/v1/me"]
+  probe -->|403| signedOut["Sign out, then /not-allowlisted"]
+  probe -->|200, or any other error| gate{"Latest analysis_runs row"}
+  hasAccess -->|no access token, refresh token already stored| gate
+  hasAccess -->|no access token and no refresh token| reauth["Sign out, then /?notice=reauth"]
+  gate -->|no row, or status is error| kickoff["Close an open row if one exists, insert a run, start the Vercel Workflow"]
+  gate -->|status running or complete| leave["Leave the run alone"]
+  kickoff --> welcome["Redirect /app?welcome=1"]
+  leave --> welcome
