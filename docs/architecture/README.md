@@ -41,7 +41,7 @@ Source: [spotify-login.mmd](./spotify-login.mmd). PNG: [spotify-login.png](./spo
 
 ## Ingestion workflow
 
-Ingest uses tracks already stored, and calls Spotify only when there are fewer than 50. Still short of 50 ends the run. Analyse enriches, computes the numbers, then asks the model for the profile and the order. Each of those two steps retries on its own: `maxRetries` is 2, so three attempts, 15 seconds apart, and the arrow goes back into that step. The last failed attempt, or a fatal error, sets the run to error, and the next sign-in starts a new run. The model calls themselves do not retry. `maxRetries` is 0 on the profile, popularity, and order requests.
+Ingest uses tracks already stored, and calls Spotify only when there are fewer than 50. Those calls are recently played, then top tracks and top artists for 4 weeks, 6 months and 1 year: seven single-page requests, each checkpointed. A 429 or 5xx retries up to three times, honouring Retry-After, otherwise waiting 250ms, 500ms, then 1s. A 403 is not retried, and a step retry skips the calls that already finished. Still short of 50 ends the run. Analyse enriches, computes the numbers, then asks the model for the profile and the order. Each of those two steps retries on its own: `maxRetries` is 2, so three attempts, 15 seconds apart, and the arrow goes back into that step. The last failed attempt, or a fatal error, sets the run to error, and the next sign-in starts a new run. The model calls themselves do not retry. `maxRetries` is 0 on the profile, popularity, and order requests.
 
 <img alt="Ingestion workflow" src="./ingestion-workflow.svg" width="100%" />
 
@@ -49,13 +49,15 @@ Ingest uses tracks already stored, and calls Spotify only when there are fewer t
 flowchart TD
   subgraph ingest["Ingest"]
     count{"50 tracks stored?"} -->|yes| go["Continue"]
-    count -->|no| fetch["Fetch from Spotify"]
-    fetch --> still{"Still under 50?"}
+    count -->|no| recent["Recently played, up to 50"]
+    recent --> tracks["Top tracks: 4 weeks, 6 months, 1 year"]
+    tracks --> artists["Top artists: 4 weeks, 6 months, 1 year"]
+    artists --> still{"Still under 50?"}
     still -->|yes| short["insufficient_data"]
     still -->|no| go
     count -.-> iFail{"Fails?"}
     iFail -->|retry up to 2x, 15s apart| count
-    iFail -->|last try or fatal| err["status error"]
+    artists -.-> calls["7 single-page calls, each checkpointed. 429 or 5xx: up to 3 retries, Retry-After or 250ms, 500ms, 1s. 403 is not retried. A step retry skips finished calls."]
   end
   go --> enrich
   subgraph analyse["Analyse"]
@@ -65,9 +67,9 @@ flowchart TD
     order --> done["Complete"]
     enrich -.-> aFail{"Fails?"}
     aFail -->|retry up to 2x, 15s apart| enrich
-    aFail -->|last try or fatal| err
   end
-  err --> next["Next sign-in starts a new run"]
+  iFail -->|last try or fatal| err["status error, then the next sign-in starts a new run"]
+  aFail -->|last try or fatal| err
 ```
 
 Source: [ingestion-workflow.mmd](./ingestion-workflow.mmd). PNG: [ingestion-workflow.png](./ingestion-workflow.png).
