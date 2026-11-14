@@ -1,4 +1,3 @@
-import { reconcileStaleRun } from "@/lib/analyse/reconcile";
 import { runStatus } from "@/lib/analyse/progress";
 import { requireSession } from "@/lib/auth/session";
 import { safeDbMessage } from "@/lib/db";
@@ -12,7 +11,7 @@ export async function GET() {
   const user = await requireSession();
   if (user instanceof Response) return user;
   try {
-    const run = await reconcileStaleRun(await latestRun(user.id));
+    const run = await latestRun(user.id);
     return Response.json(runStatus(run));
   } catch (error) {
     log("error", "runs.load", { message: safeDbMessage(error), user_id: user.id });

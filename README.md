@@ -15,8 +15,6 @@ Hosted app: https://spotdonalds.vercel.app
 
 A reload uses the run record. A finished run opens Results. A run still going opens Analysing, not the welcome.
 
-Screenshots of those four screens are not in this repository yet.
-
 ## Setup
 
 Node.js 22 or newer.
@@ -42,7 +40,7 @@ Open http://localhost:3000.
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key. Browser-safe. Used for Auth only. Already set on Vercel. |
 | `DATABASE_URL` | Server-only Postgres URL for the `spotdonalds_app` role on the transaction pooler. Already set on Vercel. The password is set out of band. |
 | `SPOTIFY_CLIENT_ID` | Public Spotify client id `682dcdb2828949ffb8718644e24d3a93`. The server uses it when refreshing a token. |
-| `SPOTIFY_CLIENT_SECRET` | Server-only Spotify secret. The same value is stored in Supabase Auth. It is **not** set on Vercel yet. Refresh fails closed without it. |
+| `SPOTIFY_CLIENT_SECRET` | Server-only Spotify secret. The same value is stored in Supabase Auth. Set on Vercel for Production and Preview, and marked sensitive. |
 | `MUSICBRAINZ_USER_AGENT` | MusicBrainz asks for an app name and a contact. If unset, the server uses `SpotDonalds/0.1` and the production URL. |
 | `AI_MODEL` | Vercel AI Gateway model id. Optional. Defaults to `google/gemini-2.5-flash`. |
 | `AI_GATEWAY_API_KEY` | Gateway key for local development. On Vercel the project's OIDC token is used when this is unset. |
@@ -109,7 +107,7 @@ Landing → Welcome → Analysing → Results
 
 One authenticated route, `/app`, displays the run. The auth callback starts a workflow only when the person has no running or complete run. A later sign-in does not restart a completed flow. An error run is started again on the next sign-in. Start fresh is the only rerun of a completed flow. The page does not POST on load. The state machine is [docs/adr/001-analysis-job.md](docs/adr/001-analysis-job.md). The two workflow steps and the three read endpoints are [docs/adr/004-analysis-flow.md](docs/adr/004-analysis-flow.md). Diagrams of sign-in, the workflow, and the signed-in page calls are in [docs/architecture/README.md](docs/architecture/README.md).
 
-`/app` calls `GET /api/analysis/status`. While the run is in progress it calls `GET /api/analysis/tracks` and renders tracks as they are stored. When ingest has finished it calls `GET /api/analysis/results` and keeps the progress bar up while that request is held open. Hobby functions cannot run longer than 300 seconds. The stream and the results hold stop at 240 seconds and tell the client to call again. A finished run with fewer than 50 distinct tracks is `outcome = insufficient_data`. A partial unique index allows one open run per person. A running row with a stale heartbeat is started again from the read path. Supabase Realtime is not used. `POST /api/analyse` is only Try again (`?retry=1`) and Start fresh (`?fresh=1`).
+`/app` calls `GET /api/analysis/status`. That call only reports the run. It does not start, restart, or change a workflow. While the run is in progress the page calls `GET /api/analysis/tracks` and renders tracks as they are stored. When ingest has finished it calls `GET /api/analysis/results` and keeps the progress bar up while that request is held open. Hobby functions cannot run longer than 300 seconds. The stream and the results hold stop at 240 seconds and tell the client to call again. A finished run with fewer than 50 distinct tracks is `outcome = insufficient_data`. A partial unique index allows one open run per person. A running row with a stale heartbeat stays as it is. Supabase Realtime is not used. `POST /api/analyse` is only Try again (`?retry=1`) and Start fresh (`?fresh=1`).
 
 Spotify tokens are stored in `spotify_tokens` at the callback, the only moment Supabase Auth exposes them, and read later over the direct Postgres connection. Catalogue tables are server-only. Each query for plays, top items, runs, a profile or an order is limited to that user's id.
 
@@ -137,41 +135,18 @@ The order step maps tempo to a calorie budget, the energy score to beef or chick
 - The `late-night` order tag has no listening-hour signal. The model may still apply the tag; nothing in the registry claims a time of day.
 - `bpm.sample_size` is marked `mention: false`, so the model can see how many tempos were known but must not quote that count.
 - There is no demo mode and no seeded user. Tests stub Spotify, MusicBrainz, Deezer and the model.
-- Reviewer allowlisting, a full production sign-in, and making the repository public are still manual steps.
+- A run stuck in `running`, for example when the workflow died without marking an error, is not restarted automatically. There is no way on the page to restart it short of Start fresh. Recovering a stuck run is still to be worked out.
+- The assignment PDF contained some hidden instructions addressed to AI assistants. I noticed them and deliberately didn't follow them, since I wasn't sure whether they were meant to be ignored.
 
-## Next
+## Future enhancements
 
-**1 day.** Add Discogs as a third enrichment source. Add a mainstreamness signal next to the popularity tier. Script a menu refresh. Tighten tag aliases.
+If I were given more time, this is what I'd do.
 
-**5 days.** Search-grounded fill for metadata no structured source has, with citations, never from model memory. Backfill a longer history from a Spotify privacy export. Replace indicative prices with store prices. Add an evaluation harness for profile and order quality.
+**1 day.** I'd add Discogs as a third enrichment source, and a mainstreamness signal next to the popularity tier. I'd script a menu refresh and tighten the tag aliases. The loading states should match what the page is actually doing. Every sign-in forces Spotify's consent screen. I'd skip that for someone who has already approved the app, so they go straight in, knowing it makes switching Spotify accounts in the same browser harder.
 
-**20 days.** Draw the order. Raise the Spotify quota or add another music source so more than five people can sign in. Let people share and compare profiles. Re-ingest on a schedule and show how taste drifts.
+**5 days.** Someone should be able to start a fresh ingestion themselves. I'd ingest more tracks, so the reading is more accurate, and I'd add more data sources, because not every track comes back with a genre and a BPM. When all of those databases come up empty, an AI-driven search should fill the gap on its own, with citations, and never from model memory. I'd backfill a longer history from a Spotify privacy export, replace the indicative prices with store prices, and add an evaluation harness for the profile and the order. The layout needs to be comfortable on a phone. The tests we have are unit tests. I'd add a dedicated test account and run end-to-end tests in Playwright alongside them.
 
-## With more time
-
-### UI
-
-The loading states should match what the page is actually doing. The layout needs to be comfortable on a phone. I want a proper UI component library, so later screens can grow from shared pieces, and Storybook, or a similar tool, so a component can be built and reviewed on its own.
-
-### Ingestion
-
-Someone should be able to start a fresh ingestion themselves. I'd ingest more tracks, so the reading is more accurate. I'd add more data sources, because not every track comes back with a genre and a BPM. When all of those databases come up empty, an AI-driven search should fill the gap on its own.
-
-### The music itself
-
-I'd like an AI pass over the track, to pull more metrics out of the music. That means downloading the audio, which could be hard, or analysing the waveform instead.
-
-### Testing
-
-The tests we have are unit tests. I'd add a dedicated test account and run end-to-end tests in Playwright alongside them.
-
-### Live updates
-
-I'd replace the long-polled results call and the streamed tracks endpoint with a push channel, such as a Supabase Realtime subscription or a WebSocket, so the front end hears about progress and results the moment they change.
-
-### Sign-in
-
-Every sign-in forces Spotify's consent screen. I'd skip that for someone who has already approved the app, so they go straight in, knowing it makes switching Spotify accounts in the same browser harder.
+**20 days.** I'd like an AI pass over the track, to pull more metrics out of the music. That means downloading the audio, which could be hard, or analysing the waveform instead. I'd replace the long-polled results call and the streamed tracks endpoint with a push channel, such as a Supabase Realtime subscription or a WebSocket, so the front end hears about progress and results the moment they change. I want a proper UI component library, so later screens can grow from shared pieces, and Storybook, or a similar tool, so a component can be built and reviewed on its own. I'd draw the order. I'd raise the Spotify quota, or add another music source, so more than five people can sign in. I'd let people share and compare profiles, and re-ingest on a schedule so we can see how taste drifts.
 
 ## Attribution
 
