@@ -221,6 +221,33 @@ export async function noteRecovery(runId: string, userId: string, at: string): P
   `;
 }
 
+export async function markOwnedRunFailed(
+  runId: string,
+  userId: string,
+  workflowRunId: string,
+  message: string,
+): Promise<RunRecord | null> {
+  const rows = await sql()<RunRow[]>`
+    update spotdonalds.analysis_runs
+    set status = 'error',
+        error = ${message},
+        finished_at = coalesce(finished_at, now()),
+        open = false,
+        attempts = attempts + 1,
+        lease_token = null,
+        heartbeat_at = null
+    where id = ${runId}
+      and user_id = ${userId}
+      and status = 'running'
+      and stage <> 'done'
+      and workflow_id = ${workflowRunId}
+      and outcome is distinct from 'insufficient_data'
+      and outcome is distinct from 'ready'
+    returning id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
+  `;
+  return rows[0] ? asRun(rows[0]) : null;
+}
+
 export async function markRunFailed(runId: string, userId: string, message: string): Promise<RunRecord | null> {
   const rows = await sql()<RunRow[]>`
     update spotdonalds.analysis_runs

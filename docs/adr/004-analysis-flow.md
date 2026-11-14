@@ -6,7 +6,7 @@ Supersedes the step list and the read path in [ADR 003](003-analysis-workflow.md
 
 The auth callback starts a workflow only when the latest run is missing or `status = error`. A `running` run is left to the worker that owns it. A `complete` run, including `outcome = insufficient_data`, is never started again by a later sign-in. Start fresh is the only way to rerun a completed flow. It closes the open row, inserts a new one, and starts a new workflow. Try again reopens an error and starts a workflow. Both buttons POST. The page does not.
 
-A read of a `running` row with no workflow id, or with a heartbeat older than 3 minutes, starts the workflow again. The steps skip work that is already stored. The last failure of a step writes `status = error` and the message.
+`GET /api/analysis/status` only reports the row. A read does not start, restart, or change a workflow. Every run ends `done` or `error`. If a step fails for good, including a timeout after its retries, the workflow writes `status = error` with a generic message and then fails the workflow run. That write leaves a `done` row and `insufficient_data` alone. The next sign-in starts that error run again. The steps skip work that is already stored when a workflow is actually running.
 
 ## Two steps
 
@@ -19,7 +19,7 @@ A read of a `running` row with no workflow id, or with a heartbeat older than 3 
 
 Checked on 13 November 2026 against the [Fluid compute duration limits](https://vercel.com/docs/functions/limitations): Hobby functions default to 300 seconds and cannot run longer. These routes set `maxDuration` to 300 and stop themselves at 240 seconds.
 
-- `GET /api/analysis/status` returns `{ status, stage, outcome, error, trackCount }`. `status` is `none`, `running`, `complete`, or `error`. `stage` is `ingest`, `analyse`, or `null`. `outcome` is `ready`, `insufficient_data`, or `null`.
+- `GET /api/analysis/status` returns `{ status, stage, outcome, error, trackCount }` and does nothing else. `status` is `none`, `running`, `complete`, or `error`. `stage` is `ingest`, `analyse`, or `null`. `outcome` is `ready`, `insufficient_data`, or `null`.
 - `GET /api/analysis/tracks` streams NDJSON while `stage` is `ingest`: tracks already stored, then each new track, then close when ingest finishes or errors. After ingest, it returns one JSON body of the stored tracks. At 240 seconds the stream sends a resume cursor and closes. The client calls the same route with that cursor.
 - `GET /api/analysis/results` returns the profile, order, menu, and aggregates when the run is ready. While analysis is still running it holds the request and polls the database. At 240 seconds it returns `202` with `retry: true`. The client calls it again. `insufficient_data` and `error` are returned as themselves, not as an empty result.
 
