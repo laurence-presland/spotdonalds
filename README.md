@@ -165,6 +165,10 @@ I'd like an AI pass over the track, to pull more metrics out of the music. That 
 
 The tests we have are unit tests. I'd add a dedicated test account and run end-to-end tests in Playwright alongside them.
 
+### Live updates
+
+I'd replace the long-polled results call and the streamed tracks endpoint with a push channel, such as a Supabase Realtime subscription or a WebSocket, so the front end hears about progress and results the moment they change.
+
 ## Attribution
 
 - Listening metadata: MusicBrainz, used under [CC BY-NC-SA](https://musicbrainz.org/doc/About/Data_License). Deezer for tempo.
