@@ -17,6 +17,7 @@
     "@ai-sdk/gateway": "^4.0.145",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
+    "@workflow/next": "5.1.0",
     "ai": "^7.0.172",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
