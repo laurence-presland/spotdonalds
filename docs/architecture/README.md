@@ -64,7 +64,6 @@ flowchart TD
     still -->|no| go
     spotify -.-> iFail{"Fails?"}
     iFail -->|retry up to 2x, 15s apart| spotify
-    taLong -.-> calls["7 single-page calls, each checkpointed. 429 or 5xx: up to 3 retries, Retry-After or 250ms, 500ms, 1s. 403 is not retried. A step retry skips finished calls."]
   end
   go --> enrich
   subgraph analyse["Analyse"]
