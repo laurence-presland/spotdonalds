@@ -22,7 +22,7 @@ export type FlowDeps = {
   fail: (userId: string, runId: string, message: string) => Promise<void>;
 };
 
-export type FlowStep = "tracks" | "enrich" | "profile" | "popularity" | "order" | "finish";
+export type FlowStep = "ingest" | "analyse";
 
 export type StepResult = "continue" | "stop";
 
@@ -37,11 +37,7 @@ type StageStep = "enrich" | "profile" | "popularity" | "order";
 
 export async function runUserFlow(deps: FlowDeps, userId: string, runId: string): Promise<void> {
   if ((await ensureTracks(deps, userId, runId)) === "stop") return;
-  if ((await runStageStep(deps, userId, runId, "enrich")) === "stop") return;
-  if ((await runStageStep(deps, userId, runId, "profile")) === "stop") return;
-  if ((await runStageStep(deps, userId, runId, "popularity")) === "stop") return;
-  if ((await runStageStep(deps, userId, runId, "order")) === "stop") return;
-  await finishFlow(deps, userId, runId);
+  await runAnalyseStep(deps, userId, runId);
 }
 
 export async function ensureTracks(deps: FlowDeps, userId: string, runId: string): Promise<StepResult> {
@@ -51,17 +47,17 @@ export async function ensureTracks(deps: FlowDeps, userId: string, runId: string
   const count = await deps.countTracks(userId);
   if (count >= MIN_RESULT_TRACKS) {
     await rememberCount(deps, userId, runId, count);
-    log("info", "analyse.step", { run_id: runId, user_id: userId, step: "tracks", skipped: true, track_count: count });
+    log("info", "analyse.step", { run_id: runId, user_id: userId, step: "ingest", skipped: true, track_count: count });
     return "continue";
   }
 
   const current = await deps.load(userId, runId);
   if (!current || halted(current.run)) return "stop";
   if (!ingestCheckpointDone(current.run.checkpoint)) {
-    log("info", "analyse.step", { run_id: runId, user_id: userId, step: "tracks", skipped: false, track_count: count });
+    log("info", "analyse.step", { run_id: runId, user_id: userId, step: "ingest", skipped: false, track_count: count });
     await deps.ingest(userId);
   } else {
-    log("info", "analyse.step", { run_id: runId, user_id: userId, step: "tracks", skipped: true, track_count: count });
+    log("info", "analyse.step", { run_id: runId, user_id: userId, step: "ingest", skipped: true, track_count: count });
   }
 
   const after = await deps.countTracks(userId);
@@ -76,22 +72,24 @@ export async function ensureTracks(deps: FlowDeps, userId: string, runId: string
   return "continue";
 }
 
-export async function runStageStep(deps: FlowDeps, userId: string, runId: string, stage: StageStep): Promise<StepResult> {
+export async function runAnalyseStep(deps: FlowDeps, userId: string, runId: string): Promise<StepResult> {
   const loaded = await deps.load(userId, runId);
   if (!loaded || halted(loaded.run)) return "stop";
-  await deps.save(running(loaded.run, stage));
-  const fresh = await deps.load(userId, runId);
-  if (!fresh || halted(fresh.run)) return "stop";
-  const skipped = stageDone(fresh, stage);
-  log("info", "analyse.step", { run_id: runId, user_id: userId, step: stage, skipped });
-  if (skipped) return "continue";
-  if (stage === "enrich") await deps.enrich(userId);
-  else if (stage === "profile") await deps.profile(userId);
-  else if (stage === "popularity") await deps.popularity(userId);
-  else await deps.order(userId);
-  const after = await deps.load(userId, runId);
-  if (!after || halted(after.run)) return "stop";
-  return "continue";
+  await deps.save(running(loaded.run, "analyse"));
+  for (const piece of ["enrich", "profile", "popularity", "order"] as const) {
+    const current = await deps.load(userId, runId);
+    if (!current || halted(current.run)) return "stop";
+    const skipped = stageDone(current, piece);
+    log("info", "analyse.step", { run_id: runId, user_id: userId, step: "analyse", piece, skipped });
+    if (skipped) continue;
+    if (piece === "enrich") await deps.enrich(userId);
+    else if (piece === "profile") await deps.profile(userId);
+    else if (piece === "popularity") await deps.popularity(userId);
+    else await deps.order(userId);
+    const after = await deps.load(userId, runId);
+    if (!after || halted(after.run)) return "stop";
+  }
+  return finishFlow(deps, userId, runId);
 }
 
 export async function finishFlow(deps: FlowDeps, userId: string, runId: string): Promise<StepResult> {

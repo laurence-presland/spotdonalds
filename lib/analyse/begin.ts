@@ -1,9 +1,12 @@
+import { startOnSignIn } from "@/lib/analyse/sign-in";
 import { ensureAnalysisJob } from "@/lib/analyse/start";
-import { insertOpenRun, loadLatestRun } from "@/lib/analysis-run";
+import { closeOpenRun, insertOpenRun, loadLatestRun } from "@/lib/analysis-run";
 
 export async function beginFirstFlow(userId: string): Promise<void> {
-  const latest = await loadLatestRun(userId);
-  if (latest) return;
-  const run = await insertOpenRun(userId, new Date().toISOString());
-  await ensureAnalysisJob(userId, run.id);
+  await startOnSignIn(userId, {
+    loadLatest: loadLatestRun,
+    closeOpen: closeOpenRun,
+    insert: (id) => insertOpenRun(id, new Date().toISOString()),
+    start: ensureAnalysisJob,
+  });
 }

@@ -19,6 +19,7 @@ export async function runIngest(input: {
   store: IngestStore;
   emit: (event: StreamEvent) => void;
   now?: () => number;
+  stayRunning?: boolean;
 }): Promise<RunRecord> {
   const now = input.now ?? Date.now;
   const started = now();
@@ -39,14 +40,14 @@ export async function runIngest(input: {
     if (!run.checkpoint.recently_played) {
       const payload = await input.client.recentlyPlayed();
       const plays = normaliseRecentPlays(payload);
-      await persistTracks(input.store, plays.map((play) => play.track));
-      await input.store.upsertPlays(input.userId, plays);
+      for (const play of plays) {
+        await persistTracks(input.store, [play.track]);
+        await input.store.upsertPlays(input.userId, [play]);
+        input.emit(trackEvent(play.track, { source: "recent", played_at: play.played_at }));
+      }
       run.counts.recently_played = plays.length;
       run.checkpoint.recently_played = true;
       await input.store.save(run);
-      for (const play of plays) {
-        input.emit(trackEvent(play.track, { source: "recent", played_at: play.played_at }));
-      }
     }
     done += 1;
     input.emit({ type: "progress", done, total: ENDPOINT_TOTAL, endpoint: "recently-played" });
@@ -55,18 +56,17 @@ export async function runIngest(input: {
       if (!run.checkpoint.top_tracks?.[term]) {
         const payload = await input.client.topTracks(term);
         const rows = normaliseTopTracks(payload, term);
-        await persistTracks(
-          input.store,
-          rows.flatMap((row) => (row.track ? [row.track] : [])),
-        );
-        await input.store.replaceTop(input.userId, "track", term, rows);
+        const stored: typeof rows = [];
+        for (const row of rows) {
+          if (!row.track) continue;
+          await persistTracks(input.store, [row.track]);
+          stored.push(row);
+          await input.store.replaceTop(input.userId, "track", term, stored);
+          input.emit(trackEvent(row.track, { source: "top", time_range: term, rank: row.rank }));
+        }
         run.counts.top_tracks[term] = rows.length;
         run.checkpoint.top_tracks = { ...run.checkpoint.top_tracks, [term]: true };
         await input.store.save(run);
-        for (const row of rows) {
-          if (!row.track) continue;
-          input.emit(trackEvent(row.track, { source: "top", time_range: term, rank: row.rank }));
-        }
       }
       done += 1;
       input.emit({ type: "progress", done, total: ENDPOINT_TOTAL, endpoint: `top-tracks:${term}` });
@@ -97,8 +97,10 @@ export async function runIngest(input: {
       input.emit({ type: "progress", done, total: ENDPOINT_TOTAL, endpoint: `top-artists:${term}` });
     }
 
-    run.status = "complete";
-    run.finished_at = new Date(now()).toISOString();
+    if (!input.stayRunning) {
+      run.status = "complete";
+      run.finished_at = new Date(now()).toISOString();
+    }
     await input.store.save(run);
     input.emit({ type: "done", stage: "ingest" });
     log("info", "ingest.finished", {
@@ -109,6 +111,14 @@ export async function runIngest(input: {
     });
     return run;
   } catch (error) {
+    if (input.stayRunning) {
+      if (error instanceof SpotifyApiError && error.code === "not_allowlisted") {
+        const fatal = new Error("not_allowlisted");
+        fatal.name = "SpotifyTokenError";
+        throw fatal;
+      }
+      throw error;
+    }
     const code = error instanceof SpotifyApiError ? error.code : "internal";
     const message = error instanceof SpotifyApiError ? error.message : "Ingestion failed";
     run.status = "error";

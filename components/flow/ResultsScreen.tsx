@@ -25,7 +25,7 @@ export function ResultsScreen({
   orderFailed: boolean;
 }) {
   const [history, setHistory] = useState(false);
-  if (history) return <AnalysingScreen />;
+  if (history) return <AnalysingScreen tracksOnly />;
 
   const decided = (order?.how_we_decided ?? {}) as { text?: string };
   return (

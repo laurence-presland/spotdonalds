@@ -1,6 +1,6 @@
 import { assertWorker, markRunFailed, saveAnalysisRun } from "@/lib/analysis-run";
 import { loadAnalysisContext, runLiveWork } from "@/lib/analyse/execute";
-import { ensureTracks, finishFlow, runStageStep, runTrackedStep, type FlowDeps, type FlowStep, type Tracked } from "@/lib/analyse/flow";
+import { ensureTracks, runAnalyseStep, runTrackedStep, type FlowDeps, type FlowStep, type Tracked } from "@/lib/analyse/flow";
 import { countDistinctTracks } from "@/lib/analyse/tracks";
 
 export async function executeFlowStep(input: {
@@ -25,9 +25,8 @@ export async function executeFlowStep(input: {
 }
 
 function dispatch(deps: FlowDeps, step: FlowStep, userId: string, runId: string) {
-  if (step === "tracks") return ensureTracks(deps, userId, runId);
-  if (step === "finish") return finishFlow(deps, userId, runId);
-  return runStageStep(deps, userId, runId, step);
+  if (step === "ingest") return ensureTracks(deps, userId, runId);
+  return runAnalyseStep(deps, userId, runId);
 }
 
 function liveDeps(runId: string): FlowDeps {
@@ -36,7 +35,7 @@ function liveDeps(runId: string): FlowDeps {
     load: (userId, id) => loadAnalysisContext(userId, id),
     save: (run) => saveAnalysisRun(run),
     countTracks: (userId) => countDistinctTracks(userId),
-    ingest: (userId) => runLiveWork("ingest", userId, runId),
+    ingest: (userId) => runLiveWork("ingest", userId, runId, { stayRunning: true }),
     enrich: (userId) => runLiveWork("enrich", userId, runId),
     profile: (userId) => runLiveWork("profile", userId, runId),
     popularity: (userId) => runLiveWork("popularity", userId, runId),

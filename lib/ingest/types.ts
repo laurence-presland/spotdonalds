@@ -21,7 +21,7 @@ export type IngestCounts = {
 };
 
 export type RunStatus = "running" | "complete" | "error";
-export type RunStage = "ingest" | "enrich" | "profile" | "popularity" | "order" | "done";
+export type RunStage = "ingest" | "enrich" | "profile" | "popularity" | "order" | "analyse" | "done";
 export type RunOutcome = "ready" | "insufficient_data";
 
 export type RunRecord = {

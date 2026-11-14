@@ -36,22 +36,28 @@ export async function loadAnalysisContext(userId: string, runId: string): Promis
   };
 }
 
-export async function runLiveWork(stage: WorkStage, userId: string, runId: string): Promise<void> {
-  log("info", "analyse.stage", { run_id: runId, user_id: userId, stage, status: "running" });
-  if (stage === "ingest") await ingest(userId);
+export async function runLiveWork(
+  stage: WorkStage,
+  userId: string,
+  runId: string,
+  options?: { stayRunning?: boolean },
+): Promise<void> {
+  log("info", "analyse.stage", { run_id: runId, user_id: userId, stage: stage === "ingest" ? "ingest" : "analyse", status: "running" });
+  if (stage === "ingest") await ingest(userId, options?.stayRunning === true);
   else if (stage === "enrich") await enrich(userId);
   else if (stage === "profile") await runTasteProfile({ userId, store: profileStore(), complete: generateProfile, emit: () => undefined });
   else if (stage === "popularity") await runPopularity({ userId, store: orderStore(), complete: completeOrder, emit: () => undefined });
   else await runOrder({ userId, store: orderStore(), complete: completeOrder, emit: () => undefined });
 }
 
-async function ingest(userId: string): Promise<void> {
+async function ingest(userId: string, stayRunning: boolean): Promise<void> {
   const token = await getSpotifyAccessToken(userId, { store: tokenStore(), now: Date.now, fetch });
   await runIngest({
     userId,
     client: createSpotifyClient(token),
     store: ingestStore(),
     emit: () => undefined,
+    stayRunning,
   });
 }
 

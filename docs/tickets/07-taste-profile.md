@@ -2,6 +2,10 @@
 
 **Size:** L · **Depends on:** 06
 
+## Current shape
+
+The taste profile runs inside the `analyse` workflow step. A profile row already stored for this run is not generated again.
+
 ## Summary / goal
 This is the main AI feature. Deterministic code computes a set of taste signals from the user's real data, and an LLM interprets those signals into a taste profile: a persona name, two or three insight lines that each cite the statistic they rely on, and trait scores. The LLM does no arithmetic. Facts about the user come only from the supplied signals, but the model is encouraged to bring its general knowledge (what a genre usually feels like, what a tempo suggests, cultural associations) to make the interpretation vivid and creative.
 

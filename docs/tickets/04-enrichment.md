@@ -2,6 +2,10 @@
 
 **Size:** L · **Depends on:** 03
 
+## Current shape
+
+Enrichment runs inside the `analyse` workflow step, not as its own visible stage. A track that already has a `track_enrichment` row is skipped.
+
 ## Summary / goal
 For each ingested track, look up the metadata Spotify no longer gives us (genre/tags, BPM, and a little more) from real databases, record exactly where every value came from, cache it, and stream progress to the client. The LLM plays no part here.
 

@@ -3,143 +3,194 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { NotAllowlisted } from "@/components/NotAllowlisted";
 import { AnalysingView } from "@/components/analysing/AnalysingView";
-import { reconnectDelay } from "@/lib/analysing/backoff";
-import { initialAnalysingState, reduceAnalysis, type RunSnapshot } from "@/lib/analysing/reduce";
-import { parseWatchLine, type WatchEvent, type WatchRun } from "@/lib/analyse/watch";
+import type { ReceiptMenuItem } from "@/components/order/OrderReceipt";
+import { initialAnalysingState, reduceAnalysis } from "@/lib/analysing/reduce";
+import { analysisErrorCopy } from "@/lib/analyse/progress";
+import { parseTrackLine } from "@/lib/analyse/read";
+import type { AnalysisStatus } from "@/lib/analyse/status";
+import type { Aggregates } from "@/lib/aggregates";
 import type { VisibleArtist, VisibleTrack } from "@/lib/catalogue/present";
+import type { StoredOrder } from "@/lib/order/run";
+import type { StoredProfile } from "@/lib/profile/run";
 
 const DROPPED = "The connection dropped. Try again.";
-const NOT_STARTED = "The analysis didn't start. Try again.";
+const NOT_STARTED = "Nothing is running yet.";
 
-export function AnalysingScreen({ onAdvance }: { onAdvance?: () => void }) {
+export type AnalysisResults = {
+  profile: StoredProfile | null;
+  order: StoredOrder | null;
+  menu: ReceiptMenuItem[];
+  aggregates: Aggregates;
+};
+
+export function AnalysingScreen({
+  tracksOnly = false,
+  onStatus,
+  onResults,
+  onInsufficient,
+}: {
+  tracksOnly?: boolean;
+  onStatus?: (status: AnalysisStatus) => void;
+  onResults?: (results: AnalysisResults) => void;
+  onInsufficient?: (count: number) => void;
+}) {
   const [state, dispatch] = useReducer(reduceAnalysis, initialAnalysingState);
   const [generation, setGeneration] = useState(0);
-  const onAdvanceRef = useRef(onAdvance);
+  const statusRef = useRef(onStatus);
+  const resultsRef = useRef(onResults);
+  const insufficientRef = useRef(onInsufficient);
   useEffect(() => {
-    onAdvanceRef.current = onAdvance;
+    statusRef.current = onStatus;
+    resultsRef.current = onResults;
+    insufficientRef.current = onInsufficient;
   });
 
   useEffect(() => {
     const controller = new AbortController();
-    let cursor: string | null = null;
-    let attempt = 0;
 
     function fail(message: string) {
       dispatch({ type: "connection", status: "dropped", message });
     }
 
-    async function read(signal: AbortSignal): Promise<"advance" | "stay" | "again" | string> {
-      const url = cursor ? `/api/runs/watch?cursor=${encodeURIComponent(cursor)}` : "/api/runs/watch";
-      const response = await fetch(url, { signal, headers: { accept: "application/x-ndjson, application/json" } });
-      if (signal.aborted) return "stay";
-      if (response.status === 401) return "stay";
+    async function readTracks(signal: AbortSignal): Promise<"done" | "error"> {
+      let cursor: string | null = null;
+      while (!signal.aborted) {
+        const url = cursor ? `/api/analysis/tracks?cursor=${encodeURIComponent(cursor)}` : "/api/analysis/tracks";
+        const response = await fetch(url, { signal, headers: { accept: "application/x-ndjson, application/json" } });
+        if (signal.aborted) return "error";
+        if (response.status === 503) throw new Error(await errorMessage(response));
+        if (!response.ok || !response.body) throw new Error(DROPPED);
+        const type = response.headers.get("content-type") ?? "";
+        if (type.includes("application/json")) {
+          const body = (await response.json()) as AnalysisStatus & { tracks?: VisibleTrack[]; artists?: VisibleArtist[] };
+          dispatch({ type: "hydrate", tracks: body.tracks ?? [], artists: body.artists ?? [] });
+          if (body.status === "error") {
+            fail(analysisErrorCopy(body.error));
+            return "error";
+          }
+          return "done";
+        }
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let resume: string | null = null;
+        while (true) {
+          const chunk = await reader.read();
+          if (chunk.done) break;
+          buffer += decoder.decode(chunk.value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          for (const line of lines) {
+            const event = parseTrackLine(line);
+            if (!event) continue;
+            if (event.type === "tracks") {
+              dispatch({ type: "hydrate", tracks: event.tracks, artists: event.artists });
+              continue;
+            }
+            if (event.type === "resume") {
+              resume = event.cursor;
+              continue;
+            }
+            if (event.type === "error") {
+              if (event.message === "not_allowlisted") dispatch({ type: "connection", status: "access", message: null });
+              else fail(analysisErrorCopy(event.message));
+              return "error";
+            }
+            if (event.type === "done") return "done";
+          }
+        }
+        if (resume) {
+          cursor = resume;
+          dispatch({ type: "connection", status: "reconnecting", message: "Reconnecting" });
+          continue;
+        }
+        throw new Error(DROPPED);
+      }
+      return "error";
+    }
+
+    async function readResults(signal: AbortSignal): Promise<void> {
+      dispatch({
+        type: "snapshot",
+        run: { status: "running", stage: "analyse", error: null, progress: { done: 0, total: 0 } },
+      });
+      while (!signal.aborted) {
+        const response = await fetch("/api/analysis/results", { signal });
+        if (signal.aborted) return;
+        if (response.status === 503) throw new Error(await errorMessage(response));
+        if (response.status === 202) continue;
+        if (!response.ok) throw new Error(DROPPED);
+        const body = (await response.json()) as AnalysisStatus & Partial<AnalysisResults> & { retry?: boolean };
+        if (body.retry) continue;
+        if (body.outcome === "insufficient_data") {
+          insufficientRef.current?.(body.trackCount);
+          return;
+        }
+        if (body.status === "error") {
+          if (body.error === "not_allowlisted") dispatch({ type: "connection", status: "access", message: null });
+          else fail(analysisErrorCopy(body.error));
+          return;
+        }
+        if (body.status === "complete" && body.aggregates) {
+          resultsRef.current?.({
+            profile: body.profile ?? null,
+            order: body.order ?? null,
+            menu: body.menu ?? [],
+            aggregates: body.aggregates,
+          });
+          return;
+        }
+        if (body.status === "none") {
+          fail(NOT_STARTED);
+          return;
+        }
+        throw new Error(DROPPED);
+      }
+    }
+
+    async function run(signal: AbortSignal) {
+      dispatch({ type: "connection", status: "streaming", message: null });
+      const response = await fetch("/api/analysis/status", { signal });
+      if (signal.aborted) return;
       if (response.status === 503) throw new Error(await errorMessage(response));
       if (!response.ok) throw new Error(DROPPED);
-      const type = response.headers.get("content-type") ?? "";
-      if (type.includes("application/json")) {
-        const body = (await response.json()) as {
-          run: (RunSnapshot & WatchRun) | null;
-          tracks: VisibleTrack[];
-          artists: VisibleArtist[];
-        };
-        dispatch({ type: "hydrate", tracks: body.tracks ?? [], artists: body.artists ?? [] });
-        return applyRun(body.run);
-      }
-      if (!response.body) throw new Error(DROPPED);
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      while (true) {
-        const chunk = await reader.read();
-        if (chunk.done) break;
-        buffer += decoder.decode(chunk.value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          const event = parseWatchLine(line);
-          if (!event) continue;
-          const step = applyEvent(event);
-          if (step === "continue") continue;
-          if (step === "advance" || step === "stay") return step;
-          return step;
-        }
-      }
-      return "again";
-    }
-
-    function applyEvent(event: WatchEvent): "advance" | "stay" | "continue" | string {
-      if (event.type === "tracks") {
-        dispatch({ type: "hydrate", tracks: event.tracks, artists: event.artists });
-        return "continue";
-      }
-      if (event.type === "run") return applyRun(event.run);
-      if (event.type === "terminal") {
-        applyRun(event.run);
-        return "advance";
-      }
-      if (event.type === "resume") return event.cursor;
-      dispatch({ type: "connection", status: "dropped", message: event.message || DROPPED });
-      return "stay";
-    }
-
-    function applyRun(run: RunSnapshot | WatchRun | null): "advance" | "stay" | "continue" {
-      if (!run) {
-        fail(NOT_STARTED);
-        return "stay";
-      }
+      const status = (await response.json()) as AnalysisStatus;
+      statusRef.current?.(status);
       dispatch({
         type: "snapshot",
         run: {
-          status: run.status,
-          stage: run.stage,
-          error: run.error,
-          progress: "progress" in run && run.progress ? run.progress : { done: 0, total: 0 },
+          status: status.status === "none" ? "running" : status.status,
+          stage: status.stage ?? "ingest",
+          error: status.error ?? null,
+          progress: { done: 0, total: 0 },
         },
       });
-      if (run.status === "error" || run.outcome === "insufficient_data" || (run.stage === "done" && run.status === "complete")) {
-        return "advance";
+      if (status.status === "none") {
+        fail(NOT_STARTED);
+        return;
       }
-      dispatch({ type: "connection", status: "streaming", message: null });
-      return "continue";
+      if (status.status === "error") return;
+      if (status.outcome === "insufficient_data") {
+        insufficientRef.current?.(status.trackCount);
+        return;
+      }
+      if (status.status === "running") {
+        const tracks = await readTracks(signal);
+        if (tracks !== "done" || tracksOnly || signal.aborted) return;
+      } else if (tracksOnly) {
+        await readTracks(signal);
+        return;
+      }
+      await readResults(signal);
     }
 
-    async function loop() {
-      dispatch({ type: "connection", status: "streaming", message: null });
-      while (!controller.signal.aborted) {
-        const next = await read(controller.signal);
-        if (next === "stay") return;
-        if (next === "advance") {
-          onAdvanceRef.current?.();
-          return;
-        }
-        if (next === "again") {
-          attempt += 1;
-          if (attempt >= 6) {
-            fail(DROPPED);
-            return;
-          }
-          dispatch({ type: "connection", status: "reconnecting", message: "Reconnecting" });
-          await wait(reconnectDelay(attempt), controller.signal);
-          continue;
-        }
-        cursor = next;
-        attempt = 0;
-      }
-    }
-
-    void loop().catch((error: unknown) => {
+    void run(controller.signal).catch((error: unknown) => {
       if (controller.signal.aborted) return;
       if (error instanceof DOMException && error.name === "AbortError") return;
       fail(error instanceof Error && error.message ? error.message : DROPPED);
     });
-
     return () => controller.abort();
-  }, [generation]);
-
-  async function start() {
-    await fetch("/api/analyse", { method: "POST" });
-    setGeneration((value) => value + 1);
-  }
+  }, [generation, tracksOnly]);
 
   async function retry() {
     await fetch("/api/analyse?retry=1", { method: "POST" });
@@ -152,19 +203,14 @@ export function AnalysingScreen({ onAdvance }: { onAdvance?: () => void }) {
   }
 
   if (state.status === "access") return <NotAllowlisted />;
+  const waiting = state.message === NOT_STARTED;
   return (
     <AnalysingView
       state={state}
-      onRetry={
-        state.status === "error"
-          ? () => void retry()
-          : state.status === "dropped" && state.message === NOT_STARTED
-            ? () => void start()
-            : state.status === "dropped"
-              ? () => setGeneration((value) => value + 1)
-              : undefined
+      onRetry={state.status === "error" ? () => void retry() : state.status === "dropped" && !waiting ? () => setGeneration((value) => value + 1) : undefined}
+      onStartFresh={
+        state.status === "error" || waiting ? () => void startFresh() : undefined
       }
-      onStartFresh={state.status === "error" ? () => void startFresh() : undefined}
     />
   );
 }
@@ -177,22 +223,4 @@ async function errorMessage(response: Response): Promise<string> {
     return "Spotify sign-in didn't respond. Try again.";
   }
   return "Spotify sign-in didn't respond. Try again.";
-}
-
-function wait(ms: number, signal: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (signal.aborted) {
-      reject(new DOMException("aborted", "AbortError"));
-      return;
-    }
-    const timer = setTimeout(() => {
-      signal.removeEventListener("abort", onAbort);
-      resolve();
-    }, ms);
-    const onAbort = () => {
-      clearTimeout(timer);
-      reject(new DOMException("aborted", "AbortError"));
-    };
-    signal.addEventListener("abort", onAbort, { once: true });
-  });
 }

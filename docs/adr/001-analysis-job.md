@@ -4,10 +4,10 @@ An analysis run is one row in `spotdonalds.analysis_runs`. That row is the only 
 
 ## State machine
 
-`stage` is the stage in progress, or `done` when the job has finished. It is never a previous stage while a later stage is running.
+`stage` is the stage in progress, or `done` when the job has finished. The visible stages are `ingest` and `analyse`. Enrichment, the profile, popularity, and the order happen inside `analyse`. Older stage names remain valid on rows written before that change.
 
 ```text
-ingest → enrich → profile → popularity → order → done
+ingest → analyse → done
 ```
 
 `status` is `running` until the job finishes. `complete` is only valid together with `stage = done`. `error` leaves `stage` on the stage that failed.
@@ -30,8 +30,8 @@ A run with fewer than 50 distinct tracks after ingest (`plays.track_id` union to
 
 ## How it runs
 
-The runner is one Vercel Workflow per open run. See [ADR 003](003-analysis-workflow.md). [ADR 002](002-analysis-queue.md) is superseded.
+The runner is one Vercel Workflow per open run, with two steps: `ingest` and `analyse`. See [ADR 004](004-analysis-flow.md). [ADR 003](003-analysis-workflow.md) and [ADR 002](002-analysis-queue.md) are superseded.
 
-The first step, `ensureTracks`, counts distinct tracks already in the database. At 50 or more it does not call Spotify. Below 50 it fetches the remaining Spotify sources, and if that still cannot reach 50 the run finishes `insufficient_data` without the later steps. Enrich, profile, popularity, and order then each look for their own output and skip when it is already stored. Every step writes its stage onto the run row. The workflow always writes `complete` / `done` after the last step, including when every step skipped. That is the fix for run `5c3177c8-0d62-403d-993e-dd80db563e95`.
+The visible `stage` is `ingest` or `analyse` (then `done`). Enrichment, the taste profile, popularity, and the order run inside `analyse` and skip when their output is already stored. The workflow writes `complete` / `done` at the end of `analyse`, including when every piece skipped.
 
-`workflow_id` stores the workflow run id (`pending` while `start()` is in flight). A second start loses the compare-and-set while the heartbeat is fresh. A read of a running row with no workflow id, or with a heartbeat older than 3 minutes, starts the workflow again. The steps skip work that is already stored. The browser does not start it.
+`workflow_id` stores the workflow run id (`pending` while `start()` is in flight). A second start loses the compare-and-set while the heartbeat is fresh. A read of a running row with no workflow id, or with a heartbeat older than 3 minutes, starts the workflow again. The browser does not start it.

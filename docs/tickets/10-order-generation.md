@@ -2,6 +2,10 @@
 
 **Size:** L · **Depends on:** 07, 09
 
+## Current shape
+
+The order runs inside the `analyse` workflow step. An order row already stored for this run is not generated again.
+
 ## Summary / goal
 A backend LLM step that decides what the user should order from McDonald's Australia based on their taste profile, using a small set of deliberately vague rules and a structured candidate menu. The model must return JSON, and we validate every pick on the server before anything reaches the UI. This is the fun layer on top of the taste profile, and its output is the hero of the Results screen (13).
 
