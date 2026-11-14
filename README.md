@@ -10,7 +10,7 @@ Hosted app: https://spotdonalds.vercel.app
 
 1. **Landing.** A red page with the yellow wordmark. Sign in with Spotify.
 2. **Welcome.** After a successful sign-in, "Please drive through..." holds for about three seconds while analysis starts underneath.
-3. **Analysing.** Enriched tracks fill in while the run moves through reading, taste and the order.
+3. **Analysing.** Enriched tracks fill in while the run moves through reading, taste and the order. The first run takes a minute or two to ingest and enrich your listening, so give it time before expecting Results.
 4. **Results.** The order is the hero. Beside it: "We think you're a", the persona, how the order was decided, and a regenerate button. Under that: taste insights, trait scores, tag mix, tempo and top artists. Back returns to the track list without starting a new run.
 
 A reload uses the run record. A finished run opens Results. A run still going opens Analysing, not the welcome.
