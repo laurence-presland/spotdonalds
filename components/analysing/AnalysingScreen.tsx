@@ -28,11 +28,13 @@ export function AnalysingScreen({
   onStatus,
   onResults,
   onInsufficient,
+  onForward,
 }: {
   tracksOnly?: boolean;
   onStatus?: (status: AnalysisStatus) => void;
   onResults?: (results: AnalysisResults) => void;
   onInsufficient?: (count: number) => void;
+  onForward?: () => void;
 }) {
   const [state, dispatch] = useReducer(reduceAnalysis, initialAnalysingState);
   const [generation, setGeneration] = useState(0);
@@ -163,6 +165,8 @@ export function AnalysingScreen({
           stage: status.stage ?? "ingest",
           error: status.error ?? null,
           progress: { done: 0, total: 0 },
+          complete: status.status === "complete",
+          trackCount: status.trackCount,
         },
       });
       if (status.status === "none") {
@@ -203,15 +207,25 @@ export function AnalysingScreen({
   }
 
   if (state.status === "access") return <NotAllowlisted />;
+  if (state.status === "idle") return <AnalysisLoading />;
   const waiting = state.message === NOT_STARTED;
   return (
     <AnalysingView
       state={state}
+      onForward={onForward}
       onRetry={state.status === "error" ? () => void retry() : state.status === "dropped" && !waiting ? () => setGeneration((value) => value + 1) : undefined}
       onStartFresh={
         state.status === "error" || waiting ? () => void startFresh() : undefined
       }
     />
+  );
+}
+
+function AnalysisLoading() {
+  return (
+    <div className="analysis-loading" role="status">
+      <p>Loading</p>
+    </div>
   );
 }
 

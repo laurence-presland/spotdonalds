@@ -63,6 +63,24 @@ describe("analysing state", () => {
     });
     expect(resumed.tracks).toHaveLength(1);
   });
+
+  it("keeps a finished run out of the reading step", () => {
+    const state = reduceAnalysis(initialAnalysingState, {
+      type: "snapshot",
+      run: {
+        status: "complete",
+        stage: "ingest",
+        error: null,
+        progress: { done: 0, total: 0 },
+        complete: true,
+        trackCount: 50,
+      },
+    });
+    expect(state.complete).toBe(true);
+    expect(state.ingested).toBe(50);
+    expect(state.stage).toBe("reading");
+    expect(state.status).toBe("streaming");
+  });
 });
 
 describe("catalogue", () => {

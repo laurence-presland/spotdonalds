@@ -37,6 +37,7 @@ describe("AnalysingView", () => {
     expect(html).toContain("Data provided by Spotify, MusicBrainz, and Deezer.");
     expect(html).toContain("https://i.scdn.co/image/humble");
     expect(html).toContain("1 track");
+    expect(html).toContain("step-spinner");
     expect(html.indexOf("wordmark-bar")).toBeLessThan(html.indexOf("Log out"));
     expect(html.indexOf("Log out")).toBeLessThan(html.indexOf("Analysing your listening history"));
     expect(html).not.toContain(">S<");
@@ -65,6 +66,29 @@ describe("AnalysingView", () => {
     expect(html).toContain("letter-tile");
     expect(html).toContain("Top · 6 months");
     expect(html).toContain("1 track");
+  });
+
+  it("shows a finished run as ingested tracks, with a way forward and no spinner", () => {
+    const html = renderToStaticMarkup(
+      <AnalysingView
+        state={{
+          ...initialAnalysingState,
+          status: "streaming",
+          complete: true,
+          ingested: 50,
+          tracks: [humble],
+        }}
+        onForward={() => undefined}
+      />,
+    );
+    expect(html).toContain("Your listening history");
+    expect(html).toContain("50 tracks ingested");
+    expect(html).toContain("This run is finished.");
+    expect(html).toContain(">Forward<");
+    expect(html).not.toContain("step-spinner");
+    expect(html).not.toContain('aria-current="step"');
+    expect(html).not.toContain('data-state="current"');
+    expect(html).toContain('data-state="done"');
   });
 
   it("shows reconnecting, an error, and the access screen", () => {

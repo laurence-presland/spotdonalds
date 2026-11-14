@@ -11,7 +11,10 @@ export function formatStoredSignal(key: SignalKey, signals: TasteSignals): strin
   const value = signals[key];
   if (value == null) return "";
   if (Array.isArray(value)) {
-    return (value as TagShare[]).map((item) => `${item.tag} ${Math.round(item.share * 100)}%`).join(", ");
+    return (value as TagShare[])
+      .slice(0, 3)
+      .map((item) => `${item.tag} ${Math.round(item.share * 100)}%`)
+      .join(", ");
   }
   const rounded = roundSignal(value, SIGNAL_REGISTRY[key].decimals);
   if (SIGNAL_REGISTRY[key].unit === "0-1") return `${Math.round(rounded * 100)}%`;

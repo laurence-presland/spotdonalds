@@ -31,16 +31,16 @@ export type SignalDefinition = {
 export const SIGNAL_REGISTRY: Record<SignalKey, SignalDefinition> = {
   "tags.top": {
     key: "tags.top",
-    label: "Top tags",
-    meaning: "Top tags with their share of tagged tracks",
+    label: "Top genres",
+    meaning: "Top genres and the share of listening each one has",
     unit: "list of {tag, share}",
     decimals: 2,
     mention: true,
   },
   "tags.diversity": {
     key: "tags.diversity",
-    label: "Tag diversity",
-    meaning: "How spread the tag mix is (normalised Shannon entropy)",
+    label: "Genre spread",
+    meaning: "How spread the genres are (normalised Shannon entropy)",
     unit: "0-1",
     decimals: 2,
     mention: true,
@@ -95,8 +95,8 @@ export const SIGNAL_REGISTRY: Record<SignalKey, SignalDefinition> = {
   },
   "consistency.tag_drift": {
     key: "consistency.tag_drift",
-    label: "Tag drift",
-    meaning: "How far the tag mix moves between the 4-week and 1-year windows",
+    label: "Genre shift",
+    meaning: "How far the genres move between the 4-week and 1-year windows",
     unit: "0-1",
     decimals: 2,
     mention: true,
@@ -176,7 +176,7 @@ export const TRAIT_REGISTRY: Record<TraitName, TraitDefinition> = {
   },
   variety: {
     name: "variety",
-    meaning: "How spread the tags are",
+    meaning: "How spread the genres are",
     sources: ["tags.diversity"],
   },
   loyalty: {

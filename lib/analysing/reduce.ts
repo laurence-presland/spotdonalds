@@ -23,6 +23,8 @@ export type AnalysingState = {
   message: string | null;
   progressDone: number;
   progressTotal: number;
+  complete: boolean;
+  ingested: number;
 };
 
 export const initialAnalysingState: AnalysingState = {
@@ -34,6 +36,8 @@ export const initialAnalysingState: AnalysingState = {
   message: null,
   progressDone: 0,
   progressTotal: 0,
+  complete: false,
+  ingested: 0,
 };
 
 export type RunSnapshot = {
@@ -42,6 +46,8 @@ export type RunSnapshot = {
   error: string | null;
   outcome?: string | null;
   progress: { done: number; total: number };
+  complete?: boolean;
+  trackCount?: number;
 };
 
 export type AnalysingAction =
@@ -67,11 +73,14 @@ export function reduceAnalysis(state: AnalysingState, action: AnalysingAction): 
 
 function applySnapshot(state: AnalysingState, run: RunSnapshot | null): AnalysingState {
   if (!run) return state;
+  const complete = run.complete === true;
   return {
     ...state,
-    stage: stageFor(run.stage, state.stage),
+    stage: complete ? state.stage : stageFor(run.stage, state.stage),
     progressDone: run.progress.done,
     progressTotal: run.progress.total,
+    complete,
+    ingested: typeof run.trackCount === "number" ? run.trackCount : state.ingested,
     status: run.status === "error" ? (run.error === "not_allowlisted" ? "access" : "error") : "streaming",
     message: run.status === "error" ? analysisErrorCopy(run.error) : null,
   };
