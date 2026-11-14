@@ -1,0 +1,116 @@
+# Architecture
+
+These diagrams follow the code as it runs now. `npm run diagrams` regenerates the SVG and PNG next to each `.mmd` file.
+
+## Spotify login
+
+The browser signs in through the app and Supabase Auth. Spotify grants consent, the callback stores the tokens, and `/me` checks the allowlist. The workflow starts only when there is no run or the latest one errored.
+
+<img alt="Spotify login" src="./spotify-login.svg" width="100%" />
+
+```mermaid
+sequenceDiagram
+  actor Browser
+  participant App
+  participant Auth as Supabase Auth
+  participant Spotify
+  participant DB
+
+  Browser->>App: Sign in
+  App->>Auth: Start Spotify sign-in
+  Auth->>Spotify: Ask for consent
+  Spotify-->>Auth: Approved
+  Auth-->>Browser: Back to the app
+  Browser->>App: Callback
+  App->>Auth: Exchange the code
+  Auth-->>App: Session and tokens
+  App->>DB: Store the tokens
+  App->>Spotify: GET /me
+  Spotify-->>App: Allowlisted
+  App->>DB: Latest run
+  alt no run, or the last one errored
+    App->>App: Start the workflow
+  else running or complete
+    App->>App: Leave it
+  end
+  App-->>Browser: Open /app
+  Note over Browser,Spotify: Consent refused, a missing token, or a 403 from /me sends the person away.
+```
+
+Source: [spotify-login.mmd](./spotify-login.mmd). PNG: [spotify-login.png](./spotify-login.png).
+
+## Ingestion workflow
+
+Ingest uses tracks already stored, and calls Spotify only when there are fewer than 50. Those calls are recently played, then top tracks and top artists for 4 weeks, 6 months and 1 year: seven single-page requests, each checkpointed. A 429 or 5xx retries up to three times, honouring Retry-After, otherwise waiting 250ms, 500ms, then 1s. A 403 is not retried, and a step retry skips the calls that already finished. Still short of 50 ends the run. Analyse enriches, computes the numbers, then asks the model for the profile and the order. Each of those two steps retries on its own: `maxRetries` is 2, so three attempts, 15 seconds apart, and the arrow goes back into that step. The last failed attempt, or a fatal error, sets the run to error, and the next sign-in starts a new run. The model calls themselves do not retry. `maxRetries` is 0 on the profile, popularity, and order requests.
+
+<img alt="Ingestion workflow" src="./ingestion-workflow.svg" width="100%" />
+
+```mermaid
+flowchart TD
+  subgraph ingest["Ingest"]
+    count{"50 tracks stored?"} -->|yes| go["Continue"]
+    count -->|no| recent
+    subgraph spotify["Spotify calls"]
+      recent["Recently played, up to 50"]
+      recent --> ttShort["Top tracks, 4 weeks, short_term"]
+      ttShort --> ttMed["Top tracks, 6 months, medium_term"]
+      ttMed --> ttLong["Top tracks, 1 year, long_term"]
+      ttLong --> taShort["Top artists, 4 weeks, short_term"]
+      taShort --> taMed["Top artists, 6 months, medium_term"]
+      taMed --> taLong["Top artists, 1 year, long_term"]
+    end
+    taLong --> still{"Still under 50?"}
+    still -->|yes| short["insufficient_data"]
+    still -->|no| go
+    spotify -.-> iFail{"Fails?"}
+    iFail -->|retry up to 2x, 15s apart| spotify
+  end
+  go --> enrich
+  subgraph analyse["Analyse"]
+    enrich["MusicBrainz and Deezer"] --> stats["BPM and stats"]
+    stats --> profile["LLM taste profile"]
+    profile --> order["LLM order"]
+    order --> done["Complete"]
+    enrich -.-> aFail{"Fails?"}
+    aFail -->|retry up to 2x, 15s apart| enrich
+  end
+  iFail -->|last try or fatal| err["status error, then the next sign-in starts a new run"]
+  aFail -->|last try or fatal| err
+```
+
+Source: [ingestion-workflow.mmd](./ingestion-workflow.mmd). PNG: [ingestion-workflow.png](./ingestion-workflow.png).
+
+## Signed-in page calls
+
+The page reads status, then tracks, then results. Tracks is a stream while ingest is still running, and one JSON body after that. Results holds for up to 240 seconds, then answers 202 so the page can ask again.
+
+<img alt="Signed-in page calls" src="./frontend-calls.svg" width="100%" />
+
+```mermaid
+sequenceDiagram
+  actor Browser
+  participant Status as status
+  participant Tracks as tracks
+  participant Results as results
+
+  Browser->>Status: GET /api/analysis/status
+  Status-->>Browser: stage
+  alt still ingesting
+    Browser->>Tracks: GET /api/analysis/tracks
+    Tracks-->>Browser: NDJSON stream
+  else ingest done
+    Browser->>Tracks: GET /api/analysis/tracks
+    Tracks-->>Browser: one JSON body
+  end
+  Browser->>Results: GET /api/analysis/results
+  alt still running after 240s
+    Results-->>Browser: 202, retry
+    Browser->>Results: Ask again
+  else ready
+    Results-->>Browser: profile and order
+  end
+  Note over Browser,Results: A spinner stays on the current step until results. A finished run can skip tracks.
+```
+
+Source: [frontend-calls.mmd](./frontend-calls.mmd). PNG: [frontend-calls.png](./frontend-calls.png).
+

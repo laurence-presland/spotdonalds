@@ -1,0 +1,23 @@
+sequenceDiagram
+  actor Browser
+  participant Status as status
+  participant Tracks as tracks
+  participant Results as results
+
+  Browser->>Status: GET /api/analysis/status
+  Status-->>Browser: stage
+  alt still ingesting
+    Browser->>Tracks: GET /api/analysis/tracks
+    Tracks-->>Browser: NDJSON stream
+  else ingest done
+    Browser->>Tracks: GET /api/analysis/tracks
+    Tracks-->>Browser: one JSON body
+  end
+  Browser->>Results: GET /api/analysis/results
+  alt still running after 240s
+    Results-->>Browser: 202, retry
+    Browser->>Results: Ask again
+  else ready
+    Results-->>Browser: profile and order
+  end
+  Note over Browser,Results: A spinner stays on the current step until results. A finished run can skip tracks.
