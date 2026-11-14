@@ -1,35 +1,38 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AnalysingScreen } from "@/components/analysing/AnalysingScreen";
+import { AnalysingScreen, type AnalysisResults } from "@/components/analysing/AnalysingScreen";
+import { InsufficientData } from "@/components/flow/InsufficientData";
+import { ResultsScreen } from "@/components/flow/ResultsScreen";
 import { Welcome } from "@/components/flow/Welcome";
+import type { AnalysisStatus } from "@/lib/analyse/status";
 
 export function DriveThrough({ welcome }: { welcome: boolean }) {
-  const router = useRouter();
   const [overlay, setOverlay] = useState(welcome);
-  const [finished, setFinished] = useState(false);
+  const [results, setResults] = useState<AnalysisResults | null>(null);
+  const [insufficient, setInsufficient] = useState<number | null>(null);
 
-  function reveal() {
-    setOverlay(false);
-    if (finished) {
-      router.replace("/app");
-      router.refresh();
-    }
+  function noteStatus(status: AnalysisStatus) {
+    if (status.status !== "running") setOverlay(false);
+  }
+
+  if (!overlay && insufficient != null) return <InsufficientData count={insufficient} />;
+  if (!overlay && results) {
+    return (
+      <ResultsScreen
+        profile={results.profile}
+        order={results.order}
+        menu={results.menu}
+        aggregates={results.aggregates}
+        orderFailed={results.order == null}
+      />
+    );
   }
 
   return (
     <>
-      <AnalysingScreen
-        onAdvance={() => {
-          setFinished(true);
-          if (!overlay) {
-            router.replace("/app");
-            router.refresh();
-          }
-        }}
-      />
-      {overlay ? <Welcome onDone={reveal} /> : null}
+      <AnalysingScreen onStatus={noteStatus} onResults={setResults} onInsufficient={setInsufficient} />
+      {overlay ? <Welcome onDone={() => setOverlay(false)} /> : null}
     </>
   );
 }

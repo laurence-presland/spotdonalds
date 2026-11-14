@@ -103,7 +103,8 @@ describe("analysis flow", () => {
     );
     await runUserFlow(store.deps, "user-1", "run-1");
     expect(store.calls).toEqual([]);
-    expect(store.stages).toEqual(expect.arrayContaining(["ingest", "enrich", "profile", "popularity", "order", "done"]));
+    expect(store.stages).toEqual(expect.arrayContaining(["ingest", "analyse", "done"]));
+    expect(store.stages).not.toContain("enrich");
     expect(store.current).toMatchObject({
       status: "complete",
       stage: "done",
@@ -154,7 +155,7 @@ describe("analysis flow", () => {
       runId: "run-1",
       attempt: 1,
       maxAttempts: 3,
-      step: "enrich",
+      step: "analyse",
       work: async () => {
         throw new Error("model timed out");
       },
@@ -168,7 +169,7 @@ describe("analysis flow", () => {
       runId: "run-1",
       attempt: 3,
       maxAttempts: 3,
-      step: "enrich",
+      step: "analyse",
       work: async () => {
         throw new Error("model timed out");
       },
@@ -186,7 +187,7 @@ describe("analysis flow", () => {
       runId: "run-1",
       attempt: 1,
       maxAttempts: 3,
-      step: "tracks",
+      step: "ingest",
       work: async () => {
         throw denied;
       },
@@ -200,7 +201,7 @@ describe("analysis flow", () => {
       runId: "run-1",
       attempt: 1,
       maxAttempts: 3,
-      step: "enrich",
+      step: "analyse",
       work: async () => {
         throw new WorkerLost();
       },

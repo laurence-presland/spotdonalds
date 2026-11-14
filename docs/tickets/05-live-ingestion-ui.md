@@ -2,6 +2,10 @@
 
 **Size:** M · **Depends on:** 03 (04 for enrichment states)
 
+## Current shape
+
+Tracks are shown as they are stored during ingest, from `GET /api/analysis/tracks`. That response is NDJSON while ingest is running and one JSON body once ingest has finished. The progress bar stays up while `GET /api/analysis/results` is held open for the analyse step. The screen does not start the workflow.
+
 ## Summary / goal
 The Analysing screen: a loading view headed "Analysing your listening history". The track list fills with tracks that have already been enriched. A track that can't be enriched is dropped and never appears, so the list has no pending, enriching, partial, missing, or error rows. This screen is not a destination; when the full analysis pipeline completes, 13 moves the user on to Results.
 

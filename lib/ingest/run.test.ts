@@ -157,6 +157,27 @@ describe("runIngest", () => {
     expect(store.plays.size).toBe(3);
   });
 
+  it("stores one track at a time and stays running when the workflow continues", async () => {
+    const store = memoryStore();
+    const batches: number[] = [];
+    const persist = store.upsertTracks.bind(store);
+    store.upsertTracks = async (rows) => {
+      batches.push(rows.length);
+      await persist(rows);
+    };
+    const run = await runIngest({
+      userId: "user-1",
+      store,
+      client: client(),
+      emit: () => {},
+      stayRunning: true,
+    });
+    expect(run.status).toBe("running");
+    expect(run.stage).toBe("ingest");
+    expect(batches.length).toBeGreaterThan(1);
+    expect(batches.every((size) => size === 1)).toBe(true);
+  });
+
   it("emits not_allowlisted when Spotify returns 403", async () => {
     const listening = client();
     listening.recentlyPlayed = async () => {

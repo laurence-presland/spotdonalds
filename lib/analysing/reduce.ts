@@ -137,7 +137,7 @@ function reduceEvent(state: AnalysingState, event: StreamEvent): AnalysingState 
 }
 
 export function stageFor(pipeline: string, current: VisibleStage): VisibleStage {
-  if (pipeline === "profile") return "taste";
+  if (pipeline === "analyse" || pipeline === "profile") return "taste";
   if (pipeline === "order" || pipeline === "popularity" || pipeline === "done") return "order";
   if (pipeline === "ingest" || pipeline === "enrich") return "reading";
   return current;

@@ -94,19 +94,22 @@ Migrations, in order:
 8. `20261113127000_run_lease.sql` — one open analysis run per person, and a short lease so a second start attaches to it
 9. `20261113128000_run_job.sql` — `attempts`, `workflow_id`, and a `popularity` stage
 10. `20261113129000_run_outcome.sql` — `outcome` of `ready` or `insufficient_data`
+11. `20261113130000_visible_stage.sql` — allows `analyse` on `analysis_runs.stage`. Older stage names stay valid.
 
 ## Architecture
 
 ```text
 Landing → Welcome → Analysing → Results
                          |
-                    GET /api/runs/watch
-                 ingest → enrich → profile → popularity → order → done
+              GET /api/analysis/status
+              GET /api/analysis/tracks
+              GET /api/analysis/results
+                    ingest → analyse → done
 ```
 
-One authenticated route, `/app`, chooses the screen from `analysis_runs`. The first run starts in the auth callback, before the redirect to `/app?welcome=1`. The page only displays that row. The state machine is [docs/adr/001-analysis-job.md](docs/adr/001-analysis-job.md). The runner is one Vercel Workflow, described in [docs/adr/003-analysis-workflow.md](docs/adr/003-analysis-workflow.md).
+One authenticated route, `/app`, displays the run. The auth callback starts a workflow only when the person has no running or complete run. A later sign-in does not restart a completed flow. An error run is started again on the next sign-in. Start fresh is the only rerun of a completed flow. The page does not POST on load. The state machine is [docs/adr/001-analysis-job.md](docs/adr/001-analysis-job.md). The two workflow steps and the three read endpoints are [docs/adr/004-analysis-flow.md](docs/adr/004-analysis-flow.md).
 
-`POST /api/analyse` is the Try again button (`?retry=1`) and Start fresh (`?fresh=1`). The server starts the workflow. The page does not call it on load. While a run is open the page reads `GET /api/runs/watch`: one JSON snapshot when the run has finished, or an NDJSON stream that replays stored tracks and follows new ones until the run finishes or the function hands back a resume cursor. A finished run with fewer than 50 distinct tracks is `outcome = insufficient_data` and does not continue into the profile. A partial unique index allows one open run per person. A running row with a stale heartbeat is started again from the read path; the steps skip work that is already stored. Supabase Realtime is not used.
+`/app` calls `GET /api/analysis/status`. While the run is in progress it calls `GET /api/analysis/tracks` and renders tracks as they are stored. When ingest has finished it calls `GET /api/analysis/results` and keeps the progress bar up while that request is held open. Hobby functions cannot run longer than 300 seconds. The stream and the results hold stop at 240 seconds and tell the client to call again. A finished run with fewer than 50 distinct tracks is `outcome = insufficient_data`. A partial unique index allows one open run per person. A running row with a stale heartbeat is started again from the read path. Supabase Realtime is not used. `POST /api/analyse` is only Try again (`?retry=1`) and Start fresh (`?fresh=1`).
 
 Spotify tokens are stored in `spotify_tokens` at the callback, the only moment Supabase Auth exposes them, and read later over the direct Postgres connection. Catalogue tables are server-only. Each query for plays, top items, runs, a profile or an order is limited to that user's id.
 

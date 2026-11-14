@@ -2,7 +2,10 @@ import { presentCatalogue, type VisibleArtist, type VisibleTrack } from "@/lib/c
 import { sql } from "@/lib/db";
 import type { Term } from "@/lib/stream/events";
 
-export async function loadCatalogue(userId: string): Promise<{ tracks: VisibleTrack[]; artists: VisibleArtist[] }> {
+export async function loadCatalogue(
+  userId: string,
+  options?: { includeUnenriched?: boolean },
+): Promise<{ tracks: VisibleTrack[]; artists: VisibleArtist[] }> {
   const db = sql();
   const plays = await db<{ track_id: string }[]>`
     select track_id from spotdonalds.plays where user_id = ${userId}
@@ -71,6 +74,8 @@ export async function loadCatalogue(userId: string): Promise<{ tracks: VisibleTr
       time_range: item.time_range,
       rank: item.rank,
     })),
-    enrichedIds: new Set(enriched.map((row) => row.spotify_track_id).filter((id): id is string => Boolean(id))),
+    enrichedIds: options?.includeUnenriched
+      ? new Set(trackIds)
+      : new Set(enriched.map((row) => row.spotify_track_id).filter((id): id is string => Boolean(id))),
   });
 }

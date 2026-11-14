@@ -1,6 +1,6 @@
 # ADR 003: One Vercel Workflow per analysis
 
-Supersedes [ADR 002](002-analysis-queue.md). [ADR 001](001-analysis-job.md) still describes the run row. The database remains the source of truth. One open run per person.
+Supersedes [ADR 002](002-analysis-queue.md). The step list and the read path below are superseded by [ADR 004](004-analysis-flow.md). [ADR 001](001-analysis-job.md) still describes the run row. The database remains the source of truth. One open run per person. The queue postmortem in this note still stands.
 
 ## Decision
 

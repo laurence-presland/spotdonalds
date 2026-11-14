@@ -2,6 +2,10 @@
 
 **Size:** M · **Depends on:** 01, 02
 
+## Current shape
+
+Ingest checks the database first. Fifty or more distinct tracks already stored means Spotify is not called. Otherwise each track is persisted as it is stored so `GET /api/analysis/tracks` can stream it. Fewer than 50 tracks finishes the run as `insufficient_data` and analyse does not run.
+
 ## Summary / goal
 Fetch everything useful Spotify will give us for the signed-in user (recent plays plus top tracks and artists for all three windows), normalise it, persist it, and stream each item to the browser as it arrives. A dropped connection must be resumable without refetching what's already saved.
 

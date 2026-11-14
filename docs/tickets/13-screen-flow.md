@@ -2,6 +2,10 @@
 
 **Size:** M · **Depends on:** 02, 05, 06, 08, 11
 
+## Current shape
+
+The pipeline is two server-side workflow steps, `ingest` then `analyse`. The page does not start it. After sign-in, `/app` calls `GET /api/analysis/status`. A run in progress calls `GET /api/analysis/tracks` and renders tracks as they stream. When ingest has finished it calls `GET /api/analysis/results`, with the progress bar held up while that request waits, then shows Results. `none` and `error` render their own states. Try again and Start fresh POST to the server. A completed run is not started again by a later sign-in. Details are in [ADR 004](../adr/004-analysis-flow.md).
+
 ## Summary / goal
 Own the product journey as four screens, and the analysis pipeline that drives them. After login, start ingestion immediately, cover the start-up wait with a 3-second "Please drive through..." welcome that fades away to reveal the Analysing screen already running underneath, then auto-progress to Results once everything is in. Results has the drive-thru order as the hero, then the taste profile, the aggregate data, and the "how we decided your order" explanation. There is no track list on Results. A Back control returns to Analysing. On reload, skip to the right screen.
 
