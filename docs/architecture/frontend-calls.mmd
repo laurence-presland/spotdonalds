@@ -1,57 +1,23 @@
 sequenceDiagram
-  actor Person
-  participant Page as /app
-  participant Status as GET /api/analysis/status
-  participant Tracks as GET /api/analysis/tracks
-  participant Results as GET /api/analysis/results
+  actor Browser
+  participant Status as status
+  participant Tracks as tracks
+  participant Results as results
 
-  Person->>Page: Open the app, already signed in
-  Note over Page: First paint is full-screen Loading. The status request itself shows the step list, spinner on Reading your history. A fresh sign-in also covers the page with Please drive through for about 3 seconds.
-  Page->>Status: GET
-  Note over Status: A running row with no workflow id, or a heartbeat older than 3 minutes, starts the workflow again.
-  Status-->>Page: status, stage, outcome, trackCount
-  Note over Page: The three steps show, with a spinner on the current one. A finished status drops the welcome line.
-  alt running, stage ingest
-    Page->>Tracks: GET, accept NDJSON
-    loop Poll stored tracks each second, for up to 240 seconds
-      Tracks-->>Page: NDJSON line, type tracks
-    end
-    alt 240 seconds elapsed
-      Tracks-->>Page: type resume, plus a cursor
-      Note over Page: Reconnecting, then the same GET with that cursor
-    else ingest has finished, or the stage has moved on
-      Tracks-->>Page: type done
-    end
-  else running, stage analyse
-    Page->>Tracks: GET
-    Tracks-->>Page: one JSON body of tracks and artists
-  else complete, and the person opened the track list
-    Page->>Tracks: GET
-    Tracks-->>Page: one JSON body, and the steps read as finished
-  else status error, or outcome insufficient_data
-    Note over Page: Error screen, or the insufficient-data screen. Results is not called.
-  else status none
-    Note over Page: Nothing is running yet. Start fresh is offered.
-  else complete, on the way to the order
-    Note over Page: The track endpoint is skipped
+  Browser->>Status: GET /api/analysis/status
+  Status-->>Browser: stage
+  alt still ingesting
+    Browser->>Tracks: GET /api/analysis/tracks
+    Tracks-->>Browser: NDJSON stream
+  else ingest done
+    Browser->>Tracks: GET /api/analysis/tracks
+    Tracks-->>Browser: one JSON body
   end
-  opt track read finished, or the order path skipped tracks. Not the finished track list, and not an error or empty run.
-    Note over Page: The taste step keeps its spinner for the whole results call
-    Page->>Results: GET
-    loop Read the run each second, for up to 240 seconds
-      Results-->>Results: still running, so keep holding
-    end
-    alt still running when the hold ends
-      Results-->>Page: 202 with retry true
-      Page->>Results: GET again
-    else outcome ready
-      Results-->>Page: 200 with profile, order, menu and aggregates
-      Note over Page: Results screen
-    else outcome insufficient_data
-      Results-->>Page: the track count
-      Note over Page: Insufficient-data screen
-    else status error
-      Results-->>Page: the error message
-      Note over Page: Try again, or Start fresh
-    end
+  Browser->>Results: GET /api/analysis/results
+  alt still running after 240s
+    Results-->>Browser: 202, retry
+    Browser->>Results: Ask again
+  else ready
+    Results-->>Browser: profile and order
   end
+  Note over Browser,Results: A spinner stays on the current step until results. A finished run can skip tracks.

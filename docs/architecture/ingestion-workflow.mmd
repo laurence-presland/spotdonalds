@@ -1,27 +1,14 @@
 flowchart TD
-  start["start analysisWorkflow for this user and run"] --> ingest["Step ingest. maxRetries 2"]
-  ingest --> own{"This workflow still owns the run?"}
-  own -->|no| fatal["FatalError and stop. The row stays for a later read."]
-  own -->|yes| enough{"Distinct tracks in plays union top tracks, 50 or more?"}
-  enough -->|yes| remembered["Skip Spotify. Store the count on analysis_runs and continue."]
-  enough -->|no| checkpoint{"Ingest checkpoint already done?"}
-  checkpoint -->|no| fetch["Spotify: recently played, then top tracks and top artists for 4 weeks, 6 months and 1 year"]
-  fetch --> written["Write artists, tracks, track_artists, plays, top_items, and the run checkpoint"]
-  checkpoint -->|yes| recount{"Count still under 50?"}
-  written --> recount
-  recount -->|yes| short["analysis_runs: complete, done, outcome insufficient_data. Workflow stops."]
-  recount -->|no| analyse
-  remembered --> analyse["Step analyse. maxRetries 2"]
-  analyse --> own2{"This workflow still owns the run?"}
-  own2 -->|no| fatal
-  own2 -->|yes| enrich["Enrich the top 30 tracks. MusicBrainz, one request a second. Deezer alongside. Cache in track_enrichment."]
-  enrich --> profile["Code computes BPM and the other signals, then the taste-profile model. Validate. Up to 3 model tries. Write taste_profiles."]
-  profile --> popularity["Popularity model for the top genres. Write genre_popularity."]
-  popularity --> order["Order model picks menu items. Validate calories, spend and protein. Up to 3 model tries. Write orders."]
-  order --> ready["analysis_runs: complete, done, outcome ready"]
-  ingest -.-> trouble["A step throws"]
-  analyse -.-> trouble
-  trouble --> which{"Which failure?"}
-  which -->|another worker owns the run| fatal
-  which -->|Spotify token error, or this was the last attempt| errored["Write status error on analysis_runs, then FatalError"]
-  which -->|any other error| again["RetryableError. Wait 15 seconds and run that step again. Stored pieces are skipped."]
+  count{"50 tracks stored?"} -->|yes| analyse
+  count -->|no| fetch["Fetch from Spotify"]
+  fetch --> still{"Still under 50?"}
+  still -->|yes| short["insufficient_data"]
+  still -->|no| analyse["Analyse"]
+  analyse --> enrich["MusicBrainz and Deezer"]
+  enrich --> stats["BPM and stats"]
+  stats --> profile["LLM taste profile"]
+  profile --> order["LLM order"]
+  order --> done["Complete"]
+  analyse -.-> fail{"Step fails?"}
+  fail -->|retry| again["Wait 15s"]
+  fail -->|last try| stop["status error"]
