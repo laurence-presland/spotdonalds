@@ -169,6 +169,10 @@ The tests we have are unit tests. I'd add a dedicated test account and run end-t
 
 I'd replace the long-polled results call and the streamed tracks endpoint with a push channel, such as a Supabase Realtime subscription or a WebSocket, so the front end hears about progress and results the moment they change.
 
+### Sign-in
+
+Every sign-in forces Spotify's consent screen. I'd skip that for someone who has already approved the app, so they go straight in, knowing it makes switching Spotify accounts in the same browser harder.
+
 ## Attribution
 
 - Listening metadata: MusicBrainz, used under [CC BY-NC-SA](https://musicbrainz.org/doc/About/Data_License). Deezer for tempo.

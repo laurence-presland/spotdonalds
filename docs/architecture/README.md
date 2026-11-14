@@ -41,25 +41,33 @@ Source: [spotify-login.mmd](./spotify-login.mmd). PNG: [spotify-login.png](./spo
 
 ## Ingestion workflow
 
-Ingest uses tracks already stored, and calls Spotify only when there are fewer than 50. Still short of 50 ends the run. Analyse enriches, computes the numbers, then asks the model for the profile and the order. A failed step waits 15 seconds and tries again. The last try writes status error.
+Ingest uses tracks already stored, and calls Spotify only when there are fewer than 50. Still short of 50 ends the run. Analyse enriches, computes the numbers, then asks the model for the profile and the order. Each of those two steps retries on its own: `maxRetries` is 2, so three attempts, 15 seconds apart, and the arrow goes back into that step. The last failed attempt, or a fatal error, sets the run to error, and the next sign-in starts a new run. The model calls themselves do not retry. `maxRetries` is 0 on the profile, popularity, and order requests.
 
 <img alt="Ingestion workflow" src="./ingestion-workflow.svg" width="100%" />
 
 ```mermaid
 flowchart TD
-  count{"50 tracks stored?"} -->|yes| analyse
-  count -->|no| fetch["Fetch from Spotify"]
-  fetch --> still{"Still under 50?"}
-  still -->|yes| short["insufficient_data"]
-  still -->|no| analyse["Analyse"]
-  analyse --> enrich["MusicBrainz and Deezer"]
-  enrich --> stats["BPM and stats"]
-  stats --> profile["LLM taste profile"]
-  profile --> order["LLM order"]
-  order --> done["Complete"]
-  analyse -.-> fail{"Step fails?"}
-  fail -->|retry| again["Wait 15s"]
-  fail -->|last try| stop["status error"]
+  subgraph ingest["Ingest"]
+    count{"50 tracks stored?"} -->|yes| go["Continue"]
+    count -->|no| fetch["Fetch from Spotify"]
+    fetch --> still{"Still under 50?"}
+    still -->|yes| short["insufficient_data"]
+    still -->|no| go
+    count -.-> iFail{"Fails?"}
+    iFail -->|retry up to 2x, 15s apart| count
+    iFail -->|last try or fatal| err["status error"]
+  end
+  go --> enrich
+  subgraph analyse["Analyse"]
+    enrich["MusicBrainz and Deezer"] --> stats["BPM and stats"]
+    stats --> profile["LLM taste profile"]
+    profile --> order["LLM order"]
+    order --> done["Complete"]
+    enrich -.-> aFail{"Fails?"}
+    aFail -->|retry up to 2x, 15s apart| enrich
+    aFail -->|last try or fatal| err
+  end
+  err --> next["Next sign-in starts a new run"]
 ```
 
 Source: [ingestion-workflow.mmd](./ingestion-workflow.mmd). PNG: [ingestion-workflow.png](./ingestion-workflow.png).

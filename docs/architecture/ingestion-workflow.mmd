@@ -1,14 +1,22 @@
 flowchart TD
-  count{"50 tracks stored?"} -->|yes| analyse
-  count -->|no| fetch["Fetch from Spotify"]
-  fetch --> still{"Still under 50?"}
-  still -->|yes| short["insufficient_data"]
-  still -->|no| analyse["Analyse"]
-  analyse --> enrich["MusicBrainz and Deezer"]
-  enrich --> stats["BPM and stats"]
-  stats --> profile["LLM taste profile"]
-  profile --> order["LLM order"]
-  order --> done["Complete"]
-  analyse -.-> fail{"Step fails?"}
-  fail -->|retry| again["Wait 15s"]
-  fail -->|last try| stop["status error"]
+  subgraph ingest["Ingest"]
+    count{"50 tracks stored?"} -->|yes| go["Continue"]
+    count -->|no| fetch["Fetch from Spotify"]
+    fetch --> still{"Still under 50?"}
+    still -->|yes| short["insufficient_data"]
+    still -->|no| go
+    count -.-> iFail{"Fails?"}
+    iFail -->|retry up to 2x, 15s apart| count
+    iFail -->|last try or fatal| err["status error"]
+  end
+  go --> enrich
+  subgraph analyse["Analyse"]
+    enrich["MusicBrainz and Deezer"] --> stats["BPM and stats"]
+    stats --> profile["LLM taste profile"]
+    profile --> order["LLM order"]
+    order --> done["Complete"]
+    enrich -.-> aFail{"Fails?"}
+    aFail -->|retry up to 2x, 15s apart| enrich
+    aFail -->|last try or fatal| err
+  end
+  err --> next["Next sign-in starts a new run"]
