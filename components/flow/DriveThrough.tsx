@@ -25,6 +25,7 @@ export function DriveThrough({ welcome }: { welcome: boolean }) {
         menu={results.menu}
         aggregates={results.aggregates}
         orderFailed={results.order == null}
+        history={results.history}
       />
     );
   }

@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { AnalysingScreen } from "@/components/analysing/AnalysingScreen";
+import { AnalysingView } from "@/components/analysing/AnalysingView";
 import { BpmHistogram, GenreMixChart, TopArtistsByWindow } from "@/components/aggregates/panels";
 import { QuietLogout } from "@/components/flow/QuietLogout";
 import { HowWeDecided, OrderReceipt, type ReceiptMenuItem } from "@/components/order/OrderReceipt";
 import { RegenerateOrderButton } from "@/components/order/RegenerateOrderButton";
 import { TasteProfileCard } from "@/components/profile/TasteProfileCard";
 import type { Aggregates } from "@/lib/aggregates";
+import type { AnalysingState } from "@/lib/analysing/reduce";
 import type { StoredOrder } from "@/lib/order/run";
 import type { StoredProfile } from "@/lib/profile/run";
 
@@ -17,15 +19,19 @@ export function ResultsScreen({
   menu,
   aggregates,
   orderFailed,
+  history,
 }: {
   profile: StoredProfile | null;
   order: StoredOrder | null;
   menu: ReceiptMenuItem[];
   aggregates: Aggregates;
   orderFailed: boolean;
+  /** Tracks already loaded on this visit. Without them, Back fetches the list. */
+  history?: AnalysingState;
 }) {
-  const [history, setHistory] = useState(false);
-  if (history) return <AnalysingScreen tracksOnly onForward={() => setHistory(false)} />;
+  const [showHistory, setShowHistory] = useState(false);
+  if (showHistory && history) return <AnalysingView state={history} onForward={() => setShowHistory(false)} />;
+  if (showHistory) return <AnalysingScreen tracksOnly onForward={() => setShowHistory(false)} />;
 
   const decided = (order?.how_we_decided ?? {}) as { text?: string };
   return (
@@ -36,7 +42,7 @@ export function ResultsScreen({
         <QuietLogout />
       </header>
       <main className="results-main">
-        <button type="button" className="back" onClick={() => setHistory(true)}>
+        <button type="button" className="back" onClick={() => setShowHistory(true)}>
           Back
         </button>
         <div className="results-hero">
