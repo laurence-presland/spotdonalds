@@ -15,16 +15,26 @@ export function chooseEnrichment(
   if (deezer.error) failures.push("deezer");
   const tags = musicbrainz.matched
     ? musicbrainz.tags
-        .map((tag) => normaliseTag(tag.original || tag.name, tag.count))
+        .map((tag) => {
+          const normalised = normaliseTag(tag.original || tag.name, tag.count);
+          return {
+            ...tag,
+            ...normalised,
+            origin: tag.origin,
+            confidence: tag.confidence,
+            sourceUrl: tag.sourceUrl,
+          };
+        })
         .filter((tag) => tag.name.length > 0)
         .map((tag) => ({
           ...tag,
           provenance: {
             value: tag.name,
             source: "musicbrainz" as const,
-            source_url: musicbrainz.sourceUrl ?? "https://musicbrainz.org",
-            confidence: musicbrainz.confidence,
+            source_url: tag.sourceUrl ?? musicbrainz.sourceUrl ?? "https://musicbrainz.org",
+            confidence: tag.confidence ?? musicbrainz.confidence,
             fetched_at: fetchedAt,
+            ...(tag.origin ? { origin: tag.origin } : {}),
           },
         }))
     : [];

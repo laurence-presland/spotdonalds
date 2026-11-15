@@ -26,6 +26,8 @@ export type TagInput = {
   count: number;
   source: string;
   source_url: string;
+  origin?: "recording" | "artist" | "release";
+  confidence?: "high" | "low";
 };
 
 export type TagBucket = {

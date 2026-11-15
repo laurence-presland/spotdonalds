@@ -8,7 +8,8 @@ import type { Term } from "@/lib/stream/events";
 type StoredTag = {
   name?: string;
   count?: number;
-  provenance?: { source?: string; source_url?: string };
+  origin?: "recording" | "artist" | "release";
+  provenance?: { source?: string; source_url?: string; confidence?: "high" | "low"; origin?: "recording" | "artist" | "release" };
 };
 
 export async function loadAggregates(userId: string): Promise<Aggregates> {
@@ -58,6 +59,8 @@ export async function loadAggregates(userId: string): Promise<Aggregates> {
           count: tag.count ?? 1,
           source: tag.provenance?.source ?? "musicbrainz",
           source_url: tag.provenance?.source_url ?? "https://musicbrainz.org",
+          origin: tag.origin ?? tag.provenance?.origin,
+          confidence: tag.provenance?.confidence,
         },
       ];
     });
