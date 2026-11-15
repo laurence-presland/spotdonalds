@@ -7,10 +7,15 @@ export type EnrichTrack = {
   album_image_url: string | null;
 };
 
+export type TagOrigin = "recording" | "artist" | "release";
+
 export type TagHit = {
   name: string;
   original: string;
   count: number;
+  origin?: TagOrigin;
+  confidence?: "high" | "low";
+  sourceUrl?: string;
 };
 
 export type SourceName = "musicbrainz" | "deezer";
@@ -34,10 +39,14 @@ export type FieldValue<T> = {
   fetched_at: string;
 };
 
+export type TagProvenance = FieldValue<string> & {
+  origin?: TagOrigin;
+};
+
 export type ChosenEnrichment = {
   matched: true;
   confidence: "high" | "low";
-  tags: (TagHit & { provenance: FieldValue<string> })[];
+  tags: (TagHit & { provenance: TagProvenance })[];
   bpm: FieldValue<number> | null;
   failures: SourceName[];
 };

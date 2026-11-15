@@ -70,4 +70,35 @@ describe("chooseEnrichment", () => {
     expect(chosen?.confidence).toBe("low");
     expect(chosen?.tags[0]?.provenance.confidence).toBe("low");
   });
+
+  it("keeps artist-fallback tags at low confidence and records their origin", () => {
+    const chosen = chooseEnrichment(
+      mb({
+        confidence: "high",
+        tags: [
+          {
+            name: "pop",
+            original: "pop",
+            count: 3,
+            origin: "artist",
+            confidence: "low",
+            sourceUrl: "https://musicbrainz.org/artist/ada",
+          },
+        ],
+      }),
+      miss("deezer"),
+      fetchedAt,
+    );
+    expect(chosen?.confidence).toBe("high");
+    expect(chosen?.tags[0]).toMatchObject({
+      name: "pop",
+      origin: "artist",
+      provenance: {
+        source: "musicbrainz",
+        source_url: "https://musicbrainz.org/artist/ada",
+        confidence: "low",
+        origin: "artist",
+      },
+    });
+  });
 });

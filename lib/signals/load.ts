@@ -6,7 +6,8 @@ import type { Term } from "@/lib/stream/events";
 type StoredTag = {
   name?: string;
   count?: number;
-  provenance?: { source?: string; source_url?: string };
+  origin?: "recording" | "artist" | "release";
+  provenance?: { source?: string; source_url?: string; confidence?: "high" | "low"; origin?: "recording" | "artist" | "release" };
 };
 
 type EnrichmentRow = {
@@ -73,6 +74,8 @@ export async function loadListening(userId: string): Promise<ListeningInput> {
                     count: tag.count ?? 1,
                     source: tag.provenance?.source ?? "musicbrainz",
                     source_url: tag.provenance?.source_url ?? "https://musicbrainz.org",
+                    origin: tag.origin ?? tag.provenance?.origin,
+                    confidence: tag.provenance?.confidence,
                   },
                 ]
               : [],
