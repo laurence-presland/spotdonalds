@@ -2,6 +2,7 @@
 
 import { useEffect, useReducer, useRef, useState } from "react";
 import { NotAllowlisted } from "@/components/NotAllowlisted";
+import { Welcome } from "@/components/flow/Welcome";
 import { AnalysingView } from "@/components/analysing/AnalysingView";
 import type { ReceiptMenuItem } from "@/components/order/OrderReceipt";
 import { initialAnalysingState, reduceAnalysis } from "@/lib/analysing/reduce";
@@ -29,15 +30,19 @@ export function AnalysingScreen({
   onResults,
   onInsufficient,
   onForward,
+  holdUntilData = false,
 }: {
   tracksOnly?: boolean;
   onStatus?: (status: AnalysisStatus) => void;
   onResults?: (results: AnalysisResults) => void;
   onInsufficient?: (count: number) => void;
   onForward?: () => void;
+  /** Return visits: keep the full-screen drive-through page up until tracks or results arrive. */
+  holdUntilData?: boolean;
 }) {
   const [state, dispatch] = useReducer(reduceAnalysis, initialAnalysingState);
   const [generation, setGeneration] = useState(0);
+  const [tracksSettled, setTracksSettled] = useState(false);
   const statusRef = useRef(onStatus);
   const resultsRef = useRef(onResults);
   const insufficientRef = useRef(onInsufficient);
@@ -66,6 +71,7 @@ export function AnalysingScreen({
         if (type.includes("application/json")) {
           const body = (await response.json()) as AnalysisStatus & { tracks?: VisibleTrack[]; artists?: VisibleArtist[] };
           dispatch({ type: "hydrate", tracks: body.tracks ?? [], artists: body.artists ?? [] });
+          setTracksSettled(true);
           if (body.status === "error") {
             fail(analysisErrorCopy(body.error));
             return "error";
@@ -98,7 +104,10 @@ export function AnalysingScreen({
               else fail(analysisErrorCopy(event.message));
               return "error";
             }
-            if (event.type === "done") return "done";
+            if (event.type === "done") {
+              setTracksSettled(true);
+              return "done";
+            }
           }
         }
         if (resume) {
@@ -207,6 +216,8 @@ export function AnalysingScreen({
   }
 
   if (state.status === "access") return <NotAllowlisted />;
+  const problem = state.status === "error" || state.status === "dropped";
+  if (holdUntilData && !problem && state.tracks.length === 0 && !tracksSettled) return <Welcome hold />;
   if (state.status === "idle") return <AnalysisLoading />;
   const waiting = state.message === NOT_STARTED;
   return (

@@ -31,7 +31,12 @@ export function DriveThrough({ welcome }: { welcome: boolean }) {
 
   return (
     <>
-      <AnalysingScreen onStatus={noteStatus} onResults={setResults} onInsufficient={setInsufficient} />
+      <AnalysingScreen
+        holdUntilData={!welcome}
+        onStatus={noteStatus}
+        onResults={setResults}
+        onInsufficient={setInsufficient}
+      />
       {overlay ? <Welcome onDone={() => setOverlay(false)} /> : null}
     </>
   );
