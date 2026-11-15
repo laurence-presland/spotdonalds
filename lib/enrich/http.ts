@@ -1,4 +1,7 @@
+import { log } from "@/lib/log";
+
 const MAX_RETRIES = 2;
+const ERROR_BODY_LIMIT = 300;
 
 /** Fetch JSON, retrying on 429 and 5xx with Retry-After or exponential backoff. */
 export async function fetchJson(
@@ -11,6 +14,7 @@ export async function fetchJson(
     const response = await deps.fetch(url, { headers });
     if (response.status === 429 || response.status === 503) {
       if (attempt >= MAX_RETRIES) {
+        await logHttpError(url, response);
         throw new Error(`${response.status}`);
       }
       const retryAfter = Number(response.headers.get("retry-after"));
@@ -19,7 +23,23 @@ export async function fetchJson(
       attempt += 1;
       continue;
     }
-    if (!response.ok) throw new Error(`${response.status}`);
+    if (!response.ok) {
+      if (response.status !== 404) {
+        await logHttpError(url, response);
+      }
+      throw new Error(`${response.status}`);
+    }
     return response.json();
   }
+}
+
+/** Log a non-404 HTTP error status and a short slice of the response body. */
+async function logHttpError(url: string, response: Response): Promise<void> {
+  let body = "";
+  try {
+    body = (await response.text()).slice(0, ERROR_BODY_LIMIT);
+  } catch {
+    body = "";
+  }
+  log("warn", "enrich.http", { status: response.status, body, url });
 }

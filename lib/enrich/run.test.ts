@@ -199,4 +199,54 @@ describe("runEnrich", () => {
       await task;
     }
   });
+
+  it("expires a cache row when a source errors, even if the other source matched", async () => {
+    const saved = store();
+    const now = Date.parse("2026-11-13T01:00:00.000Z");
+    const musicbrainz = {
+      name: "musicbrainz" as const,
+      lookup: vi.fn(async () => {
+        throw new Error("400");
+      }),
+    };
+    const deezer = { name: "deezer" as const, lookup: vi.fn(async () => hit(90)) };
+    await runEnrich({
+      userId: "user-1",
+      store: saved,
+      musicbrainz,
+      deezer,
+      emit: () => {},
+      now: () => now,
+      maxTracks: 1,
+    });
+    const row = saved.cache.get("isrc:AAA");
+    expect(row?.matched).toBe(true);
+    expect(row?.expires_at).toBe(new Date(now + 60 * 60 * 1000).toISOString());
+
+    musicbrainz.lookup.mockClear();
+    deezer.lookup.mockClear();
+    await runEnrich({
+      userId: "user-1",
+      store: saved,
+      musicbrainz,
+      deezer,
+      emit: () => {},
+      now: () => now + 30 * 60 * 1000,
+      maxTracks: 1,
+    });
+    expect(musicbrainz.lookup).not.toHaveBeenCalled();
+    expect(deezer.lookup).not.toHaveBeenCalled();
+
+    await runEnrich({
+      userId: "user-1",
+      store: saved,
+      musicbrainz,
+      deezer,
+      emit: () => {},
+      now: () => now + 60 * 60 * 1000,
+      maxTracks: 1,
+    });
+    expect(musicbrainz.lookup).toHaveBeenCalledOnce();
+    expect(deezer.lookup).toHaveBeenCalledOnce();
+  });
 });

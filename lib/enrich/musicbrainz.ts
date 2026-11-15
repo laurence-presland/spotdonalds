@@ -47,7 +47,7 @@ export function createMusicBrainz(deps: Deps) {
         await deps.wait();
         try {
           const payload = await fetchJson(
-            `${BASE}/isrc/${encodeURIComponent(isrc)}?inc=tags+genres+artist-credits&fmt=json`,
+            `${BASE}/isrc/${encodeURIComponent(isrc)}?inc=tags+artist-credits&fmt=json`,
             headers,
             deps,
           );

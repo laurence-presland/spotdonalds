@@ -68,6 +68,21 @@ describe("MusicBrainz", () => {
     expect(String(fetchImpl.mock.calls[1]?.[0])).toContain("/recording?");
   });
 
+  it("does not request genres on the ISRC lookup", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () =>
+      Response.json({ recordings: [{ id: "rec", tags: [{ name: "Rock", count: 1 }] }] }),
+    );
+    await createMusicBrainz({
+      fetch: fetchImpl,
+      sleep: async () => undefined,
+      wait: async () => undefined,
+      userAgent: "SpotDonalds/test (test@example.com)",
+    }).lookup(track);
+    const url = String(fetchImpl.mock.calls[0]?.[0]);
+    expect(url).toContain("/isrc/AUXYZ2400001?inc=tags+artist-credits");
+    expect(url).not.toContain("genres");
+  });
+
   it("falls back to the first credited artist's tags when the recording has none", async () => {
     const fetchImpl = vi.fn<typeof fetch>(async (input) => {
       const url = String(input);

@@ -13,6 +13,7 @@ import { log } from "@/lib/log";
 import type { StreamEvent } from "@/lib/stream/events";
 
 const NEGATIVE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const ERROR_TTL_MS = 60 * 60 * 1000;
 const DEEZER_CONCURRENCY = 6;
 
 export type EnrichProvider = {
@@ -142,7 +143,7 @@ function emitMatch(emit: (event: StreamEvent) => void, track: EnrichTrack, failu
   });
 }
 
-/** Build the cache row for a chosen enrichment, or a short-lived negative entry. */
+/** Build the cache row, expiring it when a source failed or nothing matched. */
 function cacheRow(
   track: EnrichTrack,
   key: string,
@@ -163,6 +164,22 @@ function cacheRow(
     raw: { musicbrainz: musicbrainz.raw, deezer: deezer.raw },
     confidence: chosen?.confidence ?? null,
     fetched_at: fetchedAt,
-    expires_at: chosen ? null : new Date(nowMs + NEGATIVE_TTL_MS).toISOString(),
+    expires_at: cacheExpiry(chosen, musicbrainz, deezer, nowMs),
   };
+}
+
+/** Expire quickly after a source error, or after a week for a clean miss. */
+function cacheExpiry(
+  chosen: ChosenEnrichment | null,
+  musicbrainz: SourceHit,
+  deezer: SourceHit,
+  nowMs: number,
+): string | null {
+  if (musicbrainz.error || deezer.error) {
+    return new Date(nowMs + ERROR_TTL_MS).toISOString();
+  }
+  if (!chosen) {
+    return new Date(nowMs + NEGATIVE_TTL_MS).toISOString();
+  }
+  return null;
 }
