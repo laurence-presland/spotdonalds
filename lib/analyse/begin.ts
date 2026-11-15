@@ -2,6 +2,7 @@ import { startOnSignIn } from "@/lib/analyse/sign-in";
 import { ensureAnalysisJob } from "@/lib/analyse/start";
 import { closeOpenRun, insertOpenRun, loadLatestRun } from "@/lib/analysis-run";
 
+/** Start the first analysis after a successful sign-in. */
 export async function beginFirstFlow(userId: string): Promise<void> {
   await startOnSignIn(userId, {
     loadLatest: loadLatestRun,

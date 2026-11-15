@@ -28,6 +28,7 @@ const WINDOW_LABEL: Record<Term, string> = {
 
 const WINDOW_ORDER: Term[] = ["short_term", "medium_term", "long_term"];
 
+/** Short label for why a track is on the list, preferring the best top ranking. */
 export function sourceLabel(sources: TrackSource[]): string {
   const tops = sources.filter((source) => source.kind === "top-track");
   if (tops.length > 0) {
@@ -41,6 +42,7 @@ export function sourceLabel(sources: TrackSource[]): string {
   return "";
 }
 
+/** Attach recent and top sources to enriched tracks. */
 export function presentCatalogue(input: {
   tracks: {
     id: string;

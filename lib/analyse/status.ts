@@ -11,6 +11,7 @@ export type AnalysisStatus = {
   trackCount: number;
 };
 
+/** Public analysis status for the client, from the run and track count. */
 export function analysisStatus(run: RunRecord | null, trackCount: number): AnalysisStatus {
   if (!run) return { status: "none", stage: null, outcome: null, trackCount };
   const count = typeof run.checkpoint.track_count === "number" ? run.checkpoint.track_count : trackCount;
@@ -32,6 +33,7 @@ export function analysisStatus(run: RunRecord | null, trackCount: number): Analy
   return { status: "running", stage: visibleStage(run.stage) ?? "analyse", outcome: null, trackCount: count };
 }
 
+/** Collapse pipeline stages to ingest, analyse, or done. */
 export function visibleStage(stage: string): AnalysisStage {
   if (stage === "done") return null;
   if (stage === "ingest") return "ingest";

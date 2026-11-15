@@ -6,6 +6,7 @@ import { markOwnedRunFailed } from "@/lib/analysis-run";
 
 const STEP_RETRIES = 2;
 
+/** Durable workflow: ingest, then analyse, and mark the run failed if a step dies. */
 export async function analysisWorkflow(userId: string, runId: string) {
   "use workflow";
   try {
@@ -17,18 +18,21 @@ export async function analysisWorkflow(userId: string, runId: string) {
   }
 }
 
+/** Workflow step that runs ingest. */
 async function ingestStep(userId: string, runId: string) {
   "use step";
   return bound(userId, runId, "ingest");
 }
 (ingestStep as { maxRetries?: number }).maxRetries = STEP_RETRIES;
 
+/** Workflow step that runs enrich, profile, popularity, and order. */
 async function analyseStep(userId: string, runId: string) {
   "use step";
   return bound(userId, runId, "analyse");
 }
 (analyseStep as { maxRetries?: number }).maxRetries = STEP_RETRIES;
 
+/** Workflow step that marks the run failed if this worker still owns it. */
 async function markFailedStep(userId: string, runId: string) {
   "use step";
   const workflow = getWorkflowMetadata();
@@ -36,6 +40,7 @@ async function markFailedStep(userId: string, runId: string) {
 }
 (markFailedStep as { maxRetries?: number }).maxRetries = STEP_RETRIES;
 
+/** Run a flow step under this worker's ownership, or stop if the lease is lost. */
 async function bound(userId: string, runId: string, step: FlowStep): Promise<"continue" | "stop"> {
   const stepMeta = getStepMetadata();
   const workflow = getWorkflowMetadata();

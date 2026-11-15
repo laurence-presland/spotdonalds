@@ -6,6 +6,7 @@ import { log } from "@/lib/log";
 
 const START_FAILED = "The analysis didn't start. Try again.";
 
+/** Claim the run and start the analysis workflow if no worker holds it. */
 export async function ensureAnalysisJob(userId: string, runId: string): Promise<void> {
   const claimed = await claimWorker(runId, userId);
   if (!claimed) return;

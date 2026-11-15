@@ -3,6 +3,7 @@ import { requireEnv } from "@/lib/env";
 
 const globalForDb = globalThis as unknown as { spotdonaldsSql?: postgres.Sql };
 
+/** Return the shared Postgres client for this process. */
 export function sql(): postgres.Sql {
   if (!globalForDb.spotdonaldsSql) {
     const url = requireEnv("DATABASE_URL");
@@ -30,6 +31,7 @@ export function sql(): postgres.Sql {
   return globalForDb.spotdonaldsSql;
 }
 
+/** Read sslmode from the database URL, defaulting to TLS. */
 function sslMode(url: string): "require" | "disable" {
   try {
     const mode = new URL(url).searchParams.get("sslmode");
@@ -40,6 +42,7 @@ function sslMode(url: string): "require" | "disable" {
   return "require";
 }
 
+/** Return an error message with any database URL stripped out. */
 export function safeDbMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : "unknown";
   return message.replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]");

@@ -35,11 +35,13 @@ export type Tracked =
 
 type StageStep = "enrich" | "profile" | "popularity" | "order";
 
+/** Run ingest, then analysis, then finish, stopping if a step says so. */
 export async function runUserFlow(deps: FlowDeps, userId: string, runId: string): Promise<void> {
   if ((await ensureTracks(deps, userId, runId)) === "stop") return;
   await runAnalyseStep(deps, userId, runId);
 }
 
+/** Make sure ingest has finished, then check there are enough tracks. */
 export async function ensureTracks(deps: FlowDeps, userId: string, runId: string): Promise<StepResult> {
   const loaded = await deps.load(userId, runId);
   if (!loaded || halted(loaded.run)) return "stop";
@@ -72,6 +74,7 @@ export async function ensureTracks(deps: FlowDeps, userId: string, runId: string
   return "continue";
 }
 
+/** Run enrich, profile, popularity, and order, skipping work already done. */
 export async function runAnalyseStep(deps: FlowDeps, userId: string, runId: string): Promise<StepResult> {
   const loaded = await deps.load(userId, runId);
   if (!loaded || halted(loaded.run)) return "stop";
@@ -92,6 +95,7 @@ export async function runAnalyseStep(deps: FlowDeps, userId: string, runId: stri
   return finishFlow(deps, userId, runId);
 }
 
+/** Mark the run successfully complete. */
 export async function finishFlow(deps: FlowDeps, userId: string, runId: string): Promise<StepResult> {
   const loaded = await deps.load(userId, runId);
   if (!loaded || halted(loaded.run)) return "stop";
@@ -101,6 +105,7 @@ export async function finishFlow(deps: FlowDeps, userId: string, runId: string):
   return "stop";
 }
 
+/** Run a step, record progress, and decide whether to continue, stop, or retry. */
 export async function runTrackedStep(
   deps: FlowDeps,
   input: { userId: string; runId: string; attempt: number; maxAttempts: number; step: FlowStep; work: () => Promise<StepResult> },
@@ -131,15 +136,18 @@ export async function runTrackedStep(
   }
 }
 
+/** True when the run has already stopped with an error or a final outcome. */
 function halted(run: RunRecord): boolean {
   if (run.status === "error" || run.outcome === "insufficient_data") return true;
   return run.status === "complete" && run.stage === "done";
 }
 
+/** Return a copy of the run marked running at this stage. */
 function running(run: RunRecord, stage: RunStage): RunRecord {
   return { ...run, status: "running", stage, error: null, finished_at: null, open: true };
 }
 
+/** True when this stage's work is already saved on the run. */
 function stageDone(loaded: { run: RunRecord; artifacts: Artifacts }, stage: StageStep): boolean {
   if (stage === "enrich") return loaded.run.checkpoint.enrich === true;
   if (stage === "profile") return loaded.artifacts.profile;
@@ -147,6 +155,7 @@ function stageDone(loaded: { run: RunRecord; artifacts: Artifacts }, stage: Stag
   return loaded.artifacts.order;
 }
 
+/** Store the distinct track count on the run checkpoint. */
 async function rememberCount(deps: FlowDeps, userId: string, runId: string, count: number): Promise<void> {
   const loaded = await deps.load(userId, runId);
   if (!loaded || halted(loaded.run)) return;

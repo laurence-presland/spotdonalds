@@ -19,6 +19,7 @@ import { runTasteProfile } from "@/lib/profile/run";
 import { profileStore } from "@/lib/profile/store";
 import { createSpotifyClient } from "@/lib/spotify/client";
 
+/** Load the run and its saved artifacts, if this worker still owns it. */
 export async function loadAnalysisContext(userId: string, runId: string): Promise<{ run: RunRecord; artifacts: Artifacts } | null> {
   const run = await loadRun(runId, userId);
   if (!run) return null;
@@ -36,6 +37,7 @@ export async function loadAnalysisContext(userId: string, runId: string): Promis
   };
 }
 
+/** Run one live pipeline stage: ingest, enrich, profile, popularity, or order. */
 export async function runLiveWork(
   stage: WorkStage,
   userId: string,
@@ -50,6 +52,7 @@ export async function runLiveWork(
   else await runOrder({ userId, store: orderStore(), complete: completeOrder, emit: () => undefined });
 }
 
+/** Run ingest and leave the run running if later stages will follow. */
 async function ingest(userId: string, stayRunning: boolean): Promise<void> {
   const token = await getSpotifyAccessToken(userId, { store: tokenStore(), now: Date.now, fetch });
   await runIngest({
@@ -61,6 +64,7 @@ async function ingest(userId: string, stayRunning: boolean): Promise<void> {
   });
 }
 
+/** Run enrichment, pacing MusicBrainz to one request a second. */
 async function enrich(userId: string): Promise<void> {
   const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
   await runEnrich({
@@ -77,6 +81,7 @@ async function enrich(userId: string): Promise<void> {
   });
 }
 
+/** Complete a popularity or order model call through the live order runner. */
 function completeOrder(call: { kind: "popularity" | "order"; system: string; prompt: string; itemIds?: string[]; tagIds?: string[] }) {
   if (call.kind === "popularity") return generatePopularity(call);
   return generateOrder({

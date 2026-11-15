@@ -1,8 +1,10 @@
+/** True when sign-in should start a new analysis. */
 export function shouldStartOnSignIn(run: { status: string } | null): boolean {
   if (!run) return true;
   return run.status !== "running" && run.status !== "complete";
 }
 
+/** Start a new analysis after sign-in unless one is already running or complete. */
 export async function startOnSignIn(
   userId: string,
   deps: {

@@ -11,6 +11,7 @@ export const popularitySchema = z
 
 const CITE_KEYS = [...SIGNAL_KEYS, "genre.popularity_tier"] as [string, ...string[]];
 
+/** JSON schema used to validate a model order. */
 export function orderSchema(itemIds: string[], tagIds: string[]) {
   const itemId = z.enum(itemIds as [string, ...string[]]);
   const tagId = z.enum(tagIds as [string, ...string[]]);

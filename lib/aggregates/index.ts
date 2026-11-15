@@ -21,6 +21,7 @@ export type Aggregates = {
   coverage: Coverage;
 };
 
+/** Build the aggregate views from loaded tracks and artists. */
 export function buildAggregates(input: {
   tracks: AggregateTrack[];
   artists: WindowArtist[];

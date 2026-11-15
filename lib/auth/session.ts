@@ -11,6 +11,7 @@ export class AuthUnavailable extends Error {
 
 const UNAVAILABLE = "Spotify sign-in didn't respond. Try again.";
 
+/** Return the signed-in user, or throw if auth is unavailable. */
 export async function getSessionUser(): Promise<{ id: string } | null> {
   const supabase = await createSupabaseServer();
   let result: Awaited<ReturnType<typeof supabase.auth.getUser>>;
@@ -28,6 +29,7 @@ export async function getSessionUser(): Promise<{ id: string } | null> {
   return result.data.user ? { id: result.data.user.id } : null;
 }
 
+/** Require a session, or return a 401/503 response. */
 export async function requireSession(): Promise<{ id: string } | Response> {
   try {
     const user = await getSessionUser();

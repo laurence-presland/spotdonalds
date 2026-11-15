@@ -6,6 +6,7 @@ import { log } from "@/lib/log";
 
 const UNAVAILABLE = "Spotify sign-in didn't respond. Try again.";
 
+/** Refresh the Supabase session on the request, or divert to an outage path. */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -67,6 +68,7 @@ export async function updateSession(request: NextRequest) {
   return redirect;
 }
 
+/** Redirect or return an error when auth is unavailable. */
 function outage(request: NextRequest, response: NextResponse) {
   const decision = authOutageDecision(request.nextUrl.pathname);
   if (decision === "allow") return response;
@@ -80,6 +82,7 @@ function outage(request: NextRequest, response: NextResponse) {
   return redirect;
 }
 
+/** Copy Set-Cookie headers from one response onto another. */
 function copyCookies(from: NextResponse, to: NextResponse) {
   from.cookies.getAll().forEach((cookie) => {
     to.cookies.set(cookie);

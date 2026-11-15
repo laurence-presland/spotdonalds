@@ -29,6 +29,7 @@ export class WorkerLost extends Error {
   }
 }
 
+/** True when recently played and every top window have been ingested. */
 export function ingestCheckpointDone(checkpoint: IngestCheckpoint): boolean {
   return Boolean(
     checkpoint.recently_played &&
@@ -37,12 +38,14 @@ export function ingestCheckpointDone(checkpoint: IngestCheckpoint): boolean {
   );
 }
 
+/** True when a heartbeat is missing or older than the stale window. */
 export function heartbeatExpired(at: string | null | undefined, now: number, staleMs = WORKER_STALE_MS): boolean {
   if (!at) return true;
   const parsed = Date.parse(at);
   return !Number.isFinite(parsed) || now - parsed > staleMs;
 }
 
+/** Decide the next job action from the run, checkpoint, and saved artifacts. */
 export function jobAction(
   run: { status: string; stage: string; checkpoint: IngestCheckpoint; outcome?: string | null },
   artifacts: Artifacts,
@@ -60,6 +63,7 @@ export function jobAction(
   return { type: "work", stage: "order" };
 }
 
+/** Mark the run complete and ready. */
 export function terminalSuccess(run: RunRecord, now: string): RunRecord {
   return {
     ...run,
@@ -72,6 +76,7 @@ export function terminalSuccess(run: RunRecord, now: string): RunRecord {
   };
 }
 
+/** Mark the run complete with too few tracks to continue. */
 export function terminalInsufficient(run: RunRecord, count: number, now: string): RunRecord {
   return {
     ...run,
@@ -85,6 +90,7 @@ export function terminalInsufficient(run: RunRecord, count: number, now: string)
   };
 }
 
+/** Mark the run failed with an error message. */
 export function terminalFailure(run: RunRecord, message: string, now: string): RunRecord {
   return {
     ...run,
@@ -96,6 +102,7 @@ export function terminalFailure(run: RunRecord, message: string, now: string): R
   };
 }
 
+/** True when a running run's worker heartbeat has gone stale. */
 export function isDeadWorker(
   run: { status: string; stage: string; heartbeat_at?: string | null; started_at?: string | null },
   now: number,
@@ -105,6 +112,7 @@ export function isDeadWorker(
   return heartbeatExpired(run.started_at, now);
 }
 
+/** True when a run needs a worker and none is alive. */
 export function shouldStartWorker(
   run: { status: string; stage: string; workflow_id?: string | null; heartbeat_at?: string | null; started_at?: string | null },
   now: number,
@@ -114,6 +122,7 @@ export function shouldStartWorker(
   return isDeadWorker(run, now);
 }
 
+/** True when this workflow id still owns the run and the lease is fresh. */
 export function ownsRun(
   workflowId: string | null | undefined,
   mine: string,
@@ -124,10 +133,12 @@ export function ownsRun(
   return heartbeatExpired(heartbeatAt, now);
 }
 
+/** User-facing message for a worker that stopped mid-stage. */
 export function deadWorkerMessage(stage: string): string {
   return `The worker stopped during ${stage}. Try again to resume from this stage.`;
 }
 
+/** Plan whether this workflow should run, skip, or stop a step. */
 export function planStep(input: {
   run: RunRecord;
   artifacts: Artifacts;
@@ -142,6 +153,7 @@ export function planStep(input: {
   return { kind: "work", stage: action.stage, run: input.run };
 }
 
+/** Numeric order of a pipeline stage. */
 export function stageIndex(stage: RunStage): number {
   if (stage === "done") return WORK_STAGES.length;
   return WORK_STAGES.indexOf(stage as WorkStage);

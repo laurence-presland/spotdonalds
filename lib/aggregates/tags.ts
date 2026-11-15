@@ -42,12 +42,14 @@ export type TagMix = {
   unmapped: string[];
 };
 
+/** Normalise a tag name, dropping junk and merging aliases. */
 export function canonicalTag(name: string): string | null {
   const normalised = name.toLowerCase().trim();
   if (!normalised || IGNORED_TAGS.has(normalised)) return null;
   return TAG_ALIASES[normalised] ?? normalised;
 }
 
+/** Rank tags by how often they appear, with an 'other' bucket. */
 export function tagMix(tracks: { tags: TagInput[] }[], topN = 8): TagMix {
   const counts = new Map<string, { count: number; sources: Map<string, { source: string; source_url: string }> }>();
   const unmapped = new Set<string>();
@@ -83,6 +85,7 @@ export function tagMix(tracks: { tags: TagInput[] }[], topN = 8): TagMix {
   return { buckets, unmapped: [...unmapped].sort() };
 }
 
+/** Diversity score from 0 to 1, based on Shannon entropy. */
 export function normalisedEntropy(weights: number[]): number {
   const positive = weights.filter((weight) => weight > 0);
   const total = positive.reduce((sum, weight) => sum + weight, 0);

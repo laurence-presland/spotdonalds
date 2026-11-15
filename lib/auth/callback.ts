@@ -13,6 +13,7 @@ export type CallbackSession = {
 
 export type ProbeResult = "ok" | "not_allowlisted" | "error";
 
+/** Call Spotify with the new token to confirm the account is allowed. */
 export async function probeSpotifyAccess(
   accessToken: string,
   fetchImpl: typeof fetch = fetch,
@@ -25,6 +26,7 @@ export async function probeSpotifyAccess(
   return "ok";
 }
 
+/** Finish the Spotify callback: store tokens, or send the user to the allowlist page. */
 export async function handleAuthCallback(input: {
   origin: string;
   params: URLSearchParams;
@@ -106,6 +108,7 @@ export async function handleAuthCallback(input: {
   return { redirectTo: `${origin}/?notice=reauth` };
 }
 
+/** Start the first analysis if needed, then redirect into the app. */
 async function enterApp(
   beginFlow: ((userId: string) => Promise<void>) | undefined,
   userId: string,

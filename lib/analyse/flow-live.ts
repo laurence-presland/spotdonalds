@@ -3,6 +3,7 @@ import { loadAnalysisContext, runLiveWork } from "@/lib/analyse/execute";
 import { ensureTracks, runAnalyseStep, runTrackedStep, type FlowDeps, type FlowStep, type Tracked } from "@/lib/analyse/flow";
 import { countDistinctTracks } from "@/lib/analyse/tracks";
 
+/** Run one workflow step against the live stores and providers. */
 export async function executeFlowStep(input: {
   userId: string;
   runId: string;
@@ -24,11 +25,13 @@ export async function executeFlowStep(input: {
   });
 }
 
+/** Dispatch a flow step to the matching live worker. */
 function dispatch(deps: FlowDeps, step: FlowStep, userId: string, runId: string) {
   if (step === "ingest") return ensureTracks(deps, userId, runId);
   return runAnalyseStep(deps, userId, runId);
 }
 
+/** Wire live database, Spotify, and enrichment dependencies for a run. */
 function liveDeps(runId: string): FlowDeps {
   return {
     now: () => new Date().toISOString(),

@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { requireEnv } from "@/lib/env";
 
+/** Supabase server client that reads and writes the request cookies. */
 export async function createSupabaseServer() {
   const cookieStore = await cookies();
   return createServerClient(

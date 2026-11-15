@@ -16,6 +16,7 @@ export type OrderCandidate = {
   price_aud: number;
 };
 
+/** Build the compact candidate list the order model is allowed to pick from. */
 export function orderCandidates(items: MenuItem[] = candidateSet(loadMenu().items)): OrderCandidate[] {
   return items.flatMap((item) => {
     if (item.energy_kcal == null || item.energy_kj == null) return [];

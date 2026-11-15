@@ -12,6 +12,7 @@ type Deps = {
   userAgent?: string;
 };
 
+/** Parse a MusicBrainz recording payload into a source hit. */
 export function parseMusicBrainz(payload: unknown, mode: "isrc" | "search"): SourceHit {
   const recordings = recordingsOf(payload);
   const recording = recordings[0];
@@ -32,6 +33,7 @@ export function parseMusicBrainz(payload: unknown, mode: "isrc" | "search"): Sou
   };
 }
 
+/** MusicBrainz client that looks up a recording by ISRC, then by title search. */
 export function createMusicBrainz(deps: Deps) {
   const headers = {
     Accept: "application/json",
@@ -73,12 +75,14 @@ export function createMusicBrainz(deps: Deps) {
   };
 }
 
+/** Trim, strip separators, and uppercase an ISRC. */
 export function normaliseIsrc(value: string | null): string | null {
   if (!value) return null;
   const compact = value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
   return /^[A-Z0-9]{12}$/.test(compact) ? compact : null;
 }
 
+/** If the recording has no tags, fall back to the artist's tags, then the release's. */
 async function fillTags(
   hit: SourceHit,
   recording: Record<string, unknown> | null,
@@ -156,6 +160,7 @@ async function fillTags(
   return hit;
 }
 
+/** True when MusicBrainz returned 404. */
 function isNotFound(error: unknown): boolean {
   return error instanceof Error && error.message === "404";
 }
@@ -164,12 +169,14 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : "failed";
 }
 
+/** Extract the recordings array from a MusicBrainz payload. */
 function recordingsOf(payload: unknown): Record<string, unknown>[] {
   if (!payload || typeof payload !== "object") return [];
   const recordings = (payload as { recordings?: unknown }).recordings;
   return Array.isArray(recordings) ? recordings.filter((item) => item && typeof item === "object") : [];
 }
 
+/** Return the first recording in a search or lookup payload. */
 function firstRecording(payload: unknown): Record<string, unknown> | null {
   return recordingsOf(payload)[0] ?? null;
 }
@@ -178,6 +185,7 @@ function asRecord(payload: unknown): Record<string, unknown> | null {
   return payload && typeof payload === "object" ? (payload as Record<string, unknown>) : null;
 }
 
+/** MusicBrainz id of the first credited artist. */
 function firstArtistId(recording: Record<string, unknown>): string | null {
   const credits = recording["artist-credit"];
   if (!Array.isArray(credits)) return null;
@@ -189,6 +197,7 @@ function firstArtistId(recording: Record<string, unknown>): string | null {
   return typeof id === "string" && id.length > 0 ? id : null;
 }
 
+/** MusicBrainz recording id from a hit, if present. */
 function recordingIdOf(hit: SourceHit, recording: Record<string, unknown> | null): string | null {
   if (recording && typeof recording.id === "string") return recording.id;
   if (hit.raw && typeof hit.raw === "object" && typeof (hit.raw as { id?: unknown }).id === "string") {
@@ -197,12 +206,14 @@ function recordingIdOf(hit: SourceHit, recording: Record<string, unknown> | null
   return null;
 }
 
+/** MusicBrainz artist id stored on a hit, if present. */
 function rawArtistId(hit: SourceHit): string | null {
   if (!hit.raw || typeof hit.raw !== "object") return null;
   const id = (hit.raw as { artistId?: unknown }).artistId;
   return typeof id === "string" && id.length > 0 ? id : null;
 }
 
+/** Collect and merge MusicBrainz tags, marking the fallback source when needed. */
 function tagsOf(
   entity: Record<string, unknown>,
   origin: TagOrigin,
@@ -229,6 +240,7 @@ function tagsOf(
   return [...collected.values()];
 }
 
+/** Tags taken from the recording's releases. */
 function releaseTags(payload: unknown): TagHit[] {
   if (!payload || typeof payload !== "object") return [];
   const releases = (payload as { releases?: unknown }).releases;
@@ -252,6 +264,7 @@ function releaseTags(payload: unknown): TagHit[] {
   return mergeTags(fromGroups.length > 0 ? fromGroups : fromReleases);
 }
 
+/** Merge tags that share a canonical name, keeping the highest count. */
 function mergeTags(tags: TagHit[]): TagHit[] {
   const collected = new Map<string, TagHit>();
   for (const tag of tags) {

@@ -65,6 +65,7 @@ export type Term = z.infer<typeof termSchema>;
 
 export const TERMS: Term[] = ["short_term", "medium_term", "long_term"];
 
+/** Parse one stream event, or return null if it is not valid. */
 export function parseStreamEvent(value: unknown): StreamEvent {
   return streamEventSchema.parse(value);
 }

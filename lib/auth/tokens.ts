@@ -30,6 +30,7 @@ type RefreshBody = {
   expires_in: number;
 };
 
+/** Exchange a Spotify refresh token for a new access token. */
 export async function refreshSpotifyAccessToken(
   refreshToken: string,
   deps: {
@@ -63,6 +64,7 @@ export async function refreshSpotifyAccessToken(
 
 const SKEW_MS = 60_000;
 
+/** Return a valid Spotify access token, refreshing it if it is close to expiry. */
 export async function getSpotifyAccessToken(
   userId: string,
   deps: { store: TokenStore; now: () => number; fetch: typeof fetch },

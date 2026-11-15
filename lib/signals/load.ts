@@ -18,6 +18,7 @@ type EnrichmentRow = {
   fields: { failures?: ("musicbrainz" | "deezer")[] } | null;
 };
 
+/** Load the user's tracks, plays, and top artists for signal computation. */
 export async function loadListening(userId: string): Promise<ListeningInput> {
   const db = sql();
   const plays = await db<{ track_id: string }[]>`

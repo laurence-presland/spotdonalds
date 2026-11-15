@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import type { IngestStore, RunRecord } from "@/lib/ingest/types";
 import type { ArtistRow, TrackRow } from "@/lib/spotify/normalise";
 
+/** Postgres-backed store for ingest writes. */
 export function ingestStore(): IngestStore {
   return {
     async resumeOrCreate(userId, now) {
@@ -131,18 +132,21 @@ export async function latestRun(userId: string): Promise<RunRecord | null> {
   return loadLatestRun(userId);
 }
 
+/** Keep the last artist row for each Spotify id, so upserts stay unique. */
 function dedupeArtists(artists: ArtistRow[]): ArtistRow[] {
   const byId = new Map<string, ArtistRow>();
   for (const artist of artists) byId.set(artist.spotify_id, artist);
   return [...byId.values()];
 }
 
+/** Keep the last track row for each Spotify id, so upserts stay unique. */
 function dedupeTracks(tracks: TrackRow[]): TrackRow[] {
   const byId = new Map<string, TrackRow>();
   for (const track of tracks) byId.set(track.spotify_id, track);
   return [...byId.values()];
 }
 
+/** Keep the last track–artist link for each pair. */
 function dedupeLinks(links: { track_id: string; artist_id: string; position: number }[]) {
   const byKey = new Map<string, { track_id: string; artist_id: string; position: number }>();
   for (const link of links) byKey.set(`${link.track_id}:${link.artist_id}`, link);

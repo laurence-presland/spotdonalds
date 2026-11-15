@@ -4,14 +4,17 @@ import type { MenuItem } from "@/lib/menu/types";
 
 const tagOrder = orderTags.tags.map((tag) => tag.id);
 
+/** Return the display order of order tags. */
 export function orderTagIds(): string[] {
   return [...tagOrder];
 }
 
+/** Return the label for an order tag id. */
 export function orderTagLabel(id: string): string | null {
   return orderTags.tags.find((tag) => tag.id === id)?.label ?? null;
 }
 
+/** Assign order-tag ids to a menu item from category and name rules. */
 export function assignTagIds(item: Pick<MenuItem, "category" | "name">): string[] {
   const chosen = new Set<string>();
   for (const rule of tagRules.rules) {

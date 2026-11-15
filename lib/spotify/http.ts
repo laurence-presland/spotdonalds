@@ -19,6 +19,7 @@ export class SpotifyApiError extends Error {
 
 const MAX_RETRIES = 3;
 
+/** GET a Spotify JSON endpoint, retrying rate limits and refreshing on 401. */
 export async function spotifyJson(
   url: string,
   token: string,
@@ -56,6 +57,7 @@ export async function spotifyJson(
   }
 }
 
+/** Path to send the user to when a Spotify call fails. */
 export function accessPathForSpotifyError(code: string): string | null {
   if (code === "not_allowlisted") return "/not-allowlisted";
   return null;

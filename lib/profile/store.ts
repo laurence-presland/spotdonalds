@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import type { ProfileStore, StoredProfile } from "@/lib/profile/run";
 import { loadListening } from "@/lib/signals/load";
 
+/** Postgres-backed store for the saved taste profile. */
 export function profileStore(): ProfileStore {
   return {
     latestRun: loadLatestRun,

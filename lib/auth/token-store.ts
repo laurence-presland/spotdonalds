@@ -3,6 +3,7 @@ import type { SpotifyTokenRow, TokenStore } from "@/lib/auth/tokens";
 
 type TokenQueryRow = Omit<SpotifyTokenRow, "expires_at"> & { expires_at: Date | string };
 
+/** Postgres-backed store for the user's Spotify tokens. */
 export function tokenStore(): TokenStore {
   return {
     async get(userId) {

@@ -12,6 +12,7 @@ type StoredTag = {
   provenance?: { source?: string; source_url?: string; confidence?: "high" | "low"; origin?: "recording" | "artist" | "release" };
 };
 
+/** Load tracks, artists, and enrichment, then build aggregates. */
 export async function loadAggregates(userId: string): Promise<Aggregates> {
   const db = sql();
   const plays = await db<{ track_id: string }[]>`

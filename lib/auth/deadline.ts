@@ -7,6 +7,7 @@ export class DeadlineError extends Error {
   }
 }
 
+/** Reject a promise if it does not settle within ms. */
 export function withDeadline<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new DeadlineError()), ms);

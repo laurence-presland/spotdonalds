@@ -2,6 +2,7 @@ import { presentCatalogue, type VisibleArtist, type VisibleTrack } from "@/lib/c
 import { sql } from "@/lib/db";
 import type { Term } from "@/lib/stream/events";
 
+/** Load the user's tracks and artists for the list screen. */
 export async function loadCatalogue(
   userId: string,
   options?: { includeUnenriched?: boolean },

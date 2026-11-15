@@ -3,6 +3,7 @@ const PUBLIC_PAGES = new Set(["/", "/not-allowlisted"]);
 export type AccessDecision = "allow" | "redirect-home" | "redirect-app" | "unauthorized";
 export type AuthOutageDecision = "allow" | "unavailable-api" | "redirect-notice";
 
+/** Decide whether a path is allowed for the current session. */
 export function accessDecision(pathname: string, hasUser: boolean): AccessDecision {
   if (pathname === "/api/health" || pathname.startsWith("/auth/") || pathname.startsWith("/.well-known/workflow/")) return "allow";
   if (hasUser && pathname === "/") return "redirect-app";
@@ -12,6 +13,7 @@ export function accessDecision(pathname: string, hasUser: boolean): AccessDecisi
   return "allow";
 }
 
+/** Decide what to do when sign-in itself is down. */
 export function authOutageDecision(pathname: string): AuthOutageDecision {
   if (
     pathname === "/" ||
@@ -26,6 +28,7 @@ export function authOutageDecision(pathname: string): AuthOutageDecision {
   return "redirect-notice";
 }
 
+/** True when Spotify rejected the account because it is not allowlisted. */
 export function isAllowlistFailure(code: string, description = ""): boolean {
   const text = `${code} ${description}`.toLowerCase();
   return (

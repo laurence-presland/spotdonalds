@@ -6,6 +6,7 @@ import type { StoredProfile } from "@/lib/profile/run";
 
 type PopularityRow = { popularity_tier: PopularityTier; reason: string; prompt_hash: string };
 
+/** Postgres-backed store for orders and genre popularity. */
 export function orderStore(): OrderStore {
   return {
     latestRun: loadLatestRun,

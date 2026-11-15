@@ -26,14 +26,17 @@ export type WatchEvent =
   | { type: "resume"; cursor: string }
   | { type: "error"; message: string };
 
+/** Stable key for an artist in a time window. */
 export function artistKey(artist: { id: string; time_range: string }): string {
   return `${artist.id}:${artist.time_range}`;
 }
 
+/** Encode a watch cursor as a base64url string. */
 export function encodeCursor(cursor: WatchCursor): string {
   return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
 }
 
+/** Decode a watch cursor, or return null if it is invalid. */
 export function decodeCursor(value: string | null): WatchCursor | null {
   if (!value) return null;
   try {
@@ -51,10 +54,12 @@ export function decodeCursor(value: string | null): WatchCursor | null {
   }
 }
 
+/** Return items whose key has not already been seen. */
 export function unseenBy<T>(items: T[], seen: Set<string>, key: (item: T) => string): T[] {
   return items.filter((item) => !seen.has(key(item)));
 }
 
+/** True when the run has finished, failed, or left ingest. */
 export function isTerminalRun(run: { status: string; stage: string; outcome?: string | null } | null): boolean {
   if (!run) return false;
   if (run.outcome === "insufficient_data") return true;
@@ -62,6 +67,7 @@ export function isTerminalRun(run: { status: string; stage: string; outcome?: st
   return run.status === "complete" && run.stage === "done";
 }
 
+/** Parse one NDJSON line from the ingest watch stream. */
 export function parseWatchLine(line: string): WatchEvent | null {
   const trimmed = line.trim();
   if (!trimmed) return null;

@@ -14,6 +14,7 @@ export type SettleResult = {
   message?: string;
 };
 
+/** Decide whether this attempt should continue, stop, or retry. */
 export async function settleAttempt(input: {
   run: RunRecord;
   artifacts: Artifacts;
@@ -78,6 +79,7 @@ export async function settleAttempt(input: {
   }
 }
 
+/** Persist a terminal failure, unless the run is already in that state. */
 async function sealFailure(
   input: { now: string; save: (run: RunRecord) => Promise<void> },
   run: RunRecord,
@@ -90,6 +92,7 @@ async function sealFailure(
   return { result: "stop", reason: "failed", message: failed.error ?? undefined };
 }
 
+/** True when two records already share the same terminal status and error. */
 function sameTerminal(current: RunRecord, next: RunRecord): boolean {
   return (
     current.status === next.status &&

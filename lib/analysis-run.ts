@@ -22,6 +22,7 @@ type RunRow = {
   outcome?: string | null;
 };
 
+/** Load the user's most recent analysis run. */
 export async function loadLatestRun(userId: string): Promise<RunRecord | null> {
   const rows = await sql()<RunRow[]>`
     select id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
@@ -33,6 +34,7 @@ export async function loadLatestRun(userId: string): Promise<RunRecord | null> {
   return rows[0] ? asRun(rows[0]) : null;
 }
 
+/** Load the user's currently open analysis run, if any. */
 export async function loadOpenRun(userId: string): Promise<RunRecord | null> {
   const rows = await sql()<RunRow[]>`
     select id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
@@ -44,6 +46,7 @@ export async function loadOpenRun(userId: string): Promise<RunRecord | null> {
   return rows[0] ? asRun(rows[0]) : null;
 }
 
+/** Load one analysis run owned by this user. */
 export async function loadRun(runId: string, userId: string): Promise<RunRecord | null> {
   const rows = await sql()<RunRow[]>`
     select id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
@@ -53,6 +56,7 @@ export async function loadRun(runId: string, userId: string): Promise<RunRecord 
   return rows[0] ? asRun(rows[0]) : null;
 }
 
+/** Insert a new analysis run. */
 export async function insertRun(userId: string, startedAt: string): Promise<RunRecord> {
   const db = sql();
   const rows = await db<RunRow[]>`
@@ -65,6 +69,7 @@ export async function insertRun(userId: string, startedAt: string): Promise<RunR
   return asRun(row);
 }
 
+/** Persist an analysis run. */
 export async function saveAnalysisRun(run: RunRecord): Promise<void> {
   const db = sql();
   const guard = leaseToken();
@@ -95,6 +100,7 @@ export async function saveAnalysisRun(run: RunRecord): Promise<void> {
   }
 }
 
+/** Insert a new open analysis run. */
 export async function insertOpenRun(userId: string, startedAt: string): Promise<RunRecord> {
   const db = sql();
   const rows = await db<RunRow[]>`
@@ -116,6 +122,7 @@ export async function insertOpenRun(userId: string, startedAt: string): Promise<
   return asRun(row);
 }
 
+/** Reopen a failed run so it can be tried again. */
 export async function reopenRun(run: RunRecord): Promise<RunRecord> {
   const rows = await sql()<RunRow[]>`
     update spotdonalds.analysis_runs
@@ -134,6 +141,7 @@ export async function reopenRun(run: RunRecord): Promise<RunRecord> {
   return asRun(row);
 }
 
+/** Close any open run for this user. */
 export async function closeOpenRun(userId: string): Promise<void> {
   await sql()`
     update spotdonalds.analysis_runs
@@ -147,6 +155,7 @@ export async function closeOpenRun(userId: string): Promise<void> {
   `;
 }
 
+/** Try to claim this run so a worker can start it. */
 export async function claimWorker(runId: string, userId: string): Promise<boolean> {
   const rows = await sql()<{ id: string }[]>`
     update spotdonalds.analysis_runs
@@ -168,6 +177,7 @@ export async function claimWorker(runId: string, userId: string): Promise<boolea
   return rows.length > 0;
 }
 
+/** Confirm this workflow still owns the run. */
 export async function assertWorker(runId: string, userId: string, workflowRunId: string): Promise<boolean> {
   const rows = await sql()<{ id: string }[]>`
     update spotdonalds.analysis_runs
@@ -189,6 +199,7 @@ export async function assertWorker(runId: string, userId: string, workflowRunId:
   return rows.length > 0;
 }
 
+/** Record the workflow id on the run. */
 export async function setWorkflowId(runId: string, userId: string, workflowRunId: string): Promise<void> {
   await sql()`
     update spotdonalds.analysis_runs
@@ -200,6 +211,7 @@ export async function setWorkflowId(runId: string, userId: string, workflowRunId
   `;
 }
 
+/** Clear a workflow id that never started. */
 export async function clearPendingWorkflow(runId: string, userId: string): Promise<void> {
   await sql()`
     update spotdonalds.analysis_runs
@@ -211,6 +223,7 @@ export async function clearPendingWorkflow(runId: string, userId: string): Promi
   `;
 }
 
+/** Record that the run was recovered after a stale worker. */
 export async function noteRecovery(runId: string, userId: string, at: string): Promise<void> {
   await sql()`
     update spotdonalds.analysis_runs
@@ -221,6 +234,7 @@ export async function noteRecovery(runId: string, userId: string, at: string): P
   `;
 }
 
+/** Mark the run failed if this workflow still owns it. */
 export async function markOwnedRunFailed(
   runId: string,
   userId: string,
@@ -248,6 +262,7 @@ export async function markOwnedRunFailed(
   return rows[0] ? asRun(rows[0]) : null;
 }
 
+/** Mark the run failed. */
 export async function markRunFailed(runId: string, userId: string, message: string): Promise<RunRecord | null> {
   const rows = await sql()<RunRow[]>`
     update spotdonalds.analysis_runs
@@ -266,6 +281,7 @@ export async function markRunFailed(runId: string, userId: string, message: stri
   return rows[0] ? asRun(rows[0]) : null;
 }
 
+/** Take the run's lease if it is free or stale. */
 export async function acquireLease(runId: string, userId: string, token: string): Promise<boolean> {
   const rows = await sql()<{ id: string }[]>`
     update spotdonalds.analysis_runs
@@ -286,6 +302,7 @@ export async function acquireLease(runId: string, userId: string, token: string)
   return rows.length > 0;
 }
 
+/** Refresh the lease heartbeat. */
 export async function touchLease(runId: string, token: string): Promise<void> {
   await sql()`
     update spotdonalds.analysis_runs
@@ -294,6 +311,7 @@ export async function touchLease(runId: string, token: string): Promise<void> {
   `;
 }
 
+/** Drop the lease if we still hold it. */
 export async function releaseLease(runId: string, token: string): Promise<void> {
   await sql()`
     update spotdonalds.analysis_runs
@@ -302,6 +320,7 @@ export async function releaseLease(runId: string, token: string): Promise<void> 
   `;
 }
 
+/** Map a database row to a run record. */
 function asRun(row: RunRow): RunRecord {
   return {
     id: row.id,

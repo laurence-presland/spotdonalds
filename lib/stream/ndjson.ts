@@ -1,5 +1,6 @@
 import { parseStreamEvent, type StreamEvent } from "@/lib/stream/events";
 
+/** Run work and stream its events as NDJSON. */
 export function ndjsonResponse(
   run: (emit: (event: StreamEvent) => void) => Promise<void>,
 ): Response {

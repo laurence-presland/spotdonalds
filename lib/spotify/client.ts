@@ -9,6 +9,7 @@ export type ListeningClient = {
   topArtists(term: Term): Promise<unknown>;
 };
 
+/** Spotify Web API client for recently played and top items. */
 export function createSpotifyClient(
   token: string,
   deps: { fetch?: typeof fetch; sleep?: (ms: number) => Promise<void> } = {},

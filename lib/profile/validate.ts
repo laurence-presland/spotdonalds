@@ -8,6 +8,7 @@ const LOW_COVERAGE = 0.5;
 
 export type ValidationResult = { ok: true; profile: ProfileDraft } | { ok: false; issues: string[] };
 
+/** Check that a model profile cites real signals and quotes their numbers honestly. */
 export function validateProfile(value: unknown, signals: TasteSignals): ValidationResult {
   const parsed = profileModelSchema.safeParse(value);
   if (!parsed.success) {

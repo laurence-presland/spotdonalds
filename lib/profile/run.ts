@@ -43,6 +43,7 @@ export type ProfileCompletion = (input: { system: string; prompt: string }) => P
 
 const ATTEMPTS = 3;
 
+/** Build signals, call the model, validate the profile, and save it. */
 export async function runTasteProfile(input: {
   userId: string;
   store: ProfileStore;
@@ -148,6 +149,7 @@ export async function runTasteProfile(input: {
   throw new Error(run.error);
 }
 
+/** Use the injected logger, or fall back to the default log helper. */
 function writeLogOr(logger: typeof writeLog | undefined): typeof writeLog {
   return logger ?? writeLog;
 }

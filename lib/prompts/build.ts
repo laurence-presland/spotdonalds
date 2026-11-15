@@ -16,6 +16,7 @@ export type BuiltPrompt = {
 
 const PLACEHOLDER = /\{\{([a-z0-9_.]+)\}\}/gi;
 
+/** Load a prompt manifest and fill its blocks with the given inputs. */
 export function buildPrompt(manifestName: string, inputs: Record<string, string> = {}): BuiltPrompt {
   const manifest = readManifest(manifestName);
   const parts = manifest.blocks.map((block) => readBlock(block));
@@ -36,6 +37,7 @@ export function buildPrompt(manifestName: string, inputs: Record<string, string>
   };
 }
 
+/** Read a prompt manifest from disk. */
 function readManifest(name: string): PromptManifest {
   const file = path.join(process.cwd(), "prompts", name.endsWith(".json") ? name : `${name}.json`);
   const manifest = JSON.parse(readFileSync(file, "utf8")) as PromptManifest;
@@ -43,6 +45,7 @@ function readManifest(name: string): PromptManifest {
   return manifest;
 }
 
+/** Read a prompt block from disk. */
 function readBlock(name: string): string {
   const file = path.join(process.cwd(), "prompts", "blocks", `${name}.txt`);
   try {

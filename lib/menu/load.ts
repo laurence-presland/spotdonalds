@@ -18,6 +18,7 @@ const validate = ajv.compile(schema);
 
 let cached: Menu | null = null;
 
+/** Validate the menu JSON, attach tag ids, and cache the default menu. */
 export function loadMenu(source: unknown = menuJson): Menu {
   if (source === menuJson && cached) return cached;
   if (!validate(source)) {
@@ -36,14 +37,17 @@ export function loadMenu(source: unknown = menuJson): Menu {
   return menu;
 }
 
+/** Find one menu item by id. */
 export function getMenuItem(id: string, menu = loadMenu()): MenuItem | null {
   return menu.items.find((item) => item.id === id) ?? null;
 }
 
+/** Return menu items in a category. */
 export function filterByCategory(category: MenuCategory, menu = loadMenu()): MenuItem[] {
   return menu.items.filter((item) => item.category === category);
 }
 
+/** Return menu items that have energy figures. */
 export function itemsWithNutrition(menu = loadMenu()): MenuItem[] {
   return menu.items.filter((item) => item.nutrition_available && item.energy_kcal != null);
 }

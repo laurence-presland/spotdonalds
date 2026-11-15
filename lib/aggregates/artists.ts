@@ -14,6 +14,7 @@ export type WindowItem = {
 
 const WINDOWS: Term[] = ["short_term", "medium_term", "long_term"];
 
+/** Group top artists by time window and sort them by rank. */
 export function topArtistsByWindow(artists: WindowArtist[]): Record<Term, WindowArtist[]> {
   const grouped = Object.fromEntries(WINDOWS.map((window) => [window, [] as WindowArtist[]])) as Record<
     Term,
@@ -24,6 +25,7 @@ export function topArtistsByWindow(artists: WindowArtist[]): Record<Term, Window
   return grouped;
 }
 
+/** Ids that appear in more than one time window. */
 export function windowOverlap(artists: WindowItem[], tracks: WindowItem[]): { artists: string[]; tracks: string[] } {
   return {
     artists: shared(artists),
@@ -31,6 +33,7 @@ export function windowOverlap(artists: WindowItem[], tracks: WindowItem[]): { ar
   };
 }
 
+/** Return ids that show up in at least two time windows. */
 function shared(items: WindowItem[]): string[] {
   const windows = new Map<string, Set<Term>>();
   for (const item of items) {

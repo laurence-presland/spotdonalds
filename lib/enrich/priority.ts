@@ -9,6 +9,7 @@ export type RankedTrack = {
   playedAt: string | null;
 };
 
+/** Choose which tracks to enrich first, favouring recent and high-ranking ones. */
 export function tracksForProfile(tracks: RankedTrack[], limit = PROFILE_TRACK_LIMIT): string[] {
   return [...tracks]
     .sort((a, b) => {
@@ -22,6 +23,7 @@ export function tracksForProfile(tracks: RankedTrack[], limit = PROFILE_TRACK_LI
     .map((track) => track.id);
 }
 
+/** Parse a timestamp to ms, or 0 if it is missing. */
 function time(value: string | null): number {
   if (!value) return 0;
   const parsed = Date.parse(value);

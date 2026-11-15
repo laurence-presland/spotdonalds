@@ -13,6 +13,7 @@ import { emptyCounts, type IngestStore, type RunRecord } from "@/lib/ingest/type
 
 const ENDPOINT_TOTAL = 1 + TERMS.length * 2;
 
+/** Pull recently played and top items from Spotify and save them. */
 export async function runIngest(input: {
   userId: string;
   client: ListeningClient;
@@ -137,12 +138,14 @@ export async function runIngest(input: {
   }
 }
 
+/** Save tracks and their artists from one ingest page. */
 async function persistTracks(store: IngestStore, tracks: TrackRow[]) {
   const artists = tracks.flatMap(artistsFromTrack);
   await store.upsertArtists(artists);
   await store.upsertTracks(tracks);
 }
 
+/** Build the stream event for one ingested track. */
 function trackEvent(
   track: TrackRow,
   extra: { source: "recent" | "top"; played_at?: string; time_range?: Term; rank?: number },

@@ -3,6 +3,7 @@ import { countDistinctTracks } from "@/lib/analyse/tracks";
 import { loadLatestRun } from "@/lib/analysis-run";
 import type { RunRecord } from "@/lib/ingest/types";
 
+/** Load the latest run and its public status payload. */
 export async function currentAnalysis(userId: string): Promise<{ run: RunRecord | null; body: AnalysisStatus }> {
   const run = await loadLatestRun(userId);
   const trackCount = run ? await countDistinctTracks(userId) : 0;

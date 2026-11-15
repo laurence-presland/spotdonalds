@@ -16,6 +16,7 @@ const REDACTED_KEYS = new Set([
   "lease_token",
 ]);
 
+/** Strip tokens, secrets, and emails from a log payload. */
 function redact(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(redact);
   if (!value || typeof value !== "object") return value;
@@ -30,6 +31,7 @@ function redact(value: unknown): unknown {
   return out;
 }
 
+/** Write a single JSON log line, with secrets redacted. */
 export function log(
   level: LogLevel,
   event: string,

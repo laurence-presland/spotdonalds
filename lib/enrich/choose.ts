@@ -1,9 +1,11 @@
 import type { ChosenEnrichment, SourceHit, SourceName, TagHit } from "@/lib/enrich/types";
 
+/** Canonicalise a raw tag and keep its count. */
 export function normaliseTag(original: string, count: number): TagHit {
   return { original, name: original.toLowerCase().trim(), count };
 }
 
+/** Pick tags from MusicBrainz and BPM from Deezer, with a confidence score. */
 export function chooseEnrichment(
   musicbrainz: SourceHit,
   deezer: SourceHit,

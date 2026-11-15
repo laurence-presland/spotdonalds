@@ -4,6 +4,7 @@ import { orderStore } from "@/lib/order/store";
 import { profileStore } from "@/lib/profile/store";
 import type { ReceiptMenuItem } from "@/components/order/OrderReceipt";
 
+/** Load the saved profile, popularity, order, and signals for the results screen. */
 export async function loadResults(userId: string) {
   const profiles = profileStore();
   const orders = orderStore();

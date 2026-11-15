@@ -10,6 +10,7 @@ type CacheQueryRow = Omit<CacheRow, "fetched_at" | "expires_at" | "bpm"> & {
   expires_at: Date | string | null;
 };
 
+/** Postgres-backed store for enrichment cache reads and writes. */
 export function enrichStore(): EnrichStore {
   return {
     latestRun: loadLatestRun,

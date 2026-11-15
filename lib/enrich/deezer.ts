@@ -6,6 +6,7 @@ type Deps = {
   sleep: (ms: number) => Promise<void>;
 };
 
+/** Parse a Deezer track payload into a source hit. */
 export function parseDeezerTrack(payload: unknown, mode: "isrc" | "search"): SourceHit {
   if (!payload || typeof payload !== "object") return miss("deezer");
   const record = payload as { id?: unknown; bpm?: unknown; error?: unknown };
@@ -22,6 +23,7 @@ export function parseDeezerTrack(payload: unknown, mode: "isrc" | "search"): Sou
   };
 }
 
+/** Deezer client that looks up a track by ISRC, then by title search. */
 export function createDeezer(deps: Deps) {
   return {
     name: "deezer" as const,

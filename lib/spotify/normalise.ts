@@ -54,6 +54,7 @@ function stringOrNull(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
+/** Pick the widest album image URL from a Spotify images list. */
 function albumImage(album: unknown): string | null {
   if (!isRecord(album) || !Array.isArray(album.images)) return null;
   const images = album.images.filter(isRecord);
@@ -61,6 +62,7 @@ function albumImage(album: unknown): string | null {
   return stringOrNull(sorted[0]?.url);
 }
 
+/** Normalise a Spotify artist payload. */
 export function normaliseArtist(value: unknown): ArtistRow | null {
   if (!isRecord(value) || typeof value.id !== "string" || typeof value.name !== "string") return null;
   const external = isRecord(value.external_urls) ? value.external_urls : {};
@@ -74,6 +76,7 @@ export function normaliseArtist(value: unknown): ArtistRow | null {
   };
 }
 
+/** Normalise a Spotify track payload. */
 export function normaliseTrack(value: unknown): TrackRow | null {
   if (!isRecord(value) || typeof value.id !== "string" || typeof value.name !== "string") return null;
   const externalIds = isRecord(value.external_ids) ? value.external_ids : {};
@@ -100,6 +103,7 @@ export function normaliseTrack(value: unknown): TrackRow | null {
   };
 }
 
+/** Normalise a recently-played page from Spotify. */
 export function normaliseRecentPlays(payload: unknown): PlayRow[] {
   const items = isRecord(payload) && Array.isArray(payload.items) ? payload.items : [];
   const plays: PlayRow[] = [];
@@ -112,6 +116,7 @@ export function normaliseRecentPlays(payload: unknown): PlayRow[] {
   return plays;
 }
 
+/** Normalise a top-tracks page from Spotify. */
 export function normaliseTopTracks(payload: unknown, timeRange: Term): TopRow[] {
   const items = isRecord(payload) && Array.isArray(payload.items) ? payload.items : [];
   const rows: TopRow[] = [];
@@ -123,6 +128,7 @@ export function normaliseTopTracks(payload: unknown, timeRange: Term): TopRow[] 
   return rows;
 }
 
+/** Normalise a top-artists page from Spotify. */
 export function normaliseTopArtists(payload: unknown, timeRange: Term): TopRow[] {
   const items = isRecord(payload) && Array.isArray(payload.items) ? payload.items : [];
   const rows: TopRow[] = [];
@@ -134,6 +140,7 @@ export function normaliseTopArtists(payload: unknown, timeRange: Term): TopRow[]
   return rows;
 }
 
+/** Artists credited on a track, in listed order. */
 export function artistsFromTrack(track: TrackRow): ArtistRow[] {
   return track.artists.map((artist) => ({
     spotify_id: artist.spotify_id,

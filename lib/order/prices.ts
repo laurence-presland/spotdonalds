@@ -18,6 +18,7 @@ const SIZE_FACTOR: Record<string, number> = {
   large: 1.2,
 };
 
+/** Look up an indicative AUD price for a menu item. */
 export function indicativePrice(item: { id: string; category: string; size?: string | null }): number {
   const base = CATEGORY_PRICE[item.category] ?? 5;
   const factor = item.size ? SIZE_FACTOR[item.size] ?? 1 : 1;

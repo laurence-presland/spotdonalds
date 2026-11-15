@@ -1,6 +1,7 @@
 import { safeDbMessage, sql } from "@/lib/db";
 import { log } from "@/lib/log";
 
+/** Check that the database health row is reachable. */
 export async function checkHealth(): Promise<{ ok: true } | { ok: false; status: number }> {
   try {
     const rows = await sql()<{ ok: boolean }[]>`

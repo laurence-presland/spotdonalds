@@ -17,6 +17,7 @@ export type Coverage = {
   };
 };
 
+/** How many tracks have tags, BPM, both, or neither. */
 export function coverage(tracks: CoverageTrack[]): Coverage {
   let withTags = 0;
   let withBpm = 0;

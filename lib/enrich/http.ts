@@ -1,5 +1,6 @@
 const MAX_RETRIES = 2;
 
+/** Fetch JSON, retrying on 429 and 5xx with Retry-After or exponential backoff. */
 export async function fetchJson(
   url: string,
   headers: Record<string, string>,

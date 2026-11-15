@@ -14,6 +14,7 @@ export type CheckedOrder = {
   total_aud: number;
 };
 
+/** Validate a model popularity payload against the schema. */
 export function validatePopularity(value: unknown): { ok: true; popularity: { popularity_tier: "niche" | "mid" | "mainstream"; reason: string } } | { ok: false; issues: string[] } {
   const parsed = popularitySchema.safeParse(value);
   if (!parsed.success) return { ok: false, issues: parsed.error.issues.map((issue) => issue.message) };
@@ -23,6 +24,7 @@ export function validatePopularity(value: unknown): { ok: true; popularity: { po
   return { ok: true, popularity: parsed.data };
 }
 
+/** Validate a model order against the schema, budget, and menu rules. */
 export function validateOrder(value: unknown, input: {
   candidates: OrderCandidate[];
   budget: OrderBudget;
@@ -81,6 +83,7 @@ export function validateOrder(value: unknown, input: {
   return issues.length === 0 ? { ok: true, order: { draft, total_kcal: totalKcal, total_aud: spend } } : { ok: false, issues };
 }
 
+/** Check that quoted prices and calories match the candidate items. */
 function checkNumbers(text: string, cites: string[], signals: TasteSignals, issues: string[]) {
   issues.push(...quotedNumberIssues(text, cites, signals));
 }

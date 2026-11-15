@@ -3,6 +3,7 @@ import { generateText, Output } from "ai";
 import { aiModel } from "@/lib/profile/model";
 import { orderSchema, popularitySchema } from "@/lib/order/schema";
 
+/** Ask the model to score genre popularity. */
 export async function generatePopularity(input: { system: string; prompt: string }): Promise<{
   object: unknown;
   usage: { inputTokens?: number; outputTokens?: number };
@@ -18,6 +19,7 @@ export async function generatePopularity(input: { system: string; prompt: string
   return { object: result.output, usage: { inputTokens: result.usage.inputTokens, outputTokens: result.usage.outputTokens } };
 }
 
+/** Ask the model to build an order from the candidate menu. */
 export async function generateOrder(input: {
   system: string;
   prompt: string;

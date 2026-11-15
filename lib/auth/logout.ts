@@ -1,5 +1,6 @@
 import { log } from "@/lib/log";
 
+/** Sign the user out and send them home. */
 export async function performLogout(input: {
   origin: string;
   userId: string | null;

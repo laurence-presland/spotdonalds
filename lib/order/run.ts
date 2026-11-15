@@ -52,6 +52,7 @@ export type OrderCompletion = (input: {
 
 const ATTEMPTS = 3;
 
+/** Run the order step: budget, candidates, model, validate, and save. */
 export async function runOrder(input: {
   userId: string;
   store: OrderStore;
@@ -209,6 +210,7 @@ export async function runOrder(input: {
   throw new Error(run.error || "order_invalid");
 }
 
+/** Run the genre-popularity step and save the result. */
 export async function runPopularity(input: {
   userId: string;
   store: OrderStore;
@@ -243,6 +245,7 @@ export async function runPopularity(input: {
   await input.store.saveRun(run);
 }
 
+/** Mark the analysis run complete. */
 async function finishRun(input: { store: OrderStore }, run: RunRecord): Promise<void> {
   if (run.stage === "done" && run.status === "complete" && run.finished_at) return;
   run.stage = "done";
@@ -252,6 +255,7 @@ async function finishRun(input: { store: OrderStore }, run: RunRecord): Promise<
   await input.store.saveRun(run);
 }
 
+/** Return a saved popularity result, or compute one now. */
 async function resolvePopularity(
   input: { userId: string; store: OrderStore; complete: OrderCompletion },
   record: typeof writeLog,
@@ -265,6 +269,7 @@ async function resolvePopularity(
   return callPopularity(input, record, popularityPrompt.text, popularityPrompt.hash, tagsKey, profile, runId);
 }
 
+/** Call the popularity model and validate its output. */
 async function callPopularity(
   input: { userId: string; store: OrderStore; complete: OrderCompletion },
   record: typeof writeLog,

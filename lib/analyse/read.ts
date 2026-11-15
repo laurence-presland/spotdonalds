@@ -14,10 +14,12 @@ export type TrackStreamEvent =
   | { type: "done" }
   | { type: "error"; message: string };
 
+/** Stream tracks during ingest; otherwise return them as JSON. */
 export function tracksTransport(status: Pick<AnalysisStatus, "status" | "stage">): "stream" | "json" {
   return status.status === "running" && status.stage === "ingest" ? "stream" : "json";
 }
 
+/** Whether the ingest watch should stay open, finish, or error. */
 export function ingestWatch(run: { status: string; stage: string; outcome?: string | null } | null): "open" | "done" | "error" {
   if (!run) return "done";
   if (run.status === "error") return "error";
@@ -25,6 +27,7 @@ export function ingestWatch(run: { status: string; stage: string; outcome?: stri
   return "open";
 }
 
+/** Whether results are ready, still loading, or should be retried. */
 export function resultsDecision(input: {
   status: AnalysisStatus["status"];
   outcome: AnalysisStatus["outcome"];
@@ -39,10 +42,12 @@ export function resultsDecision(input: {
   return "wait";
 }
 
+/** Encode a track-stream cursor as a base64url string. */
 export function encodeTrackCursor(cursor: TrackCursor): string {
   return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
 }
 
+/** Decode a track-stream cursor, or return null if it is invalid. */
 export function decodeTrackCursor(value: string | null): TrackCursor | null {
   if (!value) return null;
   try {
@@ -57,6 +62,7 @@ export function decodeTrackCursor(value: string | null): TrackCursor | null {
   }
 }
 
+/** Parse one NDJSON line from the track stream. */
 export function parseTrackLine(line: string): TrackStreamEvent | null {
   const trimmed = line.trim();
   if (!trimmed) return null;
@@ -72,6 +78,7 @@ export function parseTrackLine(line: string): TrackStreamEvent | null {
   }
 }
 
+/** Stable key for an artist in a time window. */
 export function artistStreamKey(artist: { id: string; time_range: string }): string {
   return `${artist.id}:${artist.time_range}`;
 }

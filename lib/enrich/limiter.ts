@@ -1,3 +1,4 @@
+/** Serialise calls so they run at most once per minIntervalMs. */
 export function createRateLimiter(
   intervalMs: number,
   deps: { now: () => number; sleep: (ms: number) => Promise<void> },
@@ -11,6 +12,7 @@ export function createRateLimiter(
   };
 }
 
+/** User-Agent string MusicBrainz requires on every request. */
 export function musicbrainzUserAgent(): string {
   return process.env.MUSICBRAINZ_USER_AGENT || "SpotDonalds/0.1 (https://spotdonalds.vercel.app)";
 }

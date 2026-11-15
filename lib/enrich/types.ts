@@ -65,12 +65,14 @@ export type CacheRow = {
   expires_at: string | null;
 };
 
+/** Stable cache key for a track, preferring ISRC over name and artist. */
 export function cacheKey(track: Pick<EnrichTrack, "isrc" | "name" | "artists">): string {
   if (track.isrc) return `isrc:${track.isrc.toUpperCase()}`;
   const artist = (track.artists[0] ?? "").toLowerCase().trim();
   return `text:${artist}|${track.name.toLowerCase().trim()}`;
 }
 
+/** A provider miss, optionally with an error string. */
 export function miss(source: SourceName, error?: string): SourceHit {
   return {
     source,

@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db";
 
+/** Count distinct tracks from plays and top items for this user. */
 export async function countDistinctTracks(userId: string): Promise<number> {
   const rows = await sql()<{ tracks: number }[]>`
     select count(*)::int as tracks
