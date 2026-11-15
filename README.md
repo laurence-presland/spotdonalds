@@ -141,11 +141,82 @@ The order step maps tempo to a calorie budget, the energy score to beef or chick
 
 If I were given more time, this is what I'd do.
 
-**1 day.** I'd add Discogs as a third enrichment source, and a mainstreamness signal next to the popularity tier. I'd tighten the tag aliases. The loading states should match what the page is actually doing. That one matters most, because the current loading flow still doesn't feel right. Every sign-in forces Spotify's consent screen. I'd skip that for someone who has already approved the app, so they go straight in, knowing it makes switching Spotify accounts in the same browser harder. I'd add Prettier, so formatting is consistent and enforced in CI.
+### Given 1 day
 
-**5 days.** Someone should be able to start a fresh ingestion themselves. I'd ingest more tracks, so the reading is more accurate, and I'd add more data sources, because not every track comes back with a genre and a BPM. The app should also show how much enrichment it actually got, such as how many tracks have a BPM or a genre, and the analysis should account for what's missing, leaning less on a trait when few tracks back it and saying so when the reading is thin. When all of those databases come up empty, an AI-driven search should fill the gap on its own, with citations, and never from model memory. I'd move the McDonald's menu out of the JSON file and into the database, with a scheduled job that keeps it up to date, and I'd simplify the menu data the model sees, because the full detail is more than it can meaningfully take in. I'd backfill a longer history from a Spotify privacy export, replace the indicative prices with store prices, and add an evaluation harness for the profile and the order. The layout needs to be comfortable on a phone. I'd also do a general UI and UX quality pass, with clearer feedback on buttons, such as hover and pressed states, and tidier spacing. The tests we have are unit tests. I'd add a dedicated test account and run end-to-end tests in Playwright alongside them. Session management needs doing properly: the session should survive and refresh instead of being forgotten. I'd do an SEO pass to cover the basics, and link each track and artist back to Spotify, and each menu item back to its McDonald's page. I'd also give the project a proper domain. I'd add analytics, such as Google Analytics or a similar tool, and a simple way for people to send feedback from inside the app.
+- **Loading:** make the loading states match what the page is actually doing. This one matters most, because the current loading flow still doesn't feel right.
+- **Enrichment:** add Discogs as a third enrichment source, add a mainstreamness signal next to the popularity tier, and tighten the tag aliases.
+- **Sign-in:** skip Spotify's consent screen for someone who has already approved the app, so they go straight in, knowing it makes switching Spotify accounts in the same browser harder.
+- **Tooling:** add Prettier, so formatting is consistent and enforced in CI.
 
-**20 days.** I'd like an AI pass over the track, to pull more metrics out of the music. That means downloading the audio, which could be hard, or analysing the waveform instead. I'd replace the long-polled results call and the streamed tracks endpoint with a push channel, such as a Supabase Realtime subscription or a WebSocket, so the front end hears about progress and results the moment they change. I want a proper UI component library, so later screens can grow from shared pieces, and Storybook, or a similar tool, so a component can be built and reviewed on its own. I'd draw the order, possibly with AI-generated images of the menu items, setting aside the legal questions around using McDonald's products. I'd move the Spotify app out of development mode with an extended quota, or add another music source, so more than five people can sign in. I'd let people share and compare profiles, and re-ingest on a schedule with a backend cron job, so each person's stats and order stay current and we can see how taste drifts. I'd also add a set of AI rules and skills to the repo, covering code quality, style and conventions, so AI-assisted development stays consistent as the project grows. I'd build a fuller marketing site that explains what the app does, and put more work into branding, starting with a more interesting logo. I'd add other ways to sign in, such as email and password or other identity providers, with the account management that comes with them. I'd add error tracking and alerting, such as Rollbar, to catch front-end and back-end errors for ongoing bug fixing, and hook back-end failures, above all in the ingestion flow, into an on-call paging system. I'd compare AI models on cost and quality, because a different model might give better results for less. I'd also check whether Vercel and Supabase are still the right hosts. AWS could be cheaper, but it's more to manage, and moving would mean adding infrastructure as code, such as Terraform or CloudFormation, which Vercel and Supabase currently make unnecessary. I'd do a proper accessibility review, covering colour contrast, font sizes, keyboard use and screen readers. Above all, I'd get feedback from real users and let that shape where the product goes next.
+### Given 5 days
+
+**Data and analysis**
+
+- Let people start a fresh ingestion themselves.
+- Ingest more tracks, so the reading is more accurate, and add more data sources, because not every track comes back with a genre and a BPM.
+- Show how much enrichment the app actually got, such as how many tracks have a BPM or a genre, and make the analysis account for what's missing, leaning less on a trait when few tracks back it and saying so when the reading is thin.
+- When every database comes up empty, have an AI-driven search fill the gap on its own, with citations, and never from model memory.
+- Backfill a longer history from a Spotify privacy export.
+- Add an evaluation harness for the profile and the order.
+
+**Menu**
+
+- Move the McDonald's menu out of the JSON file and into the database, with a scheduled job that keeps it up to date.
+- Simplify the menu data the model sees, because the full detail is more than it can meaningfully take in.
+- Replace the indicative prices with store prices.
+
+**Product and UI**
+
+- Make the layout comfortable on a phone.
+- Do a general UI and UX quality pass, with clearer feedback on buttons, such as hover and pressed states, and tidier spacing.
+- Link each track and artist back to Spotify, and each menu item back to its McDonald's page.
+- Do session management properly, so the session survives and refreshes instead of being forgotten.
+
+**Launch basics**
+
+- Give the project a proper domain.
+- Do an SEO pass to cover the basics.
+- Add analytics, such as Google Analytics or a similar tool, and a simple way for people to send feedback from inside the app.
+
+**Testing**
+
+- The tests we have are unit tests. Add a dedicated test account and run end-to-end tests in Playwright alongside them.
+
+### Given 20 days
+
+**Data and analysis**
+
+- Run an AI pass over the audio itself to pull more metrics out of the music. That means downloading the audio, which could be hard, or analysing the waveform instead.
+- Re-ingest on a schedule with a backend cron job, so each person's stats and order stay current and we can see how taste drifts.
+- Compare AI models on cost and quality, because a different model might give better results for less.
+
+**Product**
+
+- Draw the order, possibly with AI-generated images of the menu items, setting aside the legal questions around using McDonald's products.
+- Let people share and compare profiles.
+- Add other ways to sign in, such as email and password or other identity providers, with the account management that comes with them.
+- Move the Spotify app out of development mode with an extended quota, or add another music source, so more than five people can sign in.
+- Do a proper accessibility review, covering colour contrast, font sizes, keyboard use and screen readers.
+
+**Brand and marketing**
+
+- Build a fuller marketing site that explains what the app does.
+- Put more work into branding, starting with a more interesting logo.
+
+**Architecture and operations**
+
+- Replace the long-polled results call and the streamed tracks endpoint with a push channel, such as a Supabase Realtime subscription or a WebSocket, so the front end hears about progress and results the moment they change.
+- Add error tracking and alerting, such as Rollbar, to catch front-end and back-end errors for ongoing bug fixing, and hook back-end failures, above all in the ingestion flow, into an on-call paging system.
+- Check whether Vercel and Supabase are still the right hosts. AWS could be cheaper, but it's more to manage, and moving would mean adding infrastructure as code, such as Terraform or CloudFormation, which Vercel and Supabase currently make unnecessary.
+
+**Engineering practice**
+
+- Build a proper UI component library, so later screens can grow from shared pieces, and use Storybook, or a similar tool, so a component can be built and reviewed on its own.
+- Add a set of AI rules and skills to the repo, covering code quality, style and conventions, so AI-assisted development stays consistent as the project grows.
+
+**Above all**
+
+- Get feedback from real users and let that shape where the product goes next.
 
 ## Attribution
 
