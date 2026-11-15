@@ -2,9 +2,10 @@
 
 import { useEffect, useReducer, useRef, useState } from "react";
 import { NotAllowlisted } from "@/components/NotAllowlisted";
+import { Welcome } from "@/components/flow/Welcome";
 import { AnalysingView } from "@/components/analysing/AnalysingView";
 import type { ReceiptMenuItem } from "@/components/order/OrderReceipt";
-import { initialAnalysingState, reduceAnalysis } from "@/lib/analysing/reduce";
+import { initialAnalysingState, reduceAnalysis, type AnalysingState } from "@/lib/analysing/reduce";
 import { analysisErrorCopy } from "@/lib/analyse/progress";
 import { parseTrackLine } from "@/lib/analyse/read";
 import type { AnalysisStatus } from "@/lib/analyse/status";
@@ -21,6 +22,8 @@ export type AnalysisResults = {
   order: StoredOrder | null;
   menu: ReceiptMenuItem[];
   aggregates: Aggregates;
+  /** The track list as loaded during this visit, so Back can show it without refetching. */
+  history?: AnalysingState;
 };
 
 export function AnalysingScreen({
@@ -29,15 +32,23 @@ export function AnalysingScreen({
   onResults,
   onInsufficient,
   onForward,
+  holdUntilData = false,
 }: {
   tracksOnly?: boolean;
   onStatus?: (status: AnalysisStatus) => void;
   onResults?: (results: AnalysisResults) => void;
   onInsufficient?: (count: number) => void;
   onForward?: () => void;
+  /** Return visits: keep the full-screen drive-through page up while there's nothing to show yet. */
+  holdUntilData?: boolean;
 }) {
   const [state, dispatch] = useReducer(reduceAnalysis, initialAnalysingState);
   const [generation, setGeneration] = useState(0);
+  const [tracksSettled, setTracksSettled] = useState(false);
+  // The run had already finished when this screen opened. Keep the drive-through page
+  // up while tracks and then results load, and go straight to Results.
+  const [doneRun, setDoneRun] = useState(false);
+  const stateRef = useRef(state);
   const statusRef = useRef(onStatus);
   const resultsRef = useRef(onResults);
   const insufficientRef = useRef(onInsufficient);
@@ -45,6 +56,7 @@ export function AnalysingScreen({
     statusRef.current = onStatus;
     resultsRef.current = onResults;
     insufficientRef.current = onInsufficient;
+    stateRef.current = state;
   });
 
   useEffect(() => {
@@ -66,6 +78,7 @@ export function AnalysingScreen({
         if (type.includes("application/json")) {
           const body = (await response.json()) as AnalysisStatus & { tracks?: VisibleTrack[]; artists?: VisibleArtist[] };
           dispatch({ type: "hydrate", tracks: body.tracks ?? [], artists: body.artists ?? [] });
+          setTracksSettled(true);
           if (body.status === "error") {
             fail(analysisErrorCopy(body.error));
             return "error";
@@ -98,7 +111,10 @@ export function AnalysingScreen({
               else fail(analysisErrorCopy(event.message));
               return "error";
             }
-            if (event.type === "done") return "done";
+            if (event.type === "done") {
+              setTracksSettled(true);
+              return "done";
+            }
           }
         }
         if (resume) {
@@ -134,11 +150,19 @@ export function AnalysingScreen({
           return;
         }
         if (body.status === "complete" && body.aggregates) {
+          const loaded = stateRef.current;
           resultsRef.current?.({
             profile: body.profile ?? null,
             order: body.order ?? null,
             menu: body.menu ?? [],
             aggregates: body.aggregates,
+            history: {
+              ...loaded,
+              complete: true,
+              status: "streaming",
+              message: null,
+              ingested: loaded.ingested || loaded.tracks.length,
+            },
           });
           return;
         }
@@ -184,6 +208,10 @@ export function AnalysingScreen({
       } else if (tracksOnly) {
         await readTracks(signal);
         return;
+      } else {
+        setDoneRun(true);
+        const tracks = await readTracks(signal);
+        if (tracks !== "done" || signal.aborted) return;
       }
       await readResults(signal);
     }
@@ -207,6 +235,9 @@ export function AnalysingScreen({
   }
 
   if (state.status === "access") return <NotAllowlisted />;
+  const problem = state.status === "error" || state.status === "dropped";
+  const nothingYet = state.tracks.length === 0 && !tracksSettled;
+  if (!tracksOnly && !problem && (doneRun || (holdUntilData && nothingYet))) return <Welcome hold />;
   if (state.status === "idle") return <AnalysisLoading />;
   const waiting = state.message === NOT_STARTED;
   return (

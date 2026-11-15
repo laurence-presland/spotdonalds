@@ -25,13 +25,19 @@ export function DriveThrough({ welcome }: { welcome: boolean }) {
         menu={results.menu}
         aggregates={results.aggregates}
         orderFailed={results.order == null}
+        history={results.history}
       />
     );
   }
 
   return (
     <>
-      <AnalysingScreen onStatus={noteStatus} onResults={setResults} onInsufficient={setInsufficient} />
+      <AnalysingScreen
+        holdUntilData={!welcome}
+        onStatus={noteStatus}
+        onResults={setResults}
+        onInsufficient={setInsufficient}
+      />
       {overlay ? <Welcome onDone={() => setOverlay(false)} /> : null}
     </>
   );
