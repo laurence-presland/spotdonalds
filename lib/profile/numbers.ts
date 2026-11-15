@@ -1,3 +1,4 @@
+import { round } from "es-toolkit";
 import { SIGNAL_REGISTRY, type SignalKey } from "@/lib/signals/registry";
 import type { TagShare, TasteSignals } from "@/lib/signals/compute";
 
@@ -7,6 +8,7 @@ const NUMBER = /\d+(?:\.\d+)?%?/g;
 // percent, a decimal, a tempo, or a number large enough to be a measurement.
 const SMALL_COUNT = 13;
 
+/** Find quoted numbers in the profile that do not match a cited signal. */
 export function quotedNumberIssues(text: string, cites: string[], signals: TasteSignals): string[] {
   const issues: string[] = [];
   for (const match of text.matchAll(NUMBER)) {
@@ -17,6 +19,7 @@ export function quotedNumberIssues(text: string, cites: string[], signals: Taste
   return issues;
 }
 
+/** True when a number in the text is a statistic, not a small count or ordinal. */
 function claimsStatistic(text: string, token: string, index: number): boolean {
   if (token.endsWith("%") || token.includes(".")) return true;
   const after = text.slice(index + token.length, index + token.length + 16);
@@ -25,6 +28,7 @@ function claimsStatistic(text: string, token: string, index: number): boolean {
   return Number.isFinite(value) && value >= SMALL_COUNT;
 }
 
+/** True when the quoted number matches one of the cited signal values. */
 function matchesCited(token: string, cites: string[], signals: TasteSignals): boolean {
   const allowed = citedNumbers(cites, signals);
   if (token.endsWith("%")) {
@@ -35,6 +39,7 @@ function matchesCited(token: string, cites: string[], signals: TasteSignals): bo
   return allowed.some((value) => Math.abs(value - numeric) < 0.001);
 }
 
+/** Collect the numeric values of the cited signals. */
 function citedNumbers(cites: string[], signals: TasteSignals): number[] {
   const numbers: number[] = [];
   for (const key of cites) {
@@ -47,9 +52,4 @@ function citedNumbers(cites: string[], signals: TasteSignals): number[] {
     }
   }
   return numbers;
-}
-
-function round(value: number, decimals: number): number {
-  const factor = 10 ** decimals;
-  return Math.round(value * factor) / factor;
 }

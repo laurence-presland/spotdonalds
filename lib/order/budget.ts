@@ -1,3 +1,4 @@
+import { round } from "es-toolkit";
 import rulesConfig from "@/config/order-rules.v1.json";
 import type { TasteSignals } from "@/lib/signals/compute";
 
@@ -16,10 +17,12 @@ export type OrderBudget = {
   category_constraints: string;
 };
 
+/** Load the versioned order-budget rules. */
 export function loadOrderRules(): OrderRules {
   return rulesConfig;
 }
 
+/** Build a calorie and spend budget from the taste signals. */
 export function orderBudget(input: {
   signals: TasteSignals;
   energy: number;
@@ -62,24 +65,28 @@ export function orderBudget(input: {
   };
 }
 
+/** Choose a protein rule from the energy trait. */
 export function requiredProtein(energy: number, rules: OrderRules = loadOrderRules()): RequiredProtein {
   if (energy >= rules.energy_protein.beef_at) return "beef";
   if (energy <= rules.energy_protein.chicken_below) return "chicken";
   return "either";
 }
 
+/** Short phrase describing the required protein. */
 export function proteinPhrase(protein: RequiredProtein): string {
   if (protein === "beef") return "beef";
   if (protein === "chicken") return "chicken";
   return "beef or chicken, your call";
 }
 
+/** Sentence of hard constraints for the order prompt. */
 function constraintText(allowRepeat: boolean, variety: OrderBudget["variety"], protein: RequiredProtein): string {
   const main = allowRepeat ? "one or two mains" : "one main";
   const lean = variety === "comfort" ? " Include a comfort item." : variety === "diverse" ? " Use at least three categories." : "";
   return `${main} (${proteinPhrase(protein)}), at most one side, one drink and one dessert.${lean}`;
 }
 
+/** Round a dollar amount to two decimal places. */
 function roundMoney(value: number): number {
-  return Math.round(value * 100) / 100;
+  return round(value, 2);
 }

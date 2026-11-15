@@ -1,3 +1,4 @@
+import { uniqBy } from "es-toolkit";
 import { analysisErrorCopy } from "@/lib/analyse/progress";
 import type { VisibleArtist, VisibleTrack, TrackSource } from "@/lib/catalogue/present";
 import type { StreamEvent, Term } from "@/lib/stream/events";
@@ -56,6 +57,7 @@ export type AnalysingAction =
   | { type: "hydrate"; tracks: VisibleTrack[]; artists: VisibleArtist[] }
   | { type: "snapshot"; run: RunSnapshot | null };
 
+/** Fold a stream event, snapshot, or hydration into list-screen state. */
 export function reduceAnalysis(state: AnalysingState, action: AnalysingAction): AnalysingState {
   if (action.type === "hydrate") {
     return {
@@ -71,6 +73,7 @@ export function reduceAnalysis(state: AnalysingState, action: AnalysingAction): 
   return reduceEvent(state, action.event);
 }
 
+/** Apply a run status snapshot to the list-screen state. */
 function applySnapshot(state: AnalysingState, run: RunSnapshot | null): AnalysingState {
   if (!run) return state;
   const complete = run.complete === true;
@@ -86,6 +89,7 @@ function applySnapshot(state: AnalysingState, run: RunSnapshot | null): Analysin
   };
 }
 
+/** Apply one stream event to the list-screen state. */
 function reduceEvent(state: AnalysingState, event: StreamEvent): AnalysingState {
   if (event.type === "stage") {
     return { ...state, stage: stageFor(event.stage, state.stage), status: "streaming" };
@@ -145,6 +149,7 @@ function reduceEvent(state: AnalysingState, event: StreamEvent): AnalysingState 
   return state;
 }
 
+/** Map a pipeline stage to the three-step list-screen stage. */
 export function stageFor(pipeline: string, current: VisibleStage): VisibleStage {
   if (pipeline === "analyse" || pipeline === "profile") return "taste";
   if (pipeline === "order" || pipeline === "popularity" || pipeline === "done") return "order";
@@ -152,6 +157,7 @@ export function stageFor(pipeline: string, current: VisibleStage): VisibleStage 
   return current;
 }
 
+/** Merge incoming tracks into the list, combining sources for duplicates. */
 function mergeTracks(current: VisibleTrack[], extra: VisibleTrack[]): VisibleTrack[] {
   const byId = new Map(current.map((track) => [track.id, track]));
   for (const track of extra) {
@@ -162,24 +168,19 @@ function mergeTracks(current: VisibleTrack[], extra: VisibleTrack[]): VisibleTra
   return [...byId.values()];
 }
 
+/** Merge incoming artists into the list, last write winning per window. */
 function mergeArtists(current: VisibleArtist[], extra: VisibleArtist[]): VisibleArtist[] {
   const byId = new Map(current.map((artist) => [`${artist.id}:${artist.time_range}`, artist]));
   for (const artist of extra) byId.set(`${artist.id}:${artist.time_range}`, artist);
   return [...byId.values()];
 }
 
+/** Drop duplicate track sources, keeping the first of each kind. */
 function dedupeSources(sources: TrackSource[]): TrackSource[] {
-  const seen = new Set<string>();
-  const out: TrackSource[] = [];
-  for (const source of sources) {
-    const key = source.kind === "recent" ? "recent" : `top:${source.time_range}:${source.rank}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(source);
-  }
-  return out;
+  return uniqBy(sources, (source) => (source.kind === "recent" ? "recent" : `top:${source.time_range}:${source.rank}`));
 }
 
+/** Friendly label for a Spotify time window. */
 export function windowName(window: Term): string {
   if (window === "short_term") return "4 weeks";
   if (window === "medium_term") return "6 months";

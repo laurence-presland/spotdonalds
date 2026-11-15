@@ -1,3 +1,5 @@
+import { round } from "es-toolkit";
+
 export const SIGNAL_KEYS = [
   "tags.top",
   "tags.diversity",
@@ -191,7 +193,7 @@ export const TRAIT_REGISTRY: Record<TraitName, TraitDefinition> = {
   },
 };
 
+/** Round a signal value to a fixed number of decimal places. */
 export function roundSignal(value: number, decimals: number): number {
-  const factor = 10 ** decimals;
-  return Math.round(value * factor) / factor;
+  return round(value, decimals);
 }

@@ -1,3 +1,4 @@
+import { clamp as clampRange, median as medianOf } from "es-toolkit";
 import { coverage } from "@/lib/aggregates/coverage";
 import { bpmStats } from "@/lib/aggregates/bpm";
 import { normalisedEntropy } from "@/lib/aggregates/tags";
@@ -37,6 +38,7 @@ export type TraitScore = { name: TraitName; score: number; meaning: string };
 
 const RECENT_YEARS = 5;
 
+/** Compute taste signals from the user's tracks, plays, and top artists. */
 export function computeSignals(input: ListeningInput, now = new Date("2026-11-13T00:00:00Z")): TasteSignals {
   const tagged = input.tracks.map((track) => ({ ...track, names: tagNames(track.tags) }));
   const withTags = tagged.filter((track) => track.names.length > 0);
@@ -73,13 +75,14 @@ export function computeSignals(input: ListeningInput, now = new Date("2026-11-13
     "concentration.top_artists_share": concentration(input),
     "repeat.rate": repeatRate(input.plays),
     "recency.recent_share": years.length === 0 ? null : years.filter((year) => year >= recentCutoff).length / years.length,
-    "recency.median_release_year": median(years),
+    "recency.median_release_year": years.length === 0 ? null : medianOf(years),
     "explicit.share": input.tracks.length === 0 ? null : input.tracks.filter((track) => track.explicit).length / input.tracks.length,
     "coverage.tags": report.shares.tags,
     "coverage.bpm": report.shares.bpm,
   };
 }
 
+/** Score each taste trait from the computed signals. */
 export function scoreTraits(signals: TasteSignals): TraitScore[] {
   return (Object.keys(TRAIT_REGISTRY) as TraitName[]).map((name) => ({
     name,
@@ -88,6 +91,7 @@ export function scoreTraits(signals: TasteSignals): TraitScore[] {
   }));
 }
 
+/** Score one taste trait on a 0–100 scale. */
 export function traitScore(name: TraitName, signals: TasteSignals): number {
   if (name === "energy") return clamp(scale(numberOr(signals["bpm.mean"], 110), 60, 160));
   if (name === "variety") return clamp(numberOr(signals["tags.diversity"], 0) * 100);
@@ -101,6 +105,7 @@ export function traitScore(name: TraitName, signals: TasteSignals): number {
   return clamp(100 * (1 - recent));
 }
 
+/** Signals to show or cite, rounded and with their meaning. */
 export function presentSignals(signals: TasteSignals): {
   key: SignalKey;
   value: number | TagShare[];
@@ -124,6 +129,7 @@ export function presentSignals(signals: TasteSignals): {
   });
 }
 
+/** Round a signal value to the decimals in its registry entry. */
 export function roundValue(key: SignalKey, value: number | TagShare[]): number | TagShare[] {
   if (Array.isArray(value)) {
     return value.map((item) => ({ tag: item.tag, share: roundSignal(item.share, SIGNAL_REGISTRY[key].decimals) }));
@@ -131,6 +137,7 @@ export function roundValue(key: SignalKey, value: number | TagShare[]): number |
   return roundSignal(value, SIGNAL_REGISTRY[key].decimals);
 }
 
+/** Canonical tag names on a track, ignoring junk and zero-count tags. */
 function tagNames(tags: TagInput[]): string[] {
   const names = new Set<string>();
   for (const tag of tags) {
@@ -141,12 +148,14 @@ function tagNames(tags: TagInput[]): string[] {
   return [...names];
 }
 
+/** Four-digit release year from a date string, if it looks valid. */
 function releaseYear(value: string | null): number | null {
   if (!value) return null;
   const year = Number(value.slice(0, 4));
   return Number.isInteger(year) && year > 1900 && year < 2100 ? year : null;
 }
 
+/** Jaccard overlap of two id sets, or 0 when both are empty. */
 function jaccard(left: Set<string>, right: Set<string>): number {
   if (left.size === 0 && right.size === 0) return 0;
   let intersection = 0;
@@ -155,6 +164,7 @@ function jaccard(left: Set<string>, right: Set<string>): number {
   return union === 0 ? 0 : intersection / union;
 }
 
+/** How far tag shares have moved between two time windows. */
 function tagDrift(tracks: (ListeningTrack & { names: string[] })[], left: Term, right: Term): number {
   const a = shareMap(tracks.filter((track) => track.windows.includes(left)));
   const b = shareMap(tracks.filter((track) => track.windows.includes(right)));
@@ -166,6 +176,7 @@ function tagDrift(tracks: (ListeningTrack & { names: string[] })[], left: Term, 
   return distance / 2;
 }
 
+/** Each tag's share of tracks that have at least one tag. */
 function shareMap(tracks: { names: string[] }[]): Map<string, number> {
   const tagged = tracks.filter((track) => track.names.length > 0);
   const counts = new Map<string, number>();
@@ -175,6 +186,7 @@ function shareMap(tracks: { names: string[] }[]): Map<string, number> {
   return new Map([...counts.entries()].map(([name, count]) => [name, tagged.length === 0 ? 0 : count / tagged.length]));
 }
 
+/** Share of listening weight held by the top three artists. */
 function concentration(input: ListeningInput): number {
   const weights = new Map<string, number>();
   const artistOf = new Map(input.tracks.map((track) => [track.id, track.artistIds[0] ?? null]));
@@ -193,27 +205,23 @@ function concentration(input: ListeningInput): number {
   return top.reduce((sum, value) => sum + value, 0) / total;
 }
 
+/** Share of plays that are repeats of a track already played. */
 function repeatRate(plays: { trackId: string }[]): number {
   if (plays.length === 0) return 0;
   const unique = new Set(plays.map((play) => play.trackId)).size;
   return (plays.length - unique) / plays.length;
 }
 
-function median(years: number[]): number | null {
-  if (years.length === 0) return null;
-  const sorted = [...years].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 1 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
-}
-
 function numberOr(value: number | TagShare[] | null, fallback: number): number {
   return typeof value === "number" ? value : fallback;
 }
 
+/** Map a value from [min, max] onto a 0–100 scale. */
 function scale(value: number, min: number, max: number): number {
   return ((value - min) / (max - min)) * 100;
 }
 
+/** Round a score and clamp it to 0–100. */
 function clamp(value: number): number {
-  return Math.max(0, Math.min(100, Math.round(value)));
+  return clampRange(Math.round(value), 0, 100);
 }

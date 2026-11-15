@@ -1,3 +1,5 @@
+import { mean, median } from "es-toolkit";
+
 export const BPM_BINS = [
   { label: "Under 80", min: 0, max: 80 },
   { label: "80–100", min: 80, max: 100 },
@@ -17,6 +19,7 @@ export type BpmStats = {
   bins: { label: string; min: number; max: number; count: number }[];
 };
 
+/** Mean, median, spread, and histogram buckets for a list of tempos. */
 export function bpmStats(values: (number | null | undefined)[]): BpmStats {
   const tempos = values.filter((value): value is number => typeof value === "number" && value > 0);
   const bins = BPM_BINS.map((bin) => ({
@@ -27,14 +30,12 @@ export function bpmStats(values: (number | null | undefined)[]): BpmStats {
     return { count: 0, mean: null, median: null, stdev: null, min: null, max: null, bins };
   }
   const sorted = [...tempos].sort((a, b) => a - b);
-  const mean = sorted.reduce((sum, tempo) => sum + tempo, 0) / sorted.length;
-  const mid = Math.floor(sorted.length / 2);
-  const median = sorted.length % 2 === 1 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
-  const variance = sorted.reduce((sum, tempo) => sum + (tempo - mean) ** 2, 0) / sorted.length;
+  const average = mean(sorted);
+  const variance = sorted.reduce((sum, tempo) => sum + (tempo - average) ** 2, 0) / sorted.length;
   return {
     count: sorted.length,
-    mean,
-    median,
+    mean: average,
+    median: median(sorted),
     stdev: Math.sqrt(variance),
     min: sorted[0]!,
     max: sorted[sorted.length - 1]!,

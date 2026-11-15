@@ -1,3 +1,4 @@
+import { uniqBy } from "es-toolkit";
 import { chooseEnrichment } from "@/lib/enrich/choose";
 import {
   cacheKey,
@@ -27,6 +28,7 @@ export type EnrichStore = {
   saveCache(row: CacheRow): Promise<void>;
 };
 
+/** Look up MusicBrainz tags and Deezer BPM for the user's tracks, with caching. */
 export async function runEnrich(input: {
   userId: string;
   store: EnrichStore;
@@ -50,7 +52,7 @@ export async function runEnrich(input: {
   run.error = null;
   await input.store.saveRun(run);
 
-  const tracks = dedupe(await input.store.listTracks(input.userId));
+  const tracks = uniqBy(await input.store.listTracks(input.userId), cacheKey);
   input.emit({ type: "enrich_start", total: tracks.length });
   run.checkpoint = { ...run.checkpoint, enrich_done: 0, enrich_total: tracks.length };
   let processed = 0;
@@ -113,19 +115,12 @@ export async function runEnrich(input: {
   }
 }
 
-function dedupe(tracks: EnrichTrack[]): EnrichTrack[] {
-  const byKey = new Map<string, EnrichTrack>();
-  for (const track of tracks) {
-    const key = cacheKey(track);
-    if (!byKey.has(key)) byKey.set(key, track);
-  }
-  return [...byKey.values()];
-}
-
+/** True when a negative cache row has passed its expiry. */
 function expired(row: CacheRow, now: number): boolean {
   return row.expires_at != null && Date.parse(row.expires_at) <= now;
 }
 
+/** Run a provider lookup and turn a thrown error into a miss. */
 async function safeLookup(source: "musicbrainz" | "deezer", lookup: () => Promise<SourceHit>): Promise<SourceHit> {
   try {
     return await lookup();
@@ -134,6 +129,7 @@ async function safeLookup(source: "musicbrainz" | "deezer", lookup: () => Promis
   }
 }
 
+/** Emit the enrich_result event for a matched track. */
 function emitMatch(emit: (event: StreamEvent) => void, track: EnrichTrack, failures: string[]) {
   emit({
     type: "enrich_result",
@@ -146,6 +142,7 @@ function emitMatch(emit: (event: StreamEvent) => void, track: EnrichTrack, failu
   });
 }
 
+/** Build the cache row for a chosen enrichment, or a short-lived negative entry. */
 function cacheRow(
   track: EnrichTrack,
   key: string,
