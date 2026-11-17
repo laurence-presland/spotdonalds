@@ -80,7 +80,7 @@ describe("OrderReceipt", () => {
         calorie_budget: { min: 850, max: 1400 },
         spend_budget_aud: { min: 16, max: 42 },
       },
-    } as StoredOrder;
+    } as unknown as StoredOrder;
     const html = renderToStaticMarkup(<OrderReceipt order={older} menu={menu} />);
     expect(html).toContain("Big Mac");
     expect(html).toContain("A little is 900, a lot is 1500.");
