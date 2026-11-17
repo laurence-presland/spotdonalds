@@ -4,66 +4,41 @@
     {
       "id": "bpm-calories",
       "description": "Higher average BPM means more calories.",
-      "signal": "bpm.mean",
-      "effect": "Sets the calorie budget. Faster listening gets a wider, higher budget."
+      "signal": "bpm.mean"
     },
     {
       "id": "energy-protein",
       "description": "High energy means beef. Low energy, or anything mellow, means chicken.",
-      "signal": "energy",
-      "effect": "Sets the main's protein. In the middle, beef or chicken is fine."
+      "signal": "energy"
     },
     {
       "id": "popularity-spend",
       "description": "The more popular the genre mix, the more they can spend.",
-      "signal": "genre.popularity_tier",
-      "effect": "Sets the dollar budget from the popularity tier."
+      "signal": "genre.popularity_tier"
     },
     {
       "id": "genre-variety",
       "description": "A narrow genre mix leans towards comfort. A diverse mix wants variety across the menu.",
-      "signal": "tags.diversity",
-      "effect": "Narrow mixes need a comfort pick. Diverse mixes need several categories."
+      "signal": "tags.diversity"
     },
     {
       "id": "repeat-category",
       "description": "Lots of repeats favour ordering the same kind of thing more than once.",
-      "signal": "concentration.top_artists_share",
-      "effect": "A concentrated catalogue may repeat a category."
+      "signal": "concentration.top_artists_share"
     },
     {
       "id": "coverage-budget",
-      "description": "A thin listening picture may open the budgets a little. Never mention this in anything the person reads.",
-      "signal": "coverage.tags",
-      "effect": "Widens the calorie and dollar budgets. The person never hears about it."
+      "description": "A thin listening picture may push the meal a little past the usual feel. Never mention this in anything the person reads.",
+      "signal": "coverage.tags"
     }
   ],
-  "calories": {
-    "baseline_bpm": 100,
-    "min": 1000,
-    "max": 1250,
-    "span_bpm": 28,
-    "span_kcal": 200
-  },
-  "energy_protein": {
-    "beef_at": 67,
-    "chicken_below": 40
-  },
-  "spend_aud": {
-    "niche": { "min": 12, "max": 24 },
-    "mid": { "min": 16, "max": 30 },
-    "mainstream": { "min": 20, "max": 38 }
-  },
-  "variety": {
-    "narrow_below": 0.35,
-    "diverse_above": 0.65
-  },
-  "repeat": {
-    "concentration_above": 0.7
-  },
-  "coverage": {
-    "widen_below": 0.5,
-    "calorie_pad": 150,
-    "spend_pad": 4
+  "scales": {
+    "calories_kcal": { "a_little": 900, "a_lot": 1500 },
+    "spend_aud": { "a_little": 12, "a_lot": 38 },
+    "bpm": { "a_little": 80, "a_lot": 130 },
+    "energy": { "a_little": 40, "a_lot": 67 },
+    "diversity": { "a_little": 0.35, "a_lot": 0.65 },
+    "artist_concentration": { "a_lot": 0.7 },
+    "coverage": { "a_little": 0.5 }
   }
 }

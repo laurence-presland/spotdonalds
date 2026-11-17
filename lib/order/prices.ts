@@ -1,5 +1,5 @@
 // Official menu prices are null. These bands are indicative AUD amounts so a
-// receipt and a spend budget can still be checked. They are not McDonald's prices.
+// receipt can still show a price. They are not McDonald's prices.
 const CATEGORY_PRICE: Record<string, number> = {
   burgers: 7.9,
   chicken_and_fish: 7.5,

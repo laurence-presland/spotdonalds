@@ -97,7 +97,7 @@ Code computes the numbers; the model only interprets them. Signals in `lib/signa
 
 Prompts are versioned text blocks in `prompts/`, assembled by `lib/prompts/build.ts`, and each stored result keeps its template hash. The model is called through the Vercel AI SDK with a zod schema for structured output, via the AI Gateway (`AI_MODEL`, default `google/gemini-2.5-flash`). A second check rejects citations that aren't in the data and statistics that contradict it. Failures are fed back for up to three attempts, then the run records a typed error and stores nothing.
 
-For the order, code maps tempo to a calorie budget, energy to beef or chicken, and the popularity tier to a dollar budget. The model picks items from the candidate set and explains each one, and code adds up calories and prices.
+For the order, the model reads the written rules and the little-and-lot scales, then picks items from the candidate set and explains each one. Code adds up calories and prices.
 
 ## Assumptions and limitations
 

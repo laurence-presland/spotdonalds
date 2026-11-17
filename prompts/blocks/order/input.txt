@@ -1,7 +1,6 @@
 You get one JSON input with these parts:
 - profile: their taste profile (persona, insights, traits with scores already worked out by code)
 - signals: facts about their listening, each with a key, value, meaning and unit
-- rules: our house rules, each with an id and a description
-- constraints: budgets and limits code has already worked out from those rules
+- popularity: how mainstream their genre mix is, as a tier and a one-line reason
 - candidates: the only menu items you may choose from
 - tags: the only tags you may put on an order line

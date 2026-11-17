@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { loadOrderRules } from "@/lib/order/budget";
+import { loadOrderRules } from "@/lib/order/rules";
 import { SIGNAL_KEYS } from "@/lib/signals/registry";
 
 export const popularitySchema = z

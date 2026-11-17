@@ -27,13 +27,13 @@ const order = {
   confidence_note: "SECRET CONFIDENCE NOTE",
   totals: { kcal: 1, aud: 1 },
   budget: {
-    calorie_budget: { min: 1200, max: 1450 },
-    spend_budget_aud: { min: 16, max: 30 },
-    required_protein: "beef",
-    variety: "mixed",
-    allow_repeat: false,
-    widened: false,
-    category_constraints: "one main",
+    calories_kcal: { a_little: 900, a_lot: 1500 },
+    spend_aud: { a_little: 12, a_lot: 38 },
+    bpm: { a_little: 80, a_lot: 130 },
+    energy: { a_little: 40, a_lot: 67 },
+    diversity: { a_little: 0.35, a_lot: 0.65 },
+    artist_concentration: { a_lot: 0.7 },
+    coverage: { a_little: 0.5 },
   },
   popularity: { popularity_tier: "mid", reason: "Middle of the road." },
   signals: {} as TasteSignals,
@@ -59,6 +59,7 @@ describe("OrderReceipt", () => {
     expect(html).toContain("Classic");
     expect(html).toContain("The tempo pointed at a hearty meal.");
     expect(html).toContain("Higher average BPM means more calories.");
+    expect(html).toContain("A little is 900, a lot is 1500.");
     expect(html).toContain("2026-11-13T18:05:48+11:00");
     expect(html).toContain("Not affiliated");
     expect(html).toContain("House rules, invented by the AI");

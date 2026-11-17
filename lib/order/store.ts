@@ -1,6 +1,6 @@
 import { loadLatestRun, saveAnalysisRun } from "@/lib/analysis-run";
 import { sql } from "@/lib/db";
-import type { PopularityTier } from "@/lib/order/budget";
+import type { PopularityTier } from "@/lib/order/rules";
 import type { OrderStore, StoredOrder } from "@/lib/order/run";
 import type { StoredProfile } from "@/lib/profile/run";
 

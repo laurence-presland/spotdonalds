@@ -1,12 +1,12 @@
 import orderTags from "@/data/order-tags.json";
 import { loadMenu } from "@/lib/menu/load";
 import { orderTagIds } from "@/lib/menu/tags";
-import { orderBudget, loadOrderRules, proteinPhrase, type OrderBudget, type PopularityTier } from "@/lib/order/budget";
+import { loadOrderRules, renderOrderRules, type OrderScales, type PopularityTier } from "@/lib/order/rules";
 import { orderCandidates, type OrderCandidate } from "@/lib/order/candidates";
 import { validateOrder, validatePopularity } from "@/lib/order/validate";
 import { buildPrompt } from "@/lib/prompts/build";
 import type { StoredProfile } from "@/lib/profile/run";
-import { presentSignals, traitScore } from "@/lib/signals/compute";
+import { presentSignals } from "@/lib/signals/compute";
 import { log as writeLog } from "@/lib/log";
 import type { RunRecord } from "@/lib/ingest/types";
 
@@ -19,7 +19,7 @@ export type StoredOrder = {
   how_we_decided: unknown;
   confidence_note: string;
   totals: { kcal: number; aud: number };
-  budget: OrderBudget;
+  budget: OrderScales;
   popularity: { popularity_tier: PopularityTier; reason: string };
   signals: StoredProfile["signals"];
   inputs: unknown;
@@ -51,7 +51,7 @@ export type OrderCompletion = (input: {
 
 const ATTEMPTS = 3;
 
-/** Run the order step: budget, candidates, model, validate, and save. */
+/** Run the order step: candidates, model, validate, and save. */
 export async function runOrder(input: {
   userId: string;
   store: OrderStore;
@@ -91,20 +91,7 @@ export async function runOrder(input: {
     await input.store.saveRun(run);
     throw error;
   }
-  const budget = orderBudget({
-    signals: profile.signals,
-    energy: traitScore("energy", profile.signals),
-    popularity: popularity.popularity_tier,
-    rules,
-  });
-  const orderPrompt = buildPrompt("order.v1", {
-    "calorie_budget.min": String(budget.calorie_budget.min),
-    "calorie_budget.max": String(budget.calorie_budget.max),
-    "spend_budget_aud.min": String(budget.spend_budget_aud.min),
-    "spend_budget_aud.max": String(budget.spend_budget_aud.max),
-    required_protein: proteinPhrase(budget.required_protein),
-    category_constraints: budget.category_constraints,
-  });
+  const orderPrompt = buildPrompt("order.v1", { rules: renderOrderRules(rules) });
   const payload = {
     profile: {
       persona_name: profile.persona_name,
@@ -113,13 +100,7 @@ export async function runOrder(input: {
       traits: profile.traits,
     },
     signals: presentSignals(profile.signals),
-    rules: rules.rules.map((rule) => ({ id: rule.id, description: rule.description })),
-    constraints: {
-      calorie_budget: budget.calorie_budget,
-      spend_budget_aud: budget.spend_budget_aud,
-      required_protein: budget.required_protein,
-      category_constraints: budget.category_constraints,
-    },
+    popularity: { popularity_tier: popularity.popularity_tier, reason: popularity.reason },
     candidates,
     tags: orderTags.tags.map((tag) => ({ id: tag.id, label: tag.label, description: tag.description })),
   };
@@ -135,7 +116,7 @@ export async function runOrder(input: {
         itemIds: candidates.map((item) => item.item_id),
         tagIds: orderTagIds(),
       });
-      const checked = validateOrder(result.object, { candidates, budget, signals: profile.signals });
+      const checked = validateOrder(result.object, { candidates, signals: profile.signals });
       record("info", "order.model", {
         user_id: input.userId,
         run_id: run.id,
@@ -160,7 +141,7 @@ export async function runOrder(input: {
         how_we_decided: checked.order.draft.how_we_decided,
         confidence_note: checked.order.draft.confidence_note,
         totals: { kcal: checked.order.total_kcal, aud: checked.order.total_aud },
-        budget,
+        budget: rules.scales,
         popularity: { popularity_tier: popularity.popularity_tier, reason: popularity.reason },
         signals: profile.signals,
         inputs: payload,

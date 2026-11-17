@@ -58,7 +58,12 @@ export function OrderReceipt({
           <OrderLine key={line.item_id} line={line} />
         ))}
       </ol>
-      <BudgetBar calories={calories} min={order.budget.calorie_budget.min} max={order.budget.calorie_budget.max} rule={calorieRule?.description ?? ""} />
+      <BudgetBar
+        calories={calories}
+        little={order.budget.calories_kcal.a_little}
+        lot={order.budget.calories_kcal.a_lot}
+        rule={calorieRule?.description ?? ""}
+      />
       <p className="receipt-total">
         <span>{money(dollars)}</span>
         <span>{calories} kcal</span>
@@ -118,14 +123,14 @@ export function HowWeDecided({ text }: { text: string }) {
   );
 }
 
-export function BudgetBar({ calories, min, max, rule }: { calories: number; min: number; max: number; rule: string }) {
-  const span = Math.max(max - min, 1);
-  const width = Math.max(0, Math.min(100, ((calories - min) / span) * 100));
+export function BudgetBar({ calories, little, lot, rule }: { calories: number; little: number; lot: number; rule: string }) {
+  const span = Math.max(lot - little, 1);
+  const width = Math.max(0, Math.min(100, ((calories - little) / span) * 100));
   return (
-    <section className="budget" aria-label={`Calories ${calories} inside ${min} to ${max}. ${rule}`}>
+    <section className="budget" aria-label={`Calories ${calories}. A little is ${little}, a lot is ${lot}. ${rule}`}>
       <p>{rule}</p>
       <p>
-        {calories} kcal in a {min}–{max} budget
+        {calories} kcal. A little is {little}, a lot is {lot}.
       </p>
       <span className="budget-track" aria-hidden="true">
         <span style={{ width: `${width}%` }} />

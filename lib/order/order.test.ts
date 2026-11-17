@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { orderBudget, requiredProtein } from "@/lib/order/budget";
 import { orderCandidates, type OrderCandidate } from "@/lib/order/candidates";
 import { indicativePrice } from "@/lib/order/prices";
+import { renderOrderRules } from "@/lib/order/rules";
 import { runOrder, type OrderStore, type StoredOrder } from "@/lib/order/run";
 import { orderSchema } from "@/lib/order/schema";
 import { validateOrder, validatePopularity } from "@/lib/order/validate";
@@ -31,11 +31,61 @@ const signals: TasteSignals = {
 };
 
 const candidates: OrderCandidate[] = [
-  { item_id: "big-mac", name: "Big Mac", category: "burgers", kcal: 621, kj: 2600, protein_g: 28, protein: "beef", tag_ids: ["classic"], price_aud: 7.9 },
-  { item_id: "mcchicken", name: "McChicken", category: "chicken_and_fish", kcal: 400, kj: 1700, protein_g: 16, protein: "chicken", tag_ids: ["comfort"], price_aud: 7.5 },
-  { item_id: "medium-fries", name: "Medium Fries", category: "sides", kcal: 316, kj: 1320, protein_g: 4, protein: "other", tag_ids: ["side"], price_aud: 5.45 },
-  { item_id: "coke", name: "Coke", category: "cold_and_frozen_drinks", kcal: 136, kj: 570, protein_g: 0, protein: "other", tag_ids: ["high-energy"], price_aud: 4.55 },
-  { item_id: "mcflurry", name: "McFlurry", category: "desserts", kcal: 312, kj: 1300, protein_g: 8, protein: "other", tag_ids: ["sweet"], price_aud: 4.5 },
+  {
+    item_id: "big-mac",
+    name: "Big Mac",
+    category: "burgers",
+    kcal: 621,
+    kj: 2600,
+    protein_g: 28,
+    protein: "beef",
+    tag_ids: ["classic"],
+    price_aud: 7.9,
+  },
+  {
+    item_id: "mcchicken",
+    name: "McChicken",
+    category: "chicken_and_fish",
+    kcal: 400,
+    kj: 1700,
+    protein_g: 16,
+    protein: "chicken",
+    tag_ids: ["comfort"],
+    price_aud: 7.5,
+  },
+  {
+    item_id: "medium-fries",
+    name: "Medium Fries",
+    category: "sides",
+    kcal: 316,
+    kj: 1320,
+    protein_g: 4,
+    protein: "other",
+    tag_ids: ["side"],
+    price_aud: 5.45,
+  },
+  {
+    item_id: "coke",
+    name: "Coke",
+    category: "cold_and_frozen_drinks",
+    kcal: 136,
+    kj: 570,
+    protein_g: 0,
+    protein: "other",
+    tag_ids: ["high-energy"],
+    price_aud: 4.55,
+  },
+  {
+    item_id: "mcflurry",
+    name: "McFlurry",
+    category: "desserts",
+    kcal: 312,
+    kj: 1300,
+    protein_g: 8,
+    protein: "other",
+    tag_ids: ["sweet"],
+    price_aud: 4.5,
+  },
 ];
 
 function line(itemId: string, tag: string) {
@@ -51,8 +101,19 @@ function line(itemId: string, tag: string) {
 
 function validOrder() {
   return {
-    items: [line("big-mac", "classic"), line("medium-fries", "side"), line("coke", "high-energy"), line("mcflurry", "sweet")],
-    invented_rules: [{ id: "x-fizzy", description: "Fast tempos want something fizzy.", basis: ["bpm.mean"] }],
+    items: [
+      line("big-mac", "classic"),
+      line("medium-fries", "side"),
+      line("coke", "high-energy"),
+      line("mcflurry", "sweet"),
+    ],
+    invented_rules: [
+      {
+        id: "x-fizzy",
+        description: "Fast tempos want something fizzy.",
+        basis: ["bpm.mean"],
+      },
+    ],
     summary: "A hearty drive-through for a fast tempo.",
     confidence_note: "The drink could have gone either way.",
     how_we_decided: {
@@ -63,33 +124,23 @@ function validOrder() {
   };
 }
 
-const budget = orderBudget({ signals, energy: 68, popularity: "mid" });
-
-describe("order budget", () => {
-  it("maps tempo, energy and popularity, and stays stable", () => {
-    expect(orderBudget({ signals, energy: 80, popularity: "mid" }).calorie_budget).toEqual({ min: 1200, max: 1450 });
-    expect(orderBudget({ signals: { ...signals, "bpm.mean": 100 }, energy: 50, popularity: "mid" }).calorie_budget).toEqual({
-      min: 1000,
-      max: 1250,
-    });
-    expect(orderBudget({ signals: { ...signals, "coverage.tags": 0.2 }, energy: 80, popularity: "mid" }).calorie_budget).toEqual({
-      min: 1050,
-      max: 1600,
-    });
-    expect(requiredProtein(80)).toBe("beef");
-    expect(requiredProtein(30)).toBe("chicken");
-    expect(requiredProtein(50)).toBe("either");
-    expect(orderBudget({ signals, energy: 50, popularity: "niche" }).spend_budget_aud).toEqual({ min: 12, max: 24 });
-    expect(orderBudget({ signals, energy: 50, popularity: "mid" }).spend_budget_aud).toEqual({ min: 16, max: 30 });
-    expect(orderBudget({ signals, energy: 50, popularity: "mainstream" }).spend_budget_aud).toEqual({ min: 20, max: 38 });
-    expect(orderBudget({ signals, energy: 68, popularity: "mid" })).toEqual(budget);
-    expect(indicativePrice({ id: "big-mac", category: "burgers", size: "medium" })).toBe(7.9);
+describe("order rules", () => {
+  it("gives the model the written rules and the little and lot scales", () => {
+    const prompt = buildPrompt("order.v1", { rules: renderOrderRules() });
+    expect(prompt.text).toContain("Higher average BPM means more calories.");
+    expect(prompt.text).toContain("a little is 900 kcal, a lot is 1500 kcal");
+    expect(prompt.text).toContain("a little is $12, a lot is $38");
+    expect(prompt.text).toContain("A thin listening picture may push the meal a little past the usual feel");
+    expect(prompt.text).not.toContain("calorie_budget");
+    expect(
+      indicativePrice({ id: "big-mac", category: "burgers", size: "medium" })
+    ).toBe(7.9);
   });
 });
 
 describe("order validation", () => {
   it("accepts a sacred-rule order and rejects broken ones", () => {
-    const ok = validateOrder(validOrder(), { candidates, budget, signals });
+    const ok = validateOrder(validOrder(), { candidates, signals });
     expect(ok.ok).toBe(true);
     if (ok.ok) {
       expect(ok.order.total_kcal).toBe(1385);
@@ -97,33 +148,56 @@ describe("order validation", () => {
     }
     const invented = validOrder();
     invented.items[0]!.rule_ids = ["x-missing"];
-    expect(validateOrder(invented, { candidates, budget, signals }).ok).toBe(false);
-    expect(orderSchema(candidates.map((item) => item.item_id), ["classic", "side", "sweet", "high-energy"]).safeParse({
-      ...validOrder(),
-      items: [{ ...line("not-on-menu", "classic") }],
-    }).success).toBe(false);
-    expect(validateOrder({ ...validOrder(), items: [line("big-mac", "not-a-tag"), ...validOrder().items.slice(1)] }, { candidates, budget, signals }).ok).toBe(false);
+    expect(validateOrder(invented, { candidates, signals }).ok).toBe(false);
+    expect(
+      orderSchema(
+        candidates.map((item) => item.item_id),
+        ["classic", "side", "sweet", "high-energy"]
+      ).safeParse({
+        ...validOrder(),
+        items: [{ ...line("not-on-menu", "classic") }],
+      }).success
+    ).toBe(false);
+    expect(
+      validateOrder(
+        {
+          ...validOrder(),
+          items: [line("big-mac", "not-a-tag"), ...validOrder().items.slice(1)],
+        },
+        { candidates, signals }
+      ).ok
+    ).toBe(false);
     const heavy = validOrder();
-    heavy.items[1] = { ...heavy.items[1]!, quantity: 1 };
-    const heavyCandidates = candidates.map((item) => (item.item_id === "medium-fries" ? { ...item, kcal: 1200 } : item));
-    expect(validateOrder(heavy, { candidates: heavyCandidates, budget, signals }).ok).toBe(false);
+    const heavyCandidates = candidates.map((item) =>
+      item.item_id === "medium-fries" ? { ...item, kcal: 1200 } : item
+    );
+    const heavyOrder = validateOrder(heavy, { candidates: heavyCandidates, signals });
+    expect(heavyOrder.ok).toBe(true);
+    if (heavyOrder.ok) expect(heavyOrder.order.total_kcal).toBe(2269);
     const chicken = validOrder();
     chicken.items[0] = line("mcchicken", "comfort");
-    expect(validateOrder(chicken, { candidates, budget, signals }).ok).toBe(false);
-    const low = orderBudget({ signals: { ...signals, "bpm.mean": 70 }, energy: 10, popularity: "mid" });
-    expect(validateOrder(validOrder(), { candidates, budget: low, signals: { ...signals, "bpm.mean": 70 } }).ok).toBe(false);
-    const pricey = candidates.map((item) => ({ ...item, price_aud: item.item_id === "big-mac" ? 20 : 3 }));
-    const niche = orderBudget({ signals, energy: 68, popularity: "niche" });
-    expect(validateOrder(validOrder(), { candidates: pricey, budget: niche, signals }).ok).toBe(false);
+    expect(validateOrder(chicken, { candidates, signals }).ok).toBe(true);
     const wrong = validOrder();
-    wrong.how_we_decided = { ...wrong.how_we_decided, text: "Average tempo is 999 BPM." };
-    expect(validateOrder(wrong, { candidates, budget, signals }).ok).toBe(false);
+    wrong.how_we_decided = {
+      ...wrong.how_we_decided,
+      text: "Average tempo is 999 BPM.",
+    };
+    expect(validateOrder(wrong, { candidates, signals }).ok).toBe(false);
     const gap = validOrder();
     gap.summary = "There is missing data in this order.";
-    expect(validateOrder(gap, { candidates, budget, signals }).ok).toBe(false);
-    expect(validatePopularity({ popularity_tier: "mid", reason: "Jazz sits in the middle." }).ok).toBe(true);
-    expect(validatePopularity({ popularity_tier: "mid", reason: "About $12." }).ok).toBe(false);
-    expect(validatePopularity({ popularity_tier: "superstar", reason: "No." }).ok).toBe(false);
+    expect(validateOrder(gap, { candidates, signals }).ok).toBe(false);
+    expect(
+      validatePopularity({
+        popularity_tier: "mid",
+        reason: "Jazz sits in the middle.",
+      }).ok
+    ).toBe(true);
+    expect(
+      validatePopularity({ popularity_tier: "mid", reason: "About $12." }).ok
+    ).toBe(false);
+    expect(
+      validatePopularity({ popularity_tier: "superstar", reason: "No." }).ok
+    ).toBe(false);
   });
 
   it("gives the model compact candidates, not menu descriptions", () => {
@@ -197,29 +271,54 @@ describe("runOrder", () => {
       log: () => undefined,
       complete: async (call) => {
         calls += 1;
-        if (call.kind === "popularity") return { object: { popularity_tier: "mid", reason: "Jazz sits in the middle." }, usage: { inputTokens: 5, outputTokens: 2 } };
+        if (call.kind === "popularity")
+          return {
+            object: {
+              popularity_tier: "mid",
+              reason: "Jazz sits in the middle.",
+            },
+            usage: { inputTokens: 5, outputTokens: 2 },
+          };
         expect(call.prompt).not.toContain("nutrition_note");
         expect(call.prompt).toContain("big-mac");
-        if (calls === 2) return { object: { ...validOrder(), items: [line("not-on-menu", "classic")] }, usage: { inputTokens: 8, outputTokens: 3 } };
-        return { object: validOrder(), usage: { inputTokens: 9, outputTokens: 4 } };
+        expect(call.prompt).toContain('"popularity_tier":"mid"');
+        expect(call.system).toContain("a little is 900 kcal");
+        if (calls === 2)
+          return {
+            object: {
+              ...validOrder(),
+              items: [line("not-on-menu", "classic")],
+            },
+            usage: { inputTokens: 8, outputTokens: 3 },
+          };
+        return {
+          object: validOrder(),
+          usage: { inputTokens: 9, outputTokens: 4 },
+        };
       },
     });
     expect(saved.totals).toEqual({ kcal: 1385, aud: 22.4 });
-    expect(saved.prompt_hash).toBe(buildPrompt("order.v1", {
-      "calorie_budget.min": "1200",
-      "calorie_budget.max": "1450",
-      "spend_budget_aud.min": "16",
-      "spend_budget_aud.max": "30",
-      required_protein: "beef",
-      category_constraints: budget.category_constraints,
-    }).hash);
-    expect(saved.popularity_prompt_hash).toBe(buildPrompt("popularity.v1").hash);
+    expect(saved.prompt_hash).toBe(buildPrompt("order.v1", { rules: renderOrderRules() }).hash);
+    expect(saved.budget.calories_kcal).toEqual({ a_little: 900, a_lot: 1500 });
+    expect(saved.popularity_prompt_hash).toBe(
+      buildPrompt("popularity.v1").hash
+    );
     expect(saved.rules_version).toBe("order-rules.v1");
     expect(saved.menu_retrieved_at).toContain("2026");
-    expect(saved.summary).not.toMatch(/coverage|missing data|unlabeled|uncertain/i);
+    expect(saved.summary).not.toMatch(
+      /coverage|missing data|unlabeled|uncertain/i
+    );
     expect(stages.at(-1)).toBe("done:complete");
     const before = calls;
-    await runOrder({ userId: "user-1", store, candidates, complete: async () => { calls += 1; return { object: {} }; } });
+    await runOrder({
+      userId: "user-1",
+      store,
+      candidates,
+      complete: async () => {
+        calls += 1;
+        return { object: {} };
+      },
+    });
     expect(calls).toBe(before);
   });
 
@@ -244,7 +343,18 @@ describe("runOrder", () => {
         Object.assign(run, next);
       },
       async getProfile() {
-        return { signals, traits: [], persona_name: "A", tagline: "B", insights: [], caveats: [], run_id: "run-2", user_id: "user-1", prompt_version: "profile.v1", prompt_hash: "x" } as StoredProfile;
+        return {
+          signals,
+          traits: [],
+          persona_name: "A",
+          tagline: "B",
+          insights: [],
+          caveats: [],
+          run_id: "run-2",
+          user_id: "user-1",
+          prompt_version: "profile.v1",
+          prompt_hash: "x",
+        } as StoredProfile;
       },
       async getOrder() {
         return null;
@@ -256,7 +366,11 @@ describe("runOrder", () => {
         return undefined;
       },
       async getPopularity() {
-        return { popularity_tier: "mid", reason: "Jazz sits in the middle.", prompt_hash: buildPrompt("popularity.v1").hash };
+        return {
+          popularity_tier: "mid",
+          reason: "Jazz sits in the middle.",
+          prompt_hash: buildPrompt("popularity.v1").hash,
+        };
       },
       async savePopularity() {
         return undefined;
@@ -268,8 +382,10 @@ describe("runOrder", () => {
         store,
         candidates,
         log: () => undefined,
-        complete: async () => { throw new Error("malformed"); },
-      }),
+        complete: async () => {
+          throw new Error("malformed");
+        },
+      })
     ).rejects.toThrow();
     expect(saved).toBe(false);
     expect(run.status).toBe("error");

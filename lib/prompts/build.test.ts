@@ -4,12 +4,7 @@ import { describe, expect, it } from "vitest";
 import { buildPrompt } from "@/lib/prompts/build";
 
 const orderInputs = {
-  "calorie_budget.min": "1200",
-  "calorie_budget.max": "1450",
-  "spend_budget_aud.min": "20",
-  "spend_budget_aud.max": "38",
-  required_protein: "beef",
-  category_constraints: "one main, one side, one drink",
+  rules: "Higher average BPM means more calories.\n\nA little is 900 kcal.",
 };
 
 describe("prompt builder", () => {
@@ -24,8 +19,8 @@ describe("prompt builder", () => {
     expect(order.text).toContain("THE SACRED RULES (never break these)");
     expect(profile.version).toBe("profile.v1");
     expect(profile.hash).toHaveLength(64);
-    expect(order.text).toContain("1200-1450 kcal");
-    const other = buildPrompt("order.v1", { ...orderInputs, "calorie_budget.min": "900" });
+    expect(order.text).toContain("900 kcal");
+    const other = buildPrompt("order.v1", { rules: "Higher average BPM means more calories.\n\nA little is 800 kcal." });
     expect(other.hash).toBe(order.hash);
     expect(other.text).not.toBe(order.text);
     expect(profile.text).toMatchSnapshot();
