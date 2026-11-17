@@ -3,7 +3,6 @@ import { runEnrich, type EnrichStore } from "@/lib/enrich/run";
 import type { CacheRow, EnrichTrack, SourceHit } from "@/lib/enrich/types";
 import { emptyCounts, type RunRecord } from "@/lib/ingest/types";
 import { miss } from "@/lib/enrich/types";
-import type { StreamEvent } from "@/lib/stream/events";
 
 const tracks: EnrichTrack[] = [
   {
@@ -24,7 +23,10 @@ const tracks: EnrichTrack[] = [
   },
 ];
 
-function store(): EnrichStore & { cache: Map<string, CacheRow>; run: RunRecord } {
+function store(): EnrichStore & {
+  cache: Map<string, CacheRow>;
+  run: RunRecord;
+} {
   const cache = new Map<string, CacheRow>();
   const run: RunRecord = {
     id: "run-1",
@@ -70,73 +72,87 @@ function hit(bpm: number | null): SourceHit {
   };
 }
 
+function musicbrainzHit(): SourceHit {
+  return {
+    source: "musicbrainz",
+    matched: true,
+    confidence: "high",
+    sourceUrl: "https://musicbrainz.org/recording/abc",
+    tags: [{ name: "pop", original: "pop", count: 1 }],
+    bpm: null,
+    raw: {},
+  };
+}
+
 describe("runEnrich", () => {
-  it("caches matches, skips them on the next run, and can resume the rest", async () => {
+  it("looks up each track once, then skips a finished enrich", async () => {
     const saved = store();
     let mbCalls = 0;
     const musicbrainz = {
       name: "musicbrainz" as const,
       lookup: async (): Promise<SourceHit> => {
         mbCalls += 1;
-        return {
-          source: "musicbrainz",
-          matched: true,
-          confidence: "high",
-          sourceUrl: "https://musicbrainz.org/recording/abc",
-          tags: [{ name: "pop", original: "pop", count: 1 }],
-          bpm: null,
-          raw: {},
-        };
+        return musicbrainzHit();
       },
     };
     const deezer = { name: "deezer" as const, lookup: async () => hit(120) };
-    const firstEvents: StreamEvent[] = [];
     await runEnrich({
       userId: "user-1",
       store: saved,
       musicbrainz,
       deezer,
-      emit: (event) => firstEvents.push(event),
-      maxTracks: 1,
       now: () => Date.parse("2026-11-13T01:00:00.000Z"),
     });
-    expect(firstEvents[0]).toEqual({ type: "stage", stage: "enrich" });
     expect(saved.run.stage).toBe("enrich");
     expect(saved.run.status).toBe("running");
-    expect(firstEvents.some((event) => event.type === "done")).toBe(false);
-    expect(mbCalls).toBe(1);
+    expect(saved.run.checkpoint.enrich).toBe(true);
+    expect(mbCalls).toBe(2);
+    expect(saved.cache.size).toBe(2);
 
-    const secondEvents: StreamEvent[] = [];
     await runEnrich({
       userId: "user-1",
       store: saved,
       musicbrainz,
       deezer,
-      emit: (event) => secondEvents.push(event),
       now: () => Date.parse("2026-11-13T01:05:00.000Z"),
     });
     expect(mbCalls).toBe(2);
-    expect(saved.run.status).toBe("complete");
-    expect(saved.run.checkpoint.enrich).toBe(true);
-    expect(secondEvents.filter((event) => event.type === "enrich_result")).toHaveLength(2);
-    expect(secondEvents.at(-1)).toEqual({ type: "done", stage: "enrich" });
   });
 
-  it("makes no external calls when every track is cached", async () => {
+  it("skips a fresh cache row and looks up the rest", async () => {
     const saved = store();
-    const musicbrainz = { name: "musicbrainz" as const, lookup: vi.fn(async () => miss("musicbrainz")) };
-    const deezer = { name: "deezer" as const, lookup: vi.fn(async () => hit(100)) };
-    await runEnrich({ userId: "user-1", store: saved, musicbrainz, deezer, emit: () => {} });
-    musicbrainz.lookup.mockClear();
-    deezer.lookup.mockClear();
-    await runEnrich({ userId: "user-1", store: saved, musicbrainz, deezer, emit: () => {} });
-    expect(musicbrainz.lookup).not.toHaveBeenCalled();
-    expect(deezer.lookup).not.toHaveBeenCalled();
+    saved.cache.set("isrc:AAA", {
+      cache_key: "isrc:AAA",
+      spotify_track_id: "t1",
+      isrc: "AAA",
+      matched: true,
+      tags: [],
+      bpm: 100,
+      fields: null,
+      raw: {},
+      confidence: "high",
+      fetched_at: "2026-11-13T00:00:00.000Z",
+      expires_at: null,
+    });
+    const musicbrainz = {
+      name: "musicbrainz" as const,
+      lookup: vi.fn(async () => musicbrainzHit()),
+    };
+    const deezer = {
+      name: "deezer" as const,
+      lookup: vi.fn(async () => hit(100)),
+    };
+    await runEnrich({ userId: "user-1", store: saved, musicbrainz, deezer });
+    expect(musicbrainz.lookup).toHaveBeenCalledOnce();
+    expect(deezer.lookup).toHaveBeenCalledOnce();
+    expect(musicbrainz.lookup).toHaveBeenCalledWith(
+      expect.objectContaining({ spotify_id: "t2" })
+    );
   });
 
-  it("keeps the other source when MusicBrainz is down and does not stream a total miss", async () => {
+  it("keeps a Deezer match when MusicBrainz throws, and expires that row", async () => {
     const saved = store();
-    const events: StreamEvent[] = [];
+    const now = Date.parse("2026-11-13T01:00:00.000Z");
     await runEnrich({
       userId: "user-1",
       store: saved,
@@ -148,59 +164,22 @@ describe("runEnrich", () => {
       },
       deezer: {
         name: "deezer",
-        lookup: async (track) => (track.spotify_id === "t1" ? hit(90) : miss("deezer")),
+        lookup: async (track) =>
+          track.spotify_id === "t1" ? hit(90) : miss("deezer"),
       },
-      emit: (event) => events.push(event),
+      now: () => now,
     });
-    const results = events.filter((event) => event.type === "enrich_result");
-    expect(results).toHaveLength(1);
-    expect(results[0]).toMatchObject({ id: "t1", failures: ["musicbrainz"] });
-    expect([...saved.cache.values()].filter((row) => row.matched)).toHaveLength(1);
-    expect([...saved.cache.values()].filter((row) => !row.matched)[0]?.expires_at).not.toBeNull();
+    const matched = [...saved.cache.values()].filter((row) => row.matched);
+    const missed = [...saved.cache.values()].filter((row) => !row.matched);
+    expect(matched).toHaveLength(1);
+    expect(matched[0]?.spotify_track_id).toBe("t1");
+    expect(matched[0]?.expires_at).toBe(
+      new Date(now + 60 * 60 * 1000).toISOString()
+    );
+    expect(missed[0]?.expires_at).not.toBeNull();
   });
 
-  it("starts the Deezer lookup without waiting for MusicBrainz", async () => {
-    let release: () => void = () => undefined;
-    const gate = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    let deezerStarted = false;
-    const saved = store();
-    const task = runEnrich({
-      userId: "user-1",
-      store: saved,
-      maxTracks: 1,
-      musicbrainz: {
-        name: "musicbrainz",
-        lookup: () => gate.then(() => ({
-          source: "musicbrainz" as const,
-          matched: true,
-          confidence: "high" as const,
-          sourceUrl: "https://musicbrainz.org/recording/abc",
-          tags: [],
-          bpm: null,
-          raw: {},
-        })),
-      },
-      deezer: {
-        name: "deezer",
-        lookup: async () => {
-          deezerStarted = true;
-          return hit(100);
-        },
-      },
-      emit: () => undefined,
-    });
-    try {
-      for (let i = 0; i < 20 && !deezerStarted; i += 1) await Promise.resolve();
-      expect(deezerStarted).toBe(true);
-    } finally {
-      release();
-      await task;
-    }
-  });
-
-  it("expires a cache row when a source errors, even if the other source matched", async () => {
+  it("looks up an errored row again after it expires", async () => {
     const saved = store();
     const now = Date.parse("2026-11-13T01:00:00.000Z");
     const musicbrainz = {
@@ -209,19 +188,18 @@ describe("runEnrich", () => {
         throw new Error("400");
       }),
     };
-    const deezer = { name: "deezer" as const, lookup: vi.fn(async () => hit(90)) };
+    const deezer = {
+      name: "deezer" as const,
+      lookup: vi.fn(async () => hit(90)),
+    };
     await runEnrich({
       userId: "user-1",
       store: saved,
       musicbrainz,
       deezer,
-      emit: () => {},
       now: () => now,
-      maxTracks: 1,
     });
-    const row = saved.cache.get("isrc:AAA");
-    expect(row?.matched).toBe(true);
-    expect(row?.expires_at).toBe(new Date(now + 60 * 60 * 1000).toISOString());
+    saved.run.checkpoint.enrich = false;
 
     musicbrainz.lookup.mockClear();
     deezer.lookup.mockClear();
@@ -230,23 +208,20 @@ describe("runEnrich", () => {
       store: saved,
       musicbrainz,
       deezer,
-      emit: () => {},
       now: () => now + 30 * 60 * 1000,
-      maxTracks: 1,
     });
     expect(musicbrainz.lookup).not.toHaveBeenCalled();
     expect(deezer.lookup).not.toHaveBeenCalled();
 
+    saved.run.checkpoint.enrich = false;
     await runEnrich({
       userId: "user-1",
       store: saved,
       musicbrainz,
       deezer,
-      emit: () => {},
       now: () => now + 60 * 60 * 1000,
-      maxTracks: 1,
     });
-    expect(musicbrainz.lookup).toHaveBeenCalledOnce();
-    expect(deezer.lookup).toHaveBeenCalledOnce();
+    expect(musicbrainz.lookup).toHaveBeenCalledTimes(2);
+    expect(deezer.lookup).toHaveBeenCalledTimes(2);
   });
 });

@@ -10,11 +10,9 @@ import {
 } from "@/lib/enrich/types";
 import type { RunRecord } from "@/lib/ingest/types";
 import { log } from "@/lib/log";
-import type { StreamEvent } from "@/lib/stream/events";
 
 const NEGATIVE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const ERROR_TTL_MS = 60 * 60 * 1000;
-const DEEZER_CONCURRENCY = 6;
 
 export type EnrichProvider = {
   name: "musicbrainz" | "deezer";
@@ -29,91 +27,40 @@ export type EnrichStore = {
   saveCache(row: CacheRow): Promise<void>;
 };
 
-/** Look up MusicBrainz tags and Deezer BPM for the user's tracks, with caching. */
+/** Look up MusicBrainz tags and Deezer BPM for each track, one provider after the other. */
 export async function runEnrich(input: {
   userId: string;
   store: EnrichStore;
   musicbrainz: EnrichProvider;
   deezer: EnrichProvider;
-  emit: (event: StreamEvent) => void;
   now?: () => number;
-  maxTracks?: number;
-  timeBudgetMs?: number;
 }): Promise<void> {
   const now = input.now ?? Date.now;
-  const started = now();
-  input.emit({ type: "stage", stage: "enrich" });
   const run = await input.store.latestRun(input.userId);
-  if (!run) {
-    input.emit({ type: "error", code: "no_run", message: "Nothing has been ingested yet." });
-    return;
-  }
+  if (!run) throw new Error("no_run");
+  if (run.checkpoint.enrich === true) return;
+
   run.stage = "enrich";
   run.status = "running";
   run.error = null;
+  run.finished_at = null;
   await input.store.saveRun(run);
 
   const tracks = uniqBy(await input.store.listTracks(input.userId), cacheKey);
-  input.emit({ type: "enrich_start", total: tracks.length });
-  run.checkpoint = { ...run.checkpoint, enrich_done: 0, enrich_total: tracks.length };
-  let processed = 0;
-  const pending: EnrichTrack[] = [];
   for (const track of tracks) {
-    if (input.maxTracks != null && processed + pending.length >= input.maxTracks) break;
-    if (input.timeBudgetMs != null && processed > 0 && now() - started >= input.timeBudgetMs) break;
     const key = cacheKey(track);
     const cached = await input.store.getCache(key);
-    if (cached && !expired(cached, now())) {
-      if (cached.matched) emitMatch(input.emit, track, []);
-      processed += 1;
-      input.emit({ type: "progress", done: processed, total: tracks.length, endpoint: "enrich" });
-      continue;
-    }
-    pending.push(track);
-  }
-  const deezerTasks = new Map<string, Promise<SourceHit>>();
-  const startDeezer = (track: EnrichTrack | undefined) => {
-    if (!track || deezerTasks.has(track.spotify_id)) return;
-    deezerTasks.set(track.spotify_id, safeLookup("deezer", () => input.deezer.lookup(track)));
-  };
-  for (const track of pending.slice(0, DEEZER_CONCURRENCY)) startDeezer(track);
-  for (let index = 0; index < pending.length; index += 1) {
-    const track = pending[index];
-    if (!track) continue;
-    if (input.timeBudgetMs != null && processed > 0 && now() - started >= input.timeBudgetMs) break;
-    startDeezer(pending[index + DEEZER_CONCURRENCY]);
+    if (cached && !expired(cached, now())) continue;
     const musicbrainz = await safeLookup("musicbrainz", () => input.musicbrainz.lookup(track));
-    const deezer = await (deezerTasks.get(track.spotify_id) ?? safeLookup("deezer", () => input.deezer.lookup(track)));
+    const deezer = await safeLookup("deezer", () => input.deezer.lookup(track));
     const fetchedAt = new Date(now()).toISOString();
     const chosen = chooseEnrichment(musicbrainz, deezer, fetchedAt);
-    if (!musicbrainz.matched || !deezer.matched) {
-      log("info", "enrich.source", {
-        user_id: input.userId,
-        run_id: run.id,
-        track_id: track.spotify_id,
-        musicbrainz: musicbrainz.error ?? (musicbrainz.matched ? "match" : "miss"),
-        deezer: deezer.error ?? (deezer.matched ? "match" : "miss"),
-      });
-    }
-    await input.store.saveCache(cacheRow(track, cacheKey(track), chosen, musicbrainz, deezer, fetchedAt, now()));
-    if (chosen) emitMatch(input.emit, track, chosen.failures);
-    processed += 1;
-    run.checkpoint = { ...run.checkpoint, enrich_done: processed, enrich_total: tracks.length };
-    await input.store.saveRun(run);
-    input.emit({ type: "progress", done: processed, total: tracks.length, endpoint: "enrich" });
+    await input.store.saveCache(cacheRow(track, key, chosen, musicbrainz, deezer, fetchedAt, now()));
   }
 
-  if (processed >= tracks.length) {
-    run.status = "complete";
-    run.checkpoint = { ...run.checkpoint, enrich: true };
-    run.finished_at = new Date(now()).toISOString();
-    await input.store.saveRun(run);
-    input.emit({ type: "done", stage: "enrich" });
-    log("info", "enrich.finished", { user_id: input.userId, run_id: run.id, count: tracks.length });
-  } else {
-    await input.store.saveRun(run);
-    log("info", "enrich.partial", { user_id: input.userId, run_id: run.id, processed, total: tracks.length });
-  }
+  run.checkpoint = { ...run.checkpoint, enrich: true };
+  await input.store.saveRun(run);
+  log("info", "enrich.finished", { user_id: input.userId, run_id: run.id, count: tracks.length });
 }
 
 /** True when a negative cache row has passed its expiry. */
@@ -128,19 +75,6 @@ async function safeLookup(source: "musicbrainz" | "deezer", lookup: () => Promis
   } catch (error) {
     return miss(source, error instanceof Error ? error.message : "failed");
   }
-}
-
-/** Emit the enrich_result event for a matched track. */
-function emitMatch(emit: (event: StreamEvent) => void, track: EnrichTrack, failures: string[]) {
-  emit({
-    type: "enrich_result",
-    id: track.spotify_id,
-    name: track.name,
-    artists: track.artists,
-    album: track.album_name,
-    image: track.album_image_url,
-    failures,
-  });
 }
 
 /** Build the cache row, expiring it when a source failed or nothing matched. */

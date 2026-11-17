@@ -10,7 +10,6 @@ import { emptyCounts, type RunRecord } from "@/lib/ingest/types";
 import { loadMenu } from "@/lib/menu/load";
 import type { StoredProfile } from "@/lib/profile/run";
 import type { TasteSignals } from "@/lib/signals/compute";
-import type { StreamEvent } from "@/lib/stream/events";
 
 const signals: TasteSignals = {
   "tags.top": [{ tag: "jazz", share: 1 }],
@@ -138,7 +137,6 @@ describe("order validation", () => {
 
 describe("runOrder", () => {
   it("retries a bad id, stores hashes, and skips the model when cached", async () => {
-    const events: StreamEvent[] = [];
     const stages: string[] = [];
     let calls = 0;
     let stored: StoredOrder | null = null;
@@ -196,7 +194,6 @@ describe("runOrder", () => {
       userId: "user-1",
       store,
       candidates,
-      emit: (event) => events.push(event),
       log: () => undefined,
       complete: async (call) => {
         calls += 1;
@@ -221,14 +218,12 @@ describe("runOrder", () => {
     expect(saved.menu_retrieved_at).toContain("2026");
     expect(saved.summary).not.toMatch(/coverage|missing data|unlabeled|uncertain/i);
     expect(stages.at(-1)).toBe("done:complete");
-    expect(events.some((event) => event.type === "stage" && event.stage === "done")).toBe(true);
     const before = calls;
-    await runOrder({ userId: "user-1", store, candidates, emit: () => undefined, complete: async () => { calls += 1; return { object: {} }; } });
+    await runOrder({ userId: "user-1", store, candidates, complete: async () => { calls += 1; return { object: {} }; } });
     expect(calls).toBe(before);
   });
 
   it("stores nothing when every attempt fails", async () => {
-    const events: StreamEvent[] = [];
     const run: RunRecord = {
       id: "run-2",
       user_id: "user-1",
@@ -272,13 +267,11 @@ describe("runOrder", () => {
         userId: "user-1",
         store,
         candidates,
-        emit: (event) => events.push(event),
         log: () => undefined,
         complete: async () => { throw new Error("malformed"); },
       }),
     ).rejects.toThrow();
     expect(saved).toBe(false);
-    expect(events.some((event) => event.type === "error" && event.code === "order_invalid")).toBe(true);
     expect(run.status).toBe("error");
   });
 });

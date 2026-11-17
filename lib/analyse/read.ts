@@ -6,11 +6,9 @@ export const TRACK_STREAM_BUDGET_MS = 240_000;
 export const RESULTS_HOLD_MS = 240_000;
 export const READ_POLL_MS = 1_000;
 
-export type TrackCursor = { trackIds: string[]; artistKeys: string[] };
-
 export type TrackStreamEvent =
   | { type: "tracks"; tracks: VisibleTrack[]; artists: VisibleArtist[] }
-  | { type: "resume"; cursor: string }
+  | { type: "resume"; since?: string }
   | { type: "done" }
   | { type: "error"; message: string };
 
@@ -42,24 +40,12 @@ export function resultsDecision(input: {
   return "wait";
 }
 
-/** Encode a track-stream cursor as a base64url string. */
-export function encodeTrackCursor(cursor: TrackCursor): string {
-  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
-}
-
-/** Decode a track-stream cursor, or return null if it is invalid. */
-export function decodeTrackCursor(value: string | null): TrackCursor | null {
+/** Parse a resume timestamp, or return null when it is missing or invalid. */
+export function parseSince(value: string | null): string | null {
   if (!value) return null;
-  try {
-    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<TrackCursor>;
-    if (!parsed || !Array.isArray(parsed.trackIds)) return null;
-    return {
-      trackIds: parsed.trackIds.filter((id): id is string => typeof id === "string"),
-      artistKeys: Array.isArray(parsed.artistKeys) ? parsed.artistKeys.filter((id): id is string => typeof id === "string") : [],
-    };
-  } catch {
-    return null;
-  }
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return null;
+  return new Date(parsed).toISOString();
 }
 
 /** Parse one NDJSON line from the track stream. */
@@ -76,9 +62,4 @@ export function parseTrackLine(line: string): TrackStreamEvent | null {
   } catch {
     return null;
   }
-}
-
-/** Stable key for an artist in a time window. */
-export function artistStreamKey(artist: { id: string; time_range: string }): string {
-  return `${artist.id}:${artist.time_range}`;
 }

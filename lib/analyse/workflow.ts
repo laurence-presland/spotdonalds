@@ -1,58 +1,82 @@
-import { FatalError, getStepMetadata, getWorkflowMetadata, RetryableError } from "workflow";
+import { FatalError, getWorkflowMetadata } from "workflow";
 import { ANALYSIS_STOPPED } from "@/lib/analyse/fail-run";
-import { executeFlowStep } from "@/lib/analyse/flow-live";
-import type { FlowStep } from "@/lib/analyse/flow";
-import { markOwnedRunFailed } from "@/lib/analysis-run";
+import { assertWorker, markOwnedRunFailed, markRunFailed } from "@/lib/analysis-run";
+import { SpotifyTokenError } from "@/lib/auth/tokens";
+import { enrichUserTracks } from "@/lib/enrich/tracks";
+import { pullSpotifyCatalogue } from "@/lib/ingest/catalogue";
+import { generateUserOrder } from "@/lib/order/generate";
+import { analyseTaste } from "@/lib/profile/analyse";
 
 const STEP_RETRIES = 2;
 
-/** Durable workflow: ingest, then analyse, and mark the run failed if a step dies. */
+/** Durable workflow: ingest, enrich, analyse, generate, and fail the run if a step dies. */
 export async function analysisWorkflow(userId: string, runId: string) {
   "use workflow";
   try {
-    if ((await ingestStep(userId, runId)) !== "continue") return;
-    await analyseStep(userId, runId);
+    if ((await ingestSpotifyData(userId, runId)) === "stop") return;
+    await enrichTracks(userId, runId);
+    await analyse(userId, runId);
+    await generate(userId, runId);
   } catch (error) {
-    await markFailedStep(userId, runId);
+    await failRun(userId, runId);
     throw error;
   }
 }
 
-/** Workflow step that runs ingest. */
-async function ingestStep(userId: string, runId: string) {
+/** Fetch Spotify listening when the stored catalogue is still short. */
+async function ingestSpotifyData(userId: string, runId: string) {
   "use step";
-  return bound(userId, runId, "ingest");
+  await own(userId, runId);
+  try {
+    return await pullSpotifyCatalogue(userId, runId);
+  } catch (error) {
+    if (!spotifyAuthFailure(error)) throw error;
+    await markRunFailed(runId, userId, error.message);
+    throw new FatalError(error.message);
+  }
 }
-(ingestStep as { maxRetries?: number }).maxRetries = STEP_RETRIES;
+(ingestSpotifyData as { maxRetries?: number }).maxRetries = STEP_RETRIES;
 
-/** Workflow step that runs enrich, profile, popularity, and order. */
-async function analyseStep(userId: string, runId: string) {
+/** Add tags and tempo for the stored tracks. */
+async function enrichTracks(userId: string, runId: string) {
   "use step";
-  return bound(userId, runId, "analyse");
+  await own(userId, runId);
+  await enrichUserTracks(userId);
 }
-(analyseStep as { maxRetries?: number }).maxRetries = STEP_RETRIES;
+(enrichTracks as { maxRetries?: number }).maxRetries = STEP_RETRIES;
 
-/** Workflow step that marks the run failed if this worker still owns it. */
-async function markFailedStep(userId: string, runId: string) {
+/** Build the taste profile. */
+async function analyse(userId: string, runId: string) {
+  "use step";
+  await own(userId, runId);
+  await analyseTaste(userId);
+}
+(analyse as { maxRetries?: number }).maxRetries = STEP_RETRIES;
+
+/** Build the menu order. */
+async function generate(userId: string, runId: string) {
+  "use step";
+  await own(userId, runId);
+  await generateUserOrder(userId);
+}
+(generate as { maxRetries?: number }).maxRetries = STEP_RETRIES;
+
+/** Mark the run failed when this workflow still owns it. */
+async function failRun(userId: string, runId: string) {
   "use step";
   const workflow = getWorkflowMetadata();
   await markOwnedRunFailed(runId, userId, workflow.workflowRunId, ANALYSIS_STOPPED);
 }
-(markFailedStep as { maxRetries?: number }).maxRetries = STEP_RETRIES;
+(failRun as { maxRetries?: number }).maxRetries = STEP_RETRIES;
 
-/** Run a flow step under this worker's ownership, or stop if the lease is lost. */
-async function bound(userId: string, runId: string, step: FlowStep): Promise<"continue" | "stop"> {
-  const stepMeta = getStepMetadata();
+/** Stop the step when another workflow has taken the run. */
+async function own(userId: string, runId: string) {
   const workflow = getWorkflowMetadata();
-  const outcome = await executeFlowStep({
-    userId,
-    runId,
-    workflowRunId: workflow.workflowRunId,
-    attempt: stepMeta.attempt,
-    maxAttempts: stepMeta.maxAttempts,
-    step,
-  });
-  if (outcome.type === "retry") throw new RetryableError(outcome.message, { retryAfter: "15s" });
-  if (outcome.type === "failed" || outcome.type === "lost") throw new FatalError(outcome.message);
-  return outcome.type;
+  const owned = await assertWorker(runId, userId, workflow.workflowRunId);
+  if (!owned) throw new FatalError("Another worker owns this analysis");
+}
+
+/** True when Spotify needs the person to sign in again. */
+function spotifyAuthFailure(error: unknown): error is Error {
+  return error instanceof SpotifyTokenError || (error instanceof Error && error.name === "SpotifyTokenError");
 }

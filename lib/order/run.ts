@@ -9,7 +9,6 @@ import type { StoredProfile } from "@/lib/profile/run";
 import { presentSignals, traitScore } from "@/lib/signals/compute";
 import { log as writeLog } from "@/lib/log";
 import type { RunRecord } from "@/lib/ingest/types";
-import type { StreamEvent } from "@/lib/stream/events";
 
 export type StoredOrder = {
   run_id: string;
@@ -57,34 +56,22 @@ export async function runOrder(input: {
   userId: string;
   store: OrderStore;
   complete: OrderCompletion;
-  emit: (event: StreamEvent) => void;
   log?: typeof writeLog;
   candidates?: OrderCandidate[];
   force?: boolean;
 }): Promise<StoredOrder> {
   const record = input.log ?? writeLog;
   const run = await input.store.latestRun(input.userId);
-  if (!run) {
-    input.emit({ type: "error", code: "no_run", message: "Ingest listening before building an order." });
-    throw new Error("no_run");
-  }
-  if (run.status === "error") {
-    input.emit({ type: "error", code: "profile_invalid", message: run.error || "The taste profile didn't pass checking." });
-    throw new Error(run.error || "profile_failed");
-  }
+  if (!run) throw new Error("no_run");
+  if (run.status === "error") throw new Error(run.error || "profile_failed");
   const existing = await input.store.getOrder(input.userId, run.id);
-  input.emit({ type: "stage", stage: "order" });
   if (existing && !input.force) {
     await finishRun(input, run);
-    input.emit({ type: "stage", stage: "done" });
     return existing;
   }
   if (existing) await input.store.deleteOrder(input.userId, run.id);
   const profile = await input.store.getProfile(input.userId, run.id);
-  if (!profile) {
-    input.emit({ type: "error", code: "no_profile", message: "Build a taste profile before the order." });
-    throw new Error("no_profile");
-  }
+  if (!profile) throw new Error("no_profile");
 
   run.stage = "order";
   run.status = "running";
@@ -102,7 +89,6 @@ export async function runOrder(input: {
     run.stage = "popularity";
     run.error = error instanceof Error ? error.message : "popularity_invalid";
     await input.store.saveRun(run);
-    input.emit({ type: "error", code: "order_invalid", message: "The order didn't pass checking." });
     throw error;
   }
   const budget = orderBudget({
@@ -185,11 +171,7 @@ export async function runOrder(input: {
         menu_retrieved_at: loadMenu().metadata.retrieved_at,
       };
       await input.store.saveOrder(stored);
-      run.status = "complete";
-      run.stage = "done";
-      run.finished_at = new Date().toISOString();
-      await input.store.saveRun(run);
-      input.emit({ type: "stage", stage: "done" });
+      await finishRun(input, run);
       return stored;
     } catch (error) {
       errors = [error instanceof Error ? error.message : "The model call failed"];
@@ -206,7 +188,6 @@ export async function runOrder(input: {
   run.status = "error";
   run.error = errors.join("; ");
   await input.store.saveRun(run);
-  input.emit({ type: "error", code: "order_invalid", message: "The order didn't pass checking." });
   throw new Error(run.error || "order_invalid");
 }
 
@@ -215,7 +196,6 @@ export async function runPopularity(input: {
   userId: string;
   store: OrderStore;
   complete: OrderCompletion;
-  emit: (event: StreamEvent) => void;
   log?: typeof writeLog;
 }): Promise<void> {
   const record = input.log ?? writeLog;
@@ -247,10 +227,12 @@ export async function runPopularity(input: {
 
 /** Mark the analysis run complete. */
 async function finishRun(input: { store: OrderStore }, run: RunRecord): Promise<void> {
-  if (run.stage === "done" && run.status === "complete" && run.finished_at) return;
+  if (run.stage === "done" && run.status === "complete" && run.finished_at && run.outcome === "ready") return;
   run.stage = "done";
   run.status = "complete";
   run.error = null;
+  run.outcome = "ready";
+  run.open = false;
   run.finished_at = new Date().toISOString();
   await input.store.saveRun(run);
 }

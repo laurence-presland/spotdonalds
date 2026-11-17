@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decideClaim, isHeartbeatStale, nextPipelineStep } from "@/lib/analyse/progress";
+import { claimDecision } from "@/lib/analyse/claim";
 import { initialAnalysingState, reduceAnalysis } from "@/lib/analysing/reduce";
 import { emptyCounts, type RunRecord } from "@/lib/ingest/types";
 import { runOrder, type OrderStore, type StoredOrder } from "@/lib/order/run";
@@ -7,35 +7,18 @@ import { runOrder, type OrderStore, type StoredOrder } from "@/lib/order/run";
 describe("analysis resume", () => {
   it("attaches to the running run instead of inserting another", () => {
     const running = { status: "running", stage: "profile", open: true };
-    expect(decideClaim(running, false)).toBe("attach");
-    expect(decideClaim(running, true)).toBe("attach");
-    expect(decideClaim(null, false)).toBe("insert");
-    expect(decideClaim({ status: "error", stage: "profile", open: false }, false)).toBe("idle");
-    expect(decideClaim({ status: "error", stage: "profile", open: false }, true)).toBe("reopen");
-    expect(decideClaim({ status: "complete", stage: "done", open: false }, false)).toBe("finished");
-  });
-
-  it("stops after a failed profile and does not continue to the order", () => {
-    const failed = { status: "error", stage: "profile", checkpoint: { enrich: true } };
-    const ingested = {
-      recently_played: true,
-      top_tracks: { short_term: true, medium_term: true, long_term: true },
-      top_artists: { short_term: true, medium_term: true, long_term: true },
-      enrich: true,
-    };
-    expect(nextPipelineStep(failed, false)).toBe("stop");
-    expect(nextPipelineStep(failed, true)).toBe("stop");
-    expect(nextPipelineStep({ status: "running", stage: "profile", checkpoint: ingested }, true)).toBe("popularity");
-    expect(nextPipelineStep({ status: "running", stage: "profile", checkpoint: { ...ingested, popularity: true } }, true)).toBe("order");
-    expect(nextPipelineStep({ status: "running", stage: "enrich", checkpoint: { ...ingested, enrich: false } }, false)).toBe("enrich");
-  });
-
-  it("treats a fresh heartbeat as still working", () => {
-    const now = Date.parse("2026-11-13T00:00:30.000Z");
-    expect(isHeartbeatStale("2026-11-13T00:00:20.000Z", now)).toBe(false);
-    expect(isHeartbeatStale("2026-11-13T00:00:00.000Z", now)).toBe(false);
-    expect(isHeartbeatStale("2026-11-12T23:59:00.000Z", now)).toBe(true);
-    expect(isHeartbeatStale(null, now)).toBe(true);
+    expect(claimDecision(running, false)).toBe("attach");
+    expect(claimDecision(running, true)).toBe("attach");
+    expect(claimDecision(null, false)).toBe("insert");
+    expect(
+      claimDecision({ status: "error", stage: "profile", open: false }, false)
+    ).toBe("leave");
+    expect(
+      claimDecision({ status: "error", stage: "profile", open: false }, true)
+    ).toBe("reopen");
+    expect(
+      claimDecision({ status: "complete", stage: "done", open: false }, false)
+    ).toBe("leave");
   });
 
   it("shows the stored stage when a refresh finds the run in progress", () => {
@@ -93,15 +76,16 @@ describe("analysis resume", () => {
         throw new Error("should not save");
       },
     } as OrderStore;
-    await expect(runOrder({
-      userId: "user-1",
-      store,
-      complete: async () => {
-        calls += 1;
-        return { object: {} };
-      },
-      emit: () => undefined,
-    })).rejects.toThrow(/Quoted number 5/);
+    await expect(
+      runOrder({
+        userId: "user-1",
+        store,
+        complete: async () => {
+          calls += 1;
+          return { object: {} };
+        },
+      })
+    ).rejects.toThrow(/Quoted number 5/);
     expect(calls).toBe(0);
   });
 
@@ -149,7 +133,6 @@ describe("analysis resume", () => {
       complete: async () => {
         throw new Error("should not call the model");
       },
-      emit: () => undefined,
     });
     expect(saved.run?.stage).toBe("done");
     expect(saved.run?.status).toBe("complete");

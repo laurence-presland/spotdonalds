@@ -1,25 +1,16 @@
 import { uniqBy } from "es-toolkit";
 import { analysisErrorCopy } from "@/lib/analyse/progress";
 import type { VisibleArtist, VisibleTrack, TrackSource } from "@/lib/catalogue/present";
-import type { StreamEvent, Term } from "@/lib/stream/events";
+import type { Term } from "@/lib/stream/events";
 
 export type VisibleStage = "reading" | "taste" | "order";
 
 export type ConnectionStatus = "idle" | "streaming" | "reconnecting" | "error" | "access" | "dropped";
 
-type PendingTrack = {
-  name: string;
-  artists: string[];
-  album: string | null;
-  image: string | null;
-  sources: TrackSource[];
-};
-
 export type AnalysingState = {
   stage: VisibleStage;
   tracks: VisibleTrack[];
   artists: VisibleArtist[];
-  pending: Record<string, PendingTrack>;
   status: ConnectionStatus;
   message: string | null;
   progressDone: number;
@@ -32,7 +23,6 @@ export const initialAnalysingState: AnalysingState = {
   stage: "reading",
   tracks: [],
   artists: [],
-  pending: {},
   status: "idle",
   message: null,
   progressDone: 0,
@@ -52,12 +42,11 @@ export type RunSnapshot = {
 };
 
 export type AnalysingAction =
-  | { type: "event"; event: StreamEvent }
   | { type: "connection"; status: ConnectionStatus; message?: string | null }
   | { type: "hydrate"; tracks: VisibleTrack[]; artists: VisibleArtist[] }
   | { type: "snapshot"; run: RunSnapshot | null };
 
-/** Fold a stream event, snapshot, or hydration into list-screen state. */
+/** Fold a status snapshot or track hydration into list-screen state. */
 export function reduceAnalysis(state: AnalysingState, action: AnalysingAction): AnalysingState {
   if (action.type === "hydrate") {
     return {
@@ -69,8 +58,7 @@ export function reduceAnalysis(state: AnalysingState, action: AnalysingAction): 
   if (action.type === "connection") {
     return { ...state, status: action.status, message: action.message ?? state.message };
   }
-  if (action.type === "snapshot") return applySnapshot(state, action.run);
-  return reduceEvent(state, action.event);
+  return applySnapshot(state, action.run);
 }
 
 /** Apply a run status snapshot to the list-screen state. */
@@ -89,69 +77,9 @@ function applySnapshot(state: AnalysingState, run: RunSnapshot | null): Analysin
   };
 }
 
-/** Apply one stream event to the list-screen state. */
-function reduceEvent(state: AnalysingState, event: StreamEvent): AnalysingState {
-  if (event.type === "stage") {
-    return { ...state, stage: stageFor(event.stage, state.stage), status: "streaming" };
-  }
-  if (event.type === "done" && event.stage === "enrich") {
-    return { ...state, stage: "taste", status: "streaming" };
-  }
-  if (event.type === "done" && event.stage === "profile") {
-    return { ...state, stage: "order", status: "streaming" };
-  }
-  if (event.type === "progress") {
-    return { ...state, progressDone: event.done, progressTotal: event.total, status: "streaming" };
-  }
-  if (event.type === "error") {
-    if (event.code === "not_allowlisted") {
-      return { ...state, status: "access", message: event.message };
-    }
-    return { ...state, status: "error", message: event.message };
-  }
-  if (event.type === "track") {
-    const current = state.pending[event.id] ?? {
-      name: event.name,
-      artists: event.artists,
-      album: event.album,
-      image: event.image,
-      sources: [],
-    };
-    const source: TrackSource = event.source === "top"
-      ? { kind: "top-track", time_range: event.time_range ?? "short_term", rank: event.rank ?? 0 }
-      : { kind: "recent" };
-    return {
-      ...state,
-      pending: {
-        ...state.pending,
-        [event.id]: { ...current, sources: dedupeSources([...current.sources, source]) },
-      },
-    };
-  }
-  if (event.type === "artist") {
-    const artists = mergeArtists(state.artists, [
-      { id: event.id, name: event.name, time_range: event.time_range, rank: event.rank },
-    ]);
-    return { ...state, artists };
-  }
-  if (event.type === "enrich_result") {
-    const known = state.pending[event.id];
-    const track: VisibleTrack = {
-      id: event.id,
-      name: event.name,
-      artists: event.artists,
-      album: event.album,
-      image: event.image,
-      sources: known?.sources ?? [],
-    };
-    return { ...state, tracks: mergeTracks(state.tracks, [track]), status: "streaming" };
-  }
-  return state;
-}
-
-/** Map a pipeline stage to the three-step list-screen stage. */
+/** Map a stored run stage to the three progress labels. */
 export function stageFor(pipeline: string, current: VisibleStage): VisibleStage {
-  if (pipeline === "analyse" || pipeline === "profile") return "taste";
+  if (pipeline === "profile") return "taste";
   if (pipeline === "order" || pipeline === "popularity" || pipeline === "done") return "order";
   if (pipeline === "ingest" || pipeline === "enrich") return "reading";
   return current;

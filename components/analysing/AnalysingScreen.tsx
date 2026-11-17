@@ -9,6 +9,7 @@ import { initialAnalysingState, reduceAnalysis, type AnalysingState } from "@/li
 import { analysisErrorCopy } from "@/lib/analyse/progress";
 import { parseTrackLine } from "@/lib/analyse/read";
 import type { AnalysisStatus } from "@/lib/analyse/status";
+import { screenForRun } from "@/lib/flow/screen";
 import type { Aggregates } from "@/lib/aggregates";
 import type { VisibleArtist, VisibleTrack } from "@/lib/catalogue/present";
 import type { StoredOrder } from "@/lib/order/run";
@@ -66,10 +67,29 @@ export function AnalysingScreen({
       dispatch({ type: "connection", status: "dropped", message });
     }
 
+    function applyStatus(status: AnalysisStatus) {
+      const screen = screenForRun(
+        { stage: status.stage ?? "", status: status.status, outcome: status.outcome },
+        false,
+      );
+      dispatch({
+        type: "snapshot",
+        run: {
+          status: status.status,
+          stage: status.stage ?? "",
+          error: status.error ?? null,
+          outcome: status.outcome,
+          progress: { done: 0, total: 0 },
+          complete: screen === "results",
+          trackCount: status.trackCount,
+        },
+      });
+    }
+
     async function readTracks(signal: AbortSignal): Promise<"done" | "error"> {
-      let cursor: string | null = null;
+      let since: string | null = null;
       while (!signal.aborted) {
-        const url = cursor ? `/api/analysis/tracks?cursor=${encodeURIComponent(cursor)}` : "/api/analysis/tracks";
+        const url = since ? `/api/analysis/tracks?since=${encodeURIComponent(since)}` : "/api/analysis/tracks";
         const response = await fetch(url, { signal, headers: { accept: "application/x-ndjson, application/json" } });
         if (signal.aborted) return "error";
         if (response.status === 503) throw new Error(await errorMessage(response));
@@ -88,7 +108,7 @@ export function AnalysingScreen({
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-        let resume: string | null = null;
+        let resume: string | null | undefined;
         while (true) {
           const chunk = await reader.read();
           if (chunk.done) break;
@@ -103,7 +123,7 @@ export function AnalysingScreen({
               continue;
             }
             if (event.type === "resume") {
-              resume = event.cursor;
+              resume = event.since ?? null;
               continue;
             }
             if (event.type === "error") {
@@ -117,8 +137,8 @@ export function AnalysingScreen({
             }
           }
         }
-        if (resume) {
-          cursor = resume;
+        if (resume !== undefined) {
+          since = resume;
           dispatch({ type: "connection", status: "reconnecting", message: "Reconnecting" });
           continue;
         }
@@ -128,15 +148,15 @@ export function AnalysingScreen({
     }
 
     async function readResults(signal: AbortSignal): Promise<void> {
-      dispatch({
-        type: "snapshot",
-        run: { status: "running", stage: "analyse", error: null, progress: { done: 0, total: 0 } },
-      });
       while (!signal.aborted) {
         const response = await fetch("/api/analysis/results", { signal });
         if (signal.aborted) return;
         if (response.status === 503) throw new Error(await errorMessage(response));
-        if (response.status === 202) continue;
+        if (response.status === 202) {
+          const waiting = (await response.json()) as AnalysisStatus;
+          applyStatus(waiting);
+          continue;
+        }
         if (!response.ok) throw new Error(DROPPED);
         const body = (await response.json()) as AnalysisStatus & Partial<AnalysisResults> & { retry?: boolean };
         if (body.retry) continue;
@@ -182,37 +202,40 @@ export function AnalysingScreen({
       if (!response.ok) throw new Error(DROPPED);
       const status = (await response.json()) as AnalysisStatus;
       statusRef.current?.(status);
-      dispatch({
-        type: "snapshot",
-        run: {
-          status: status.status === "none" ? "running" : status.status,
-          stage: status.stage ?? "ingest",
-          error: status.error ?? null,
-          progress: { done: 0, total: 0 },
-          complete: status.status === "complete",
-          trackCount: status.trackCount,
-        },
-      });
       if (status.status === "none") {
         fail(NOT_STARTED);
         return;
       }
-      if (status.status === "error") return;
-      if (status.outcome === "insufficient_data") {
+      applyStatus(status);
+      const screen = screenForRun(
+        { stage: status.stage ?? "", status: status.status, outcome: status.outcome },
+        false,
+      );
+      if (screen === "error") return;
+      if (screen === "insufficient") {
         insufficientRef.current?.(status.trackCount);
         return;
       }
-      if (status.status === "running") {
-        const tracks = await readTracks(signal);
-        if (tracks !== "done" || tracksOnly || signal.aborted) return;
-      } else if (tracksOnly) {
-        await readTracks(signal);
-        return;
-      } else {
-        setDoneRun(true);
-        const tracks = await readTracks(signal);
-        if (tracks !== "done" || signal.aborted) return;
+      if (screen === "results") setDoneRun(true);
+      const tracks = await readTracks(signal);
+      if (tracks !== "done" || signal.aborted) return;
+      const latest = await refreshStatus(signal);
+      if (signal.aborted) return;
+      if (latest) {
+        statusRef.current?.(latest);
+        applyStatus(latest);
+        const next = screenForRun(
+          { stage: latest.stage ?? "", status: latest.status, outcome: latest.outcome },
+          false,
+        );
+        if (next === "error") return;
+        if (next === "insufficient") {
+          insufficientRef.current?.(latest.trackCount);
+          return;
+        }
+        if (next === "results") setDoneRun(true);
       }
+      if (tracksOnly) return;
       await readResults(signal);
     }
 
@@ -250,6 +273,12 @@ export function AnalysingScreen({
       }
     />
   );
+}
+
+async function refreshStatus(signal: AbortSignal): Promise<AnalysisStatus | null> {
+  const response = await fetch("/api/analysis/status", { signal });
+  if (signal.aborted || !response.ok) return null;
+  return (await response.json()) as AnalysisStatus;
 }
 
 function AnalysisLoading() {

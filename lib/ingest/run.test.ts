@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { runIngest } from "@/lib/ingest/run";
-import { emptyCounts, type IngestStore, type RunRecord } from "@/lib/ingest/types";
+import {
+  emptyCounts,
+  type IngestStore,
+  type RunRecord,
+} from "@/lib/ingest/types";
 import { SpotifyApiError } from "@/lib/spotify/http";
 import {
   recentlyPlayedPayload,
@@ -9,7 +13,7 @@ import {
 } from "@/lib/spotify/fixtures";
 import type { ListeningClient } from "@/lib/spotify/client";
 import type { PlayRow, TopRow, TrackRow } from "@/lib/spotify/normalise";
-import { parseStreamEvent, type StreamEvent, type Term } from "@/lib/stream/events";
+import { type Term } from "@/lib/stream/events";
 
 function memoryStore(): IngestStore & {
   plays: Map<string, PlayRow>;
@@ -76,7 +80,9 @@ function memoryStore(): IngestStore & {
   return store;
 }
 
-function client(extra?: Partial<ListeningClient>): ListeningClient & { calls: string[] } {
+function client(
+  extra?: Partial<ListeningClient>
+): ListeningClient & { calls: string[] } {
   const calls: string[] = [];
   return {
     calls,
@@ -97,36 +103,25 @@ function client(extra?: Partial<ListeningClient>): ListeningClient & { calls: st
 }
 
 describe("runIngest", () => {
-  it("emits a stage event before the Spotify calls finish", async () => {
-    let release: (value: unknown) => void = () => {};
-    const gate = new Promise((resolve) => {
-      release = resolve;
-    });
-    const events: StreamEvent[] = [];
-    const base = client();
-    const task = runIngest({
-      userId: "user-1",
-      store: memoryStore(),
-      client: { ...base, recentlyPlayed: () => gate },
-      emit: (event) => events.push(event),
-    });
-    expect(events[0]).toEqual({ type: "stage", stage: "ingest" });
-    expect(events.some((event) => event.type === "done")).toBe(false);
-    release(recentlyPlayedPayload);
-    await task;
-    expect(events.some((event) => event.type === "track")).toBe(true);
-    expect(events.at(-1)).toEqual({ type: "done", stage: "ingest" });
-    expect(events.every((event) => parseStreamEvent(event))).toBe(true);
+  it("stores the history and finishes the run", async () => {
+    const store = memoryStore();
+    const run = await runIngest({ userId: "user-1", store, client: client() });
+    expect(run.status).toBe("complete");
+    expect(run.stage).toBe("ingest");
+    expect(store.plays.size).toBe(3);
+    expect(store.tracks.size).toBeGreaterThan(0);
   });
 
   it("does not duplicate rows when ingestion runs twice", async () => {
     const store = memoryStore();
     const listening = client();
-    await runIngest({ userId: "user-1", store, client: listening, emit: () => {} });
-    await runIngest({ userId: "user-1", store, client: listening, emit: () => {} });
+    await runIngest({ userId: "user-1", store, client: listening });
+    await runIngest({ userId: "user-1", store, client: listening });
     expect(store.plays.size).toBe(3);
     expect(store.tracks.size).toBe(2);
-    expect(store.runs.filter((run) => run.status === "complete")).toHaveLength(2);
+    expect(store.runs.filter((run) => run.status === "complete")).toHaveLength(
+      2
+    );
   });
 
   it("resumes a killed run without refetching the plays already saved", async () => {
@@ -136,24 +131,26 @@ describe("runIngest", () => {
       listening.calls.push("tracks:boom");
       throw new SpotifyApiError(503, "server", "Spotify was unavailable");
     };
-    const first = await runIngest({ userId: "user-1", store, client: listening, emit: () => {} });
+    const first = await runIngest({
+      userId: "user-1",
+      store,
+      client: listening,
+    });
     expect(first.status).toBe("error");
     expect(first.checkpoint.recently_played).toBe(true);
     expect(store.plays.size).toBe(3);
 
     const resumed = client();
-    const events: StreamEvent[] = [];
     const second = await runIngest({
       userId: "user-1",
       store,
       client: resumed,
-      emit: (event) => events.push(event),
     });
     expect(second.id).toBe(first.id);
     expect(second.status).toBe("complete");
     expect(second.stage).toBe("ingest");
     expect(resumed.calls.includes("recent")).toBe(false);
-    expect(events.some((event) => event.type === "error")).toBe(false);
+    expect(second.error).toBeNull();
     expect(store.plays.size).toBe(3);
   });
 
@@ -169,7 +166,6 @@ describe("runIngest", () => {
       userId: "user-1",
       store,
       client: client(),
-      emit: () => {},
       stayRunning: true,
     });
     expect(run.status).toBe("running");
@@ -178,20 +174,22 @@ describe("runIngest", () => {
     expect(batches.every((size) => size === 1)).toBe(true);
   });
 
-  it("emits not_allowlisted when Spotify returns 403", async () => {
+  it("records not_allowlisted when Spotify returns 403", async () => {
     const listening = client();
     listening.recentlyPlayed = async () => {
-      throw new SpotifyApiError(403, "not_allowlisted", "Spotify refused this account");
+      throw new SpotifyApiError(
+        403,
+        "not_allowlisted",
+        "Spotify refused this account"
+      );
     };
-    const events: StreamEvent[] = [];
     const run = await runIngest({
       userId: "user-1",
       store: memoryStore(),
       client: listening,
-      emit: (event) => events.push(event),
     });
     expect(run.status).toBe("error");
-    expect(events.at(-1)).toMatchObject({ type: "error", code: "not_allowlisted" });
+    expect(run.error).toBe("not_allowlisted");
   });
 
   it("logs duration and per-endpoint counts for the caller only", async () => {
@@ -201,7 +199,6 @@ describe("runIngest", () => {
       userId: "user-9",
       store,
       client: client(),
-      emit: () => {},
       now: (() => {
         let tick = 1_000;
         return () => (tick += 50);

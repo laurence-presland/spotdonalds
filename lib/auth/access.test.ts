@@ -8,26 +8,35 @@ describe("accessDecision", () => {
     expect(accessDecision("/api/health", false)).toBe("allow");
     expect(accessDecision("/auth/login", false)).toBe("allow");
     expect(accessDecision("/auth/callback", false)).toBe("allow");
-    expect(accessDecision("/.well-known/workflow/v1/flow", false)).toBe("allow");
+    expect(accessDecision("/.well-known/workflow/v1/flow", false)).toBe(
+      "allow"
+    );
   });
 
   it("redirects anonymous visitors away from protected pages and rejects their API calls", () => {
     expect(accessDecision("/app", false)).toBe("redirect-home");
     expect(accessDecision("/app/anything", false)).toBe("redirect-home");
-    expect(accessDecision("/api/ingest", false)).toBe("unauthorized");
+    expect(accessDecision("/api/order", false)).toBe("unauthorized");
   });
 
   it("sends a signed-in visitor from the landing page into the app", () => {
     expect(accessDecision("/", true)).toBe("redirect-app");
     expect(accessDecision("/app", true)).toBe("allow");
-    expect(accessDecision("/api/ingest", true)).toBe("allow");
+    expect(accessDecision("/api/order", true)).toBe("allow");
   });
 });
 
 describe("isAllowlistFailure", () => {
   it("treats development-mode failures as the access screen and consent denial as something else", () => {
-    expect(isAllowlistFailure("access_denied", "user denied the request")).toBe(false);
+    expect(isAllowlistFailure("access_denied", "user denied the request")).toBe(
+      false
+    );
     expect(isAllowlistFailure("not_allowlisted")).toBe(true);
-    expect(isAllowlistFailure("", "User is not registered in the developer dashboard")).toBe(true);
+    expect(
+      isAllowlistFailure(
+        "",
+        "User is not registered in the developer dashboard"
+      )
+    ).toBe(true);
   });
 });

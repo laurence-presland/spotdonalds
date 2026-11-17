@@ -4,7 +4,6 @@ import { computeSignals, presentSignals, scoreTraits, type ListeningInput, type 
 import type { ProfileDraft } from "@/lib/profile/schema";
 import type { TraitName } from "@/lib/signals/registry";
 import { log as writeLog } from "@/lib/log";
-import type { StreamEvent } from "@/lib/stream/events";
 import type { RunRecord } from "@/lib/ingest/types";
 
 export type StoredTrait = {
@@ -48,22 +47,14 @@ export async function runTasteProfile(input: {
   userId: string;
   store: ProfileStore;
   complete: ProfileCompletion;
-  emit: (event: StreamEvent) => void;
   log?: typeof writeLog;
   force?: boolean;
 }): Promise<StoredProfile> {
   const record = writeLogOr(input.log);
   const run = await input.store.latestRun(input.userId);
-  if (!run) {
-    input.emit({ type: "error", code: "no_run", message: "Ingest listening before building a taste profile." });
-    throw new Error("no_run");
-  }
+  if (!run) throw new Error("no_run");
   const existing = await input.store.getProfile(input.userId, run.id);
-  input.emit({ type: "stage", stage: "profile" });
-  if (existing && !input.force) {
-    input.emit({ type: "done", stage: "profile" });
-    return existing;
-  }
+  if (existing && !input.force) return existing;
   if (existing) await input.store.deleteProfile(input.userId, run.id);
 
   run.stage = "profile";
@@ -131,11 +122,10 @@ export async function runTasteProfile(input: {
       prompt_hash: prompt.hash,
     };
     await input.store.saveProfile(stored);
-    run.status = "complete";
+    run.status = "running";
     run.stage = "profile";
-    run.finished_at = new Date().toISOString();
+    run.finished_at = null;
     await input.store.saveRun(run);
-    input.emit({ type: "done", stage: "profile" });
     return stored;
   }
 
@@ -145,7 +135,6 @@ export async function runTasteProfile(input: {
   run.stage = "profile";
   run.error = errors.join("; ");
   await input.store.saveRun(run);
-  input.emit({ type: "error", code: "profile_invalid", message: "The taste profile didn't pass checking." });
   throw new Error(run.error);
 }
 

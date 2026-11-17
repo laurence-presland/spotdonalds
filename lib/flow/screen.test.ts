@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { initialAnalysingState, reduceAnalysis } from "@/lib/analysing/reduce";
 import { screenForRun, welcomePlan } from "@/lib/flow/screen";
-import type { StreamEvent } from "@/lib/stream/events";
 
 describe("screen flow", () => {
   it("picks the screen from the run, and does not replay the welcome once a run exists", () => {
@@ -15,22 +14,24 @@ describe("screen flow", () => {
     expect(screenForRun({ stage: "done", status: "complete", outcome: "insufficient_data" }, false)).toBe("insufficient");
   });
 
-  it("walks a scripted stream from ingest to done", () => {
-    const events: StreamEvent[] = [
-      { type: "stage", stage: "ingest" },
-      { type: "stage", stage: "enrich" },
-      { type: "stage", stage: "profile" },
-      { type: "stage", stage: "order" },
-      { type: "stage", stage: "done" },
-    ];
+  it("walks stored stages from ingest to the order", () => {
+    const stages = ["ingest", "enrich", "profile", "order", "done"];
     let state = initialAnalysingState;
-    const stages: string[] = [];
-    for (const event of events) {
-      state = reduceAnalysis(state, { type: "event", event });
-      if (event.type === "stage") stages.push(event.stage);
+    for (const stage of stages) {
+      state = reduceAnalysis(state, {
+        type: "snapshot",
+        run: {
+          status: stage === "done" ? "complete" : "running",
+          stage,
+          error: null,
+          progress: { done: 0, total: 0 },
+          complete: stage === "done",
+        },
+      });
     }
-    expect(stages).toEqual(["ingest", "enrich", "profile", "order", "done"]);
     expect(state.stage).toBe("order");
+    expect(state.complete).toBe(true);
+    expect(screenForRun({ stage: "done", status: "complete" }, false)).toBe("results");
   });
 
   it("holds the welcome for three seconds and skips the fade when motion is reduced", () => {

@@ -1,9 +1,7 @@
-import { LeaseLost, leaseToken } from "@/lib/analyse/lease";
-import { WORKER_STALE_SECONDS } from "@/lib/analyse/machine";
 import { sql } from "@/lib/db";
 import { emptyCounts, type IngestCheckpoint, type IngestCounts, type RunRecord, type RunStage, type RunStatus } from "@/lib/ingest/types";
 
-const LEASE_STALE_SECONDS = 30;
+const WORKER_STALE_SECONDS = 180;
 
 type RunRow = {
   id: string;
@@ -72,7 +70,6 @@ export async function insertRun(userId: string, startedAt: string): Promise<RunR
 /** Persist an analysis run. */
 export async function saveAnalysisRun(run: RunRecord): Promise<void> {
   const db = sql();
-  const guard = leaseToken();
   const open = !(run.status === "error" || (run.status === "complete" && run.stage === "done"));
   const result = await db`
     update spotdonalds.analysis_runs
@@ -88,16 +85,8 @@ export async function saveAnalysisRun(run: RunRecord): Promise<void> {
         heartbeat_at = case when ${run.status} = 'running' then now() else heartbeat_at end
     where id = ${run.id}
       and user_id = ${run.user_id}
-      and (
-        ${guard}::text is null
-        or lease_token is null
-        or lease_token = ${guard}
-      )
   `;
-  if (result.count !== 1) {
-    if (guard) throw new LeaseLost();
-    throw new Error("analysis run was not updated");
-  }
+  if (result.count !== 1) throw new Error("analysis run was not updated");
 }
 
 /** Insert a new open analysis run. */
@@ -131,7 +120,6 @@ export async function reopenRun(run: RunRecord): Promise<RunRecord> {
         open = true,
         finished_at = null,
         heartbeat_at = null,
-        lease_token = null,
         workflow_id = null
     where id = ${run.id} and user_id = ${run.user_id}
     returning id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
@@ -149,7 +137,6 @@ export async function closeOpenRun(userId: string): Promise<void> {
         status = case when status = 'running' then 'error' else status end,
         error = case when status = 'running' then 'Closed to start a new analysis.' else error end,
         finished_at = case when status = 'running' and finished_at is null then now() else finished_at end,
-        lease_token = null,
         workflow_id = null
     where user_id = ${userId} and open
   `;
@@ -159,9 +146,8 @@ export async function closeOpenRun(userId: string): Promise<void> {
 export async function claimWorker(runId: string, userId: string): Promise<boolean> {
   const rows = await sql()<{ id: string }[]>`
     update spotdonalds.analysis_runs
-    set heartbeat_at = now(),
-        workflow_id = 'pending',
-        lease_token = null
+    set         heartbeat_at = now(),
+        workflow_id = 'pending'
     where id = ${runId}
       and user_id = ${userId}
       and open
@@ -223,17 +209,6 @@ export async function clearPendingWorkflow(runId: string, userId: string): Promi
   `;
 }
 
-/** Record that the run was recovered after a stale worker. */
-export async function noteRecovery(runId: string, userId: string, at: string): Promise<void> {
-  await sql()`
-    update spotdonalds.analysis_runs
-    set checkpoint = jsonb_set(coalesce(checkpoint, '{}'::jsonb), '{recovery_at}', to_jsonb(${at}::text), true)
-    where id = ${runId}
-      and user_id = ${userId}
-      and status = 'running'
-  `;
-}
-
 /** Mark the run failed if this workflow still owns it. */
 export async function markOwnedRunFailed(
   runId: string,
@@ -248,7 +223,6 @@ export async function markOwnedRunFailed(
         finished_at = coalesce(finished_at, now()),
         open = false,
         attempts = attempts + 1,
-        lease_token = null,
         heartbeat_at = null
     where id = ${runId}
       and user_id = ${userId}
@@ -271,7 +245,6 @@ export async function markRunFailed(runId: string, userId: string, message: stri
         finished_at = coalesce(finished_at, now()),
         open = false,
         attempts = attempts + 1,
-        lease_token = null,
         heartbeat_at = null
     where id = ${runId}
       and user_id = ${userId}
@@ -279,45 +252,6 @@ export async function markRunFailed(runId: string, userId: string, message: stri
     returning id, user_id, status, stage, started_at, finished_at, counts, error, checkpoint, open, heartbeat_at, attempts, workflow_id, outcome
   `;
   return rows[0] ? asRun(rows[0]) : null;
-}
-
-/** Take the run's lease if it is free or stale. */
-export async function acquireLease(runId: string, userId: string, token: string): Promise<boolean> {
-  const rows = await sql()<{ id: string }[]>`
-    update spotdonalds.analysis_runs
-    set heartbeat_at = now(),
-        lease_token = ${token}
-    where id = ${runId}
-      and user_id = ${userId}
-      and open
-      and status <> 'error'
-      and (
-        lease_token is null
-        or lease_token = ${token}
-        or heartbeat_at is null
-        or heartbeat_at < now() - make_interval(secs => ${LEASE_STALE_SECONDS})
-      )
-    returning id
-  `;
-  return rows.length > 0;
-}
-
-/** Refresh the lease heartbeat. */
-export async function touchLease(runId: string, token: string): Promise<void> {
-  await sql()`
-    update spotdonalds.analysis_runs
-    set heartbeat_at = now()
-    where id = ${runId} and lease_token = ${token}
-  `;
-}
-
-/** Drop the lease if we still hold it. */
-export async function releaseLease(runId: string, token: string): Promise<void> {
-  await sql()`
-    update spotdonalds.analysis_runs
-    set lease_token = null
-    where id = ${runId} and lease_token = ${token}
-  `;
 }
 
 /** Map a database row to a run record. */

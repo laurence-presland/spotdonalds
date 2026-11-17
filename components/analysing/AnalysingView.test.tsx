@@ -4,7 +4,6 @@ import { AnalysingView } from "@/components/analysing/AnalysingView";
 import { initialAnalysingState, reduceAnalysis } from "@/lib/analysing/reduce";
 import { NotAllowlisted } from "@/components/NotAllowlisted";
 import { reconnectDelay } from "@/lib/analysing/backoff";
-import type { StreamEvent } from "@/lib/stream/events";
 
 const humble = {
   id: "t1",
@@ -43,24 +42,17 @@ describe("AnalysingView", () => {
     expect(html).not.toContain(">S<");
   });
 
-  it("uses a letter tile when Spotify has no image and keeps one row after a repeated event", () => {
-    const events: StreamEvent[] = [
-      {
-        type: "track",
-        id: "t2",
-        name: "Nights",
-        artists: ["Frank Ocean"],
-        album: "Blonde",
-        image: null,
-        source: "top",
-        time_range: "medium_term",
-        rank: 3,
-      },
-      { type: "enrich_result", id: "t2", name: "Nights", artists: ["Frank Ocean"], album: "Blonde", image: null, failures: [] },
-      { type: "enrich_result", id: "t2", name: "Nights", artists: ["Frank Ocean"], album: "Blonde", image: null, failures: [] },
-    ];
-    let state = initialAnalysingState;
-    for (const event of events) state = reduceAnalysis(state, { type: "event", event });
+  it("uses a letter tile when Spotify has no image and keeps one row for a repeated track", () => {
+    const nights = {
+      id: "t2",
+      name: "Nights",
+      artists: ["Frank Ocean"],
+      album: "Blonde",
+      image: null,
+      sources: [{ kind: "top-track" as const, time_range: "medium_term" as const, rank: 3 }],
+    };
+    let state = reduceAnalysis(initialAnalysingState, { type: "hydrate", tracks: [nights], artists: [] });
+    state = reduceAnalysis(state, { type: "hydrate", tracks: [nights], artists: [] });
     expect(state.tracks).toHaveLength(1);
     const html = renderToStaticMarkup(<AnalysingView state={state} initialTab="top-tracks" />);
     expect(html).toContain("letter-tile");

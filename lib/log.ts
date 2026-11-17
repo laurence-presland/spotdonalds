@@ -13,7 +13,6 @@ const REDACTED_KEYS = new Set([
   "apikey",
   "database_url",
   "password",
-  "lease_token",
 ]);
 
 /** Strip tokens, secrets, and emails from a log payload. */

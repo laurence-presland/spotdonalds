@@ -7,6 +7,6 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const user = await requireSession();
   if (user instanceof Response) return user;
-  const catalogue = await loadCatalogue(user.id);
-  return Response.json(catalogue);
+  const { tracks, artists } = await loadCatalogue(user.id);
+  return Response.json({ tracks, artists });
 }
