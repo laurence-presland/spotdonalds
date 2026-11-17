@@ -73,6 +73,19 @@ describe("OrderReceipt", () => {
     expect(html).toContain("Regenerate order");
   });
 
+  it("renders an order saved before the little and lot scales", () => {
+    const older = {
+      ...order,
+      budget: {
+        calorie_budget: { min: 850, max: 1400 },
+        spend_budget_aud: { min: 16, max: 42 },
+      },
+    } as StoredOrder;
+    const html = renderToStaticMarkup(<OrderReceipt order={older} menu={menu} />);
+    expect(html).toContain("Big Mac");
+    expect(html).toContain("A little is 900, a lot is 1500.");
+  });
+
   it("shows loading and error without a second receipt", () => {
     expect(renderToStaticMarkup(<OrderReceipt order={null} menu={[]} status="loading" />)).toContain("Building your order.");
     const error = renderToStaticMarkup(<OrderReceipt order={order} menu={menu} status="error" />);

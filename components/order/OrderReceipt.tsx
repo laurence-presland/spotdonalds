@@ -46,6 +46,7 @@ export function OrderReceipt({
   const decided = order.how_we_decided as { text?: string };
   const invented = (order.invented_rules ?? []) as { id: string; description: string }[];
   const calorieRule = rules.rules.find((rule) => rule.id === "bpm-calories");
+  const scale = calorieScale(order.budget);
 
   return (
     <article className="receipt">
@@ -60,8 +61,8 @@ export function OrderReceipt({
       </ol>
       <BudgetBar
         calories={calories}
-        little={order.budget.calories_kcal.a_little}
-        lot={order.budget.calories_kcal.a_lot}
+        little={scale.little}
+        lot={scale.lot}
         rule={calorieRule?.description ?? ""}
       />
       <p className="receipt-total">
@@ -121,6 +122,15 @@ export function HowWeDecided({ text }: { text: string }) {
       <p>{text}</p>
     </section>
   );
+}
+
+/** Use the stored little/lot scale, or the current one when an older order has none. */
+function calorieScale(budget: StoredOrder["budget"]): { little: number; lot: number } {
+  const stored = budget as { calories_kcal?: { a_little?: number; a_lot?: number } } | null;
+  const little = stored?.calories_kcal?.a_little;
+  const lot = stored?.calories_kcal?.a_lot;
+  if (typeof little === "number" && typeof lot === "number") return { little, lot };
+  return { little: rules.scales.calories_kcal.a_little, lot: rules.scales.calories_kcal.a_lot };
 }
 
 export function BudgetBar({ calories, little, lot, rule }: { calories: number; little: number; lot: number; rule: string }) {
